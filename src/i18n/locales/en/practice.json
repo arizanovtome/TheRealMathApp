@@ -1,0 +1,13 @@
+{
+  "greatJobName": "Great job, {{name}}!",
+  "scoreSummary": "You answered {{correct}} out of {{total}} correctly.",
+  "scorePct": "Score: {{pct}}%",
+  "quizAgain": "Quiz again",
+  "timedAgain": "Timed again",
+  "practiceAgain": "Practice again",
+  "hintOpenSettings": "Open settings to change profile or math options",
+  "questionReview": "Question review",
+  "qIndex": "Q{{index}}",
+  "questionCorrectA11y": "Question {{index}}. Correct. Your answer {{chosen}}.",
+  "questionIncorrectA11y": "Question {{index}}. Incorrect. Your answer {{chosen}}. Correct answer {{correct}}."
+}

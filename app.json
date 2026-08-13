@@ -1,36 +1,44 @@
 {
   "expo": {
-    "name": "MathKidsApp",
-    "slug": "MathKidsApp",
+    "name": "The Real Math",
+    "slug": "the-real-math",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "mathkidsapp",
+    "icon": "./src/assets/icon.png",
+    "scheme": "therealmathapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tome.arizanov.TheRealMathApp"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tome.arizanov.TheRealMathApp",
+      "buildNumber": "1.0.0"
     },
     "android": {
+      "versionCode": 100001,
+      "package": "com.tome.arizanov.TheRealMathApp",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#15372B",
+        "foregroundImage": "./src/assets/android-adaptive-icon.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.tome.arizanov.TheRealMathApp"
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./src/assets/icon.png"
     },
     "plugins": [
+      "expo-dev-client",
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./src/assets/icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
@@ -38,11 +46,26 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-font",
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "a7ba91f1-e418-4e27-81d0-542ded07900a"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "owner": "arizanovtome",
+    "updates": {
+      "url": "https://u.expo.dev/a7ba91f1-e418-4e27-81d0-542ded07900a"
     }
   }
 }

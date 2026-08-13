@@ -1,0 +1,13 @@
+{
+  "greatJobName": "Браво, {{name}}!",
+  "scoreSummary": "Точно одговоривте на {{correct}} од {{total}}.",
+  "scorePct": "Резултат: {{pct}}%",
+  "quizAgain": "Квиз повторно",
+  "timedAgain": "На време повторно",
+  "practiceAgain": "Вежбај повторно",
+  "hintOpenSettings": "Отвори поставки за да ги смените профилот или математичките опции",
+  "questionReview": "Преглед на прашања",
+  "qIndex": "П{{index}}",
+  "questionCorrectA11y": "Прашање {{index}}. Точно. Ваш одговор {{chosen}}.",
+  "questionIncorrectA11y": "Прашање {{index}}. Неточно. Ваш одговор {{chosen}}. Точен одговор {{correct}}."
+}

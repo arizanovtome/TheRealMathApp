@@ -1,0 +1,34 @@
+import { FRACTION_DENOMINATOR_POOL } from '@/constants/fractions';
+import { getRecommendedLearningPlan } from '@/features/learning-plan/recommendedLearningPlan';
+import { tryGenerateFractionVisualQuestion } from '@/features/questions/fractionVisualGenerator';
+
+describe('fractionVisualGenerator', () => {
+  it('generates MC fraction identification question', () => {
+    const config = {
+      ...getRecommendedLearningPlan(8),
+      fractionVisual: { enabled: true },
+      answerOptionsCount: 4 as const,
+    };
+    const q = tryGenerateFractionVisualQuestion(config);
+    expect(q).not.toBeNull();
+    expect(q!.questionText).toBe('What fraction is shaded?');
+    expect(q!.shaded.numerator).toBeGreaterThan(0);
+    expect(q!.shaded.numerator).toBeLessThan(q!.shaded.denominator);
+    expect(q!.answerOptions).toContain(q!.correctAnswer);
+    expect(q!.answerOptions.length).toBe(4);
+  });
+
+  it('matches visual slice count to the reduced correct fraction', () => {
+    const config = {
+      ...getRecommendedLearningPlan(8),
+      fractionVisual: { enabled: true },
+      answerOptionsCount: 4 as const,
+    };
+    for (let i = 0; i < 40; i++) {
+      const q = tryGenerateFractionVisualQuestion(config);
+      expect(q).not.toBeNull();
+      expect(q!.correctAnswer).toBe(`${q!.shaded.numerator}/${q!.shaded.denominator}`);
+      expect(FRACTION_DENOMINATOR_POOL).toContain(q!.shaded.denominator);
+    }
+  });
+});

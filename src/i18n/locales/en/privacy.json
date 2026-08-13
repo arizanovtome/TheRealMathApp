@@ -1,0 +1,55 @@
+{
+  "title": "Privacy policy",
+  "sections": {
+    "overview": {
+      "title": "Overview",
+      "p1": "The Real Math helps learners practice math with customizable sessions, quizzes, timed runs, and tutorials.",
+      "p2": "We designed the app so your learning data stays on your device. We do not run accounts, ads, or analytics in the app."
+    },
+    "stored": {
+      "title": "Information stored on your device",
+      "p1": "When you use the app, the following information is saved locally on your phone or tablet so the app can remember your setup and progress:",
+      "b1": "Profile label and learner name (for greetings and switching between learners)",
+      "b2": "Age (to suggest a starting learning plan)",
+      "b3": "Learning plan settings (which topics, difficulty, timers, and question styles are enabled)",
+      "b4": "Recent session results (scores, dates, and breakdowns by operation)",
+      "b5": "Whether onboarding has been completed"
+    },
+    "notCollected": {
+      "title": "Information we do not collect",
+      "p1": "We do not ask for or collect:",
+      "b1": "Email addresses, passwords, or social login",
+      "b2": "Precise location, contacts, photos, microphone, or camera data",
+      "b3": "Advertising identifiers for targeted ads",
+      "b4": "Usage analytics tied to your identity"
+    },
+    "storage": {
+      "title": "How data is stored and shared",
+      "p1": "All profile and progress data is stored in local device storage (AsyncStorage) under the key \"therealmathapp\". It is not uploaded to our servers and is not shared with third parties for marketing.",
+      "p2": "If you use multiple devices, data does not sync between them unless you back up the device through your operating system.",
+      "p3": "The app may check for software updates through Expo Updates. That process uses standard app version information to deliver updates and does not include learner names or practice history."
+    },
+    "children": {
+      "title": "Children and families",
+      "p1": "The app is intended for learners of all ages, often used by children with a parent or guardian configuring settings.",
+      "p2": "Because information stays on the device, we do not knowingly collect personal information from children over the internet. A parent or guardian chooses what name and age to enter.",
+      "p3": "If you believe information was entered in error, you can edit or remove a profile in Settings, or delete all app data by uninstalling the app."
+    },
+    "choices": {
+      "title": "Your choices",
+      "p1": "You remain in control of the data on your device:",
+      "b1": "Edit or remove individual profiles in Settings",
+      "b2": "Change learning plan options at any time",
+      "b3": "Delete all app data by uninstalling The Real Math from your device"
+    },
+    "changes": {
+      "title": "Changes to this policy",
+      "p1": "We may update this privacy policy when the app changes. The \"Last updated\" date at the top of this screen will change when we do.",
+      "p2": "Continued use of the app after an update means you accept the revised policy."
+    },
+    "contact": {
+      "title": "Contact",
+      "p1": "Questions about this privacy policy? Email us at {{email}}."
+    }
+  }
+}

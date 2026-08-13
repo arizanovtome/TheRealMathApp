@@ -1,0 +1,1706 @@
+# Business Requirements Document: Kids Math Learning App
+
+## 1. Document Purpose
+
+This document defines the business and functional requirements for a React Native Expo mobile application that helps children learn and practice math. The focus of this document is the application behavior, learning flow, configuration model, and question-generation logic.
+
+This document does not cover monetization, store release requirements, privacy policies, legal requirements, or kids-specific compliance constraints.
+
+---
+
+## 2. Product Overview
+
+The app is a mobile math learning application for children aged 4 to 12. The app should help children practice basic arithmetic through age-appropriate exercises and configurable learning plans.
+
+The app should be simple to start, easy to use, and flexible enough to allow parents or older children to customize what type of math practice is included.
+
+The main learning operations are:
+
+- Addition
+- Subtraction
+- Multiplication
+- Division
+- Squaring (e.g. `7² = ?`)
+- Square roots (e.g. `√49 = ?`)
+- Rounding to the nearest 10 or 100
+- Order of operations (e.g. `3 + 4 × 5 = ?`, multiply before add)
+- Equations with an unknown (e.g. `x + 3 = 8`)
+
+[Phase 2] The app should also support additional question styles that reuse the same core math engine where possible instead of creating unnecessary separate operations. Examples include missing-number questions, comparisons, true/false questions, finding mistakes, number sequences, place value, fractions, decimals, percentages, time, money, geometry, and word problems.
+
+The app should support recommended learning settings based on the child’s age, while also allowing manual customization of the learning plan.
+
+---
+
+## 3. Product Goals
+
+The main goals of the app are:
+
+- Allow children to start practicing math quickly with minimal setup.
+- Personalize the experience using the child’s name or nickname.
+- Recommend age-appropriate math practice automatically.
+- Allow customization of operations and number ranges.
+- Support different practice styles, such as instant feedback and quiz-style sessions.
+- Provide answer choices to make the app easier to use on mobile devices.
+- Track simple session results such as correct answers, wrong answers, and score.
+
+---
+
+## 4. Target Users
+
+The main users are children aged 4 to 12.
+
+A secondary user is a parent or guardian who may configure the learning plan or adjust the difficulty.
+
+For the purpose of this document, the app should support the following general age groups:
+
+| Age Group | Suggested Learning Focus |
+|---|---|
+| 4–5 | Counting, small number addition, very simple subtraction |
+| 6–7 | Addition and subtraction up to 20 |
+| 8–9 | Addition and subtraction up to 100, basic multiplication |
+| 10–12 | Multiplication, division, mixed arithmetic, larger number ranges |
+
+---
+
+## 5. High-Level User Flow
+
+The recommended first-time user flow is:
+
+1. User opens the app.
+2. App asks what name or nickname should be used.
+3. App asks the child’s age.
+4. App creates a recommended learning plan based on the selected age.
+5. User can either:
+   - Start learning immediately with the recommended plan.
+   - Customize the learning plan before starting.
+6. User starts a practice or quiz session.
+7. App presents math questions.
+8. User selects an answer from possible answer choices.
+9. App provides feedback based on the selected mode.
+10. App displays progress or final result.
+
+---
+
+## 6. Onboarding Requirements
+
+### 6.1 Name / Nickname
+
+The app should ask the user:
+
+> What should we call you?
+
+The entered name should be used in the app to make the experience more personal.
+
+Example usage:
+
+- “Hi Alex!”
+- “Great job, Alex!”
+- “Ready for the next question?”
+
+The name should not be required to be a real name. A nickname should be accepted.
+
+### 6.2 Age Selection
+
+The app should ask the user to select their age.
+
+Supported age range:
+
+- Minimum age: 4
+- Maximum age: 12
+
+The selected age should be used to generate the recommended learning plan.
+
+### 6.3 Recommended Plan as Default
+
+After name and age are selected, the app should default to the recommended learning plan.
+
+The app should not force the user to configure all learning settings before starting.
+
+Recommended primary action:
+
+> Start learning
+
+Secondary action:
+
+> Customize
+
+Example screen message:
+
+> Based on your age, we prepared a learning plan for you. You can change it anytime.
+
+---
+
+## 7. Learning Plan Requirements
+
+The learning plan defines which operations are enabled and what number ranges should be used for each operation.
+
+The app should not use one global number range for all operations.
+
+Each operation should have its own configuration because different operations require different ranges.
+
+Example:
+
+- Addition: numbers 1–100
+- Subtraction: first number 1–100, second number 1–20
+- Multiplication: numbers 1–10
+- Division: answer 1–10, divisor 1–10
+
+### 7.1 Operation Selection
+
+The app should allow each operation to be enabled or disabled independently.
+
+Available operations (each can be enabled or disabled independently):
+
+- Addition
+- Subtraction
+- Multiplication
+- Division
+- Squaring
+- Square roots
+- Rounding (nearest 10 and/or 100)
+- Order of operations
+- Equations with an unknown (`x`), with per-operator toggles when enabled
+
+There should not be a separate “Mixed” operation.
+
+Mixed practice is created automatically when more than one operation is enabled.
+
+Example:
+
+| Operation | Enabled | Range |
+|---|---:|---|
+| Addition | Yes | 1–100 and 1–100 |
+| Subtraction | Yes | 1–100 and 1–20 |
+| Multiplication | Yes | 1–10 and 1–10 |
+| Division | No | Not used |
+
+In this example, the session is mixed because more than one operation is enabled.
+
+### 7.2 [Phase 2] Question Styles vs Operations
+
+[Phase 2] The app should distinguish between **operations** and **question styles**.
+
+Operations define the math logic and number ranges, for example addition, subtraction, multiplication, division, squaring, square roots, rounding, and order of operations.
+
+Question styles define how the same math logic is presented to the learner. This prevents the app from duplicating configuration for every new type of question.
+
+Examples:
+
+| Question Style | Reuses Existing Operation Config? | Example |
+|---|---:|---|
+| Standard calculation | Yes | `8 + 5 = ?` |
+| Missing number | Yes | `8 + ? = 13` |
+| True / false | Yes | `8 + 5 = 14` → false |
+| Find the mistake | Yes | `3 + 4 × 2 = 14. Is this correct?` |
+| Comparison | Partly | `8 + 5 __ 12` |
+| Word problem | Yes | `Ana has 8 apples and gets 5 more. How many now?` |
+
+Recommended approach:
+
+- Keep the current operation configuration as the source of truth.
+- Add optional question-style toggles in Phase 2.
+- Only create a new operation when the math logic requires a different configuration model.
+- Reuse existing operation ranges whenever the new question style is based on addition, subtraction, multiplication, or division.
+
+Example:
+
+```text
+Addition enabled: Yes
+Addition first number: 1–20
+Addition second number: 1–20
+
+Enabled question styles:
+- Standard calculation
+- Missing number
+- Word problem
+```
+
+Possible generated questions:
+
+```text
+8 + 7 = ?
+8 + ? = 15
+Mia has 8 stickers and gets 7 more. How many stickers does she have now?
+```
+
+---
+
+## 8. Operation Configuration Requirements
+
+### 8.1 Addition Configuration
+
+Addition should support two number ranges:
+
+- First number range
+- Second number range
+
+Example:
+
+```text
+First number: 1–100
+Second number: 1–100
+```
+
+Possible generated question:
+
+```text
+37 + 18 = ?
+```
+
+Although addition can often use the same range for both numbers, the app should support separate ranges for flexibility.
+
+### 8.2 Subtraction Configuration
+
+Subtraction should support two number ranges:
+
+- First number range
+- Second number range
+
+Example:
+
+```text
+First number: 1–100
+Second number: 1–20
+```
+
+Possible generated question:
+
+```text
+86 - 7 = ?
+```
+
+Subtraction should also support a setting for negative answers.
+
+Required setting:
+
+```text
+Allow answers below zero: Yes / No
+```
+
+Default behavior should be:
+
+```text
+Allow answers below zero: No
+```
+
+When negative answers are not allowed, the generated question should ensure that the result is zero or greater.
+
+Examples of valid questions:
+
+```text
+8 - 3 = ?
+15 - 15 = ?
+42 - 9 = ?
+```
+
+Examples of invalid questions when negative answers are disabled:
+
+```text
+3 - 8 = ?
+4 - 12 = ?
+```
+
+### 8.3 Multiplication Configuration
+
+Multiplication should support two number ranges:
+
+- First number range
+- Second number range
+
+Example:
+
+```text
+First number: 1–10
+Second number: 1–10
+```
+
+Possible generated question:
+
+```text
+7 × 6 = ?
+```
+
+Multiplication ranges should usually be smaller than addition and subtraction ranges.
+
+Recommended multiplication ranges:
+
+- 1–5
+- 1–10
+- 1–12
+
+### 8.4 Division Configuration
+
+Division should not be generated by randomly selecting a dividend and divisor, because that can create decimal answers.
+
+Instead, division should be generated from a clean answer and divisor.
+
+Division should support two ranges:
+
+- Answer range
+- Divisor range
+
+Example:
+
+```text
+Answer: 1–10
+Divisor: 1–10
+```
+
+Generation logic:
+
+```text
+answer = random number from answer range
+divisor = random number from divisor range
+dividend = answer × divisor
+question = dividend ÷ divisor
+correctAnswer = answer
+```
+
+Example:
+
+```text
+answer = 7
+divisor = 6
+dividend = 42
+question = 42 ÷ 6 = ?
+correct answer = 7
+```
+
+This guarantees whole-number division questions.
+
+[Phase 2] Division may optionally support questions with remainders. This should not be a separate operation. It should be an additional setting inside the existing division configuration.
+
+Optional Phase 2 setting:
+
+```text
+Allow remainders: Yes / No
+```
+
+Default behavior should remain:
+
+```text
+Allow remainders: No
+```
+
+When remainders are enabled, the app may generate questions such as:
+
+```text
+17 ÷ 5 = ? remainder ?
+correct answer = 3 remainder 2
+```
+
+For MVP, division should stay whole-number only.
+
+### 8.5 Rounding configuration
+
+Rounding should support:
+
+- Enable/disable toggle
+- Round to nearest **10** and/or **100** (at least one when enabled)
+- A range of whole numbers to round (e.g. 1–99)
+
+Example question:
+
+```text
+Round 47 to the nearest 10.
+correct answer = 50
+```
+
+Rounding is **not** limited by the maximum final result setting (see §12).
+
+### 8.6 Order of operations configuration
+
+Order of operations should support:
+
+- Enable/disable toggle
+- Operand maximum (each of `a`, `b`, `c` in `a + b × c = ?` is chosen from 1…operandMax)
+
+Generation must follow multiply-before-add (PEMDAS), not left-to-right.
+
+Order of operations is **not** limited by the maximum final result setting (see §12).
+
+### 8.7 [Phase 2] Number Sense Configuration
+
+[Phase 2] The app may add number-sense question types that are not exactly arithmetic operations but are useful for younger children.
+
+Recommended Phase 2 number-sense question types:
+
+- Counting forward and backward
+- Odd or even numbers
+- Number comparison using `<`, `>`, `=`
+- Number sequences
+- Place value
+- Expanded form
+
+These should use simple independent configuration because they do not always map cleanly to addition, subtraction, multiplication, or division.
+
+Examples:
+
+```text
+7, 8, 9, ?
+Is 27 odd or even?
+15 __ 19
+In 348, what is the value of 4?
+300 + 40 + 8 = ?
+```
+
+### 8.8 [Phase 2] Fractions, Decimals, and Percentages
+
+[Phase 2] The app may add basic fraction, decimal, and percentage practice for older children. These should be treated as separate configurable categories because they require different generation and answer validation rules.
+
+Recommended Phase 2 question types:
+
+- Equivalent fractions, e.g. `1/2 = ?/4`
+- Compare fractions, e.g. `1/3` vs `1/2`
+- Fraction of a number, e.g. `1/4 of 20 = ?`
+- Decimal comparison, e.g. `0.7` vs `0.65`
+- Decimal addition and subtraction
+- Convert simple fractions to decimals, e.g. `1/2 = 0.5`
+- Basic percentages, e.g. `10% of 80 = ?`
+- Convert percentages to fractions or decimals, e.g. `25% = 1/4 = 0.25`
+
+These should not be included in MVP unless the app needs a wider age range from the first release.
+
+### 8.9 [Phase 2] Time, Money, and Geometry
+
+[Phase 2] The app may add practical math categories that are useful but separate from the core arithmetic engine.
+
+Recommended categories:
+
+- Time reading and time difference
+- Money counting and change calculation
+- Shape recognition
+- Perimeter
+- Area
+- Basic angles
+- Symmetry
+
+Examples:
+
+```text
+From 2:30 to 3:15, how many minutes passed?
+You pay €10 for something that costs €6.50. What is the change?
+How many sides does a hexagon have?
+Find the area of a rectangle: 6 × 4
+```
+
+These categories should be added after the core arithmetic experience is stable.
+
+---
+
+## 9. Suggested Configuration Data Model
+
+The app should use operation-specific configuration instead of forcing all operations into one generic shape.
+
+Suggested TypeScript model:
+
+```ts
+type AdditionConfig = {
+  enabled: boolean;
+  leftMin: number;
+  leftMax: number;
+  rightMin: number;
+  rightMax: number;
+};
+
+type SubtractionConfig = {
+  enabled: boolean;
+  firstMin: number;
+  firstMax: number;
+  secondMin: number;
+  secondMax: number;
+  allowNegativeAnswers: boolean;
+};
+
+type MultiplicationConfig = {
+  enabled: boolean;
+  leftMin: number;
+  leftMax: number;
+  rightMin: number;
+  rightMax: number;
+};
+
+type DivisionConfig = {
+  enabled: boolean;
+  answerMin: number;
+  answerMax: number;
+  divisorMin: number;
+  divisorMax: number;
+  /** [Phase 2] Defaults to false. When true, division questions may ask for quotient and remainder. */
+  allowRemainders?: boolean;
+};
+
+type QuestionStyleConfig = {
+  /** MVP default */
+  standardCalculation: boolean;
+
+  /** [Phase 2] Reuses enabled arithmetic operations. Example: 8 + ? = 13 */
+  missingNumber?: boolean;
+
+  /** [Phase 2] Reuses enabled arithmetic operations. Example: 8 + 5 = 14 -> false */
+  trueFalse?: boolean;
+
+  /** [Phase 2] Reuses enabled arithmetic operations. Example: 3 + 4 × 2 = 14. Is this correct? */
+  findTheMistake?: boolean;
+
+  /** [Phase 2] Reuses direct numbers or generated arithmetic results. Example: 15 > 9 */
+  comparison?: boolean;
+
+  /** [Phase 2] Reuses enabled arithmetic operations but presents them as short text problems. */
+  wordProblems?: boolean;
+};
+
+type NumberSenseConfig = {
+  /** [Phase 2] */
+  counting?: { enabled: boolean; min: number; max: number; stepMin: number; stepMax: number };
+  /** [Phase 2] */
+  oddEven?: { enabled: boolean; min: number; max: number };
+  /** [Phase 2] */
+  numberSequences?: { enabled: boolean; min: number; max: number; stepMin: number; stepMax: number };
+  /** [Phase 2] */
+  placeValue?: { enabled: boolean; min: number; max: number };
+};
+
+type MathLearningConfig = {
+  addition: AdditionConfig;
+  subtraction: SubtractionConfig;
+  multiplication: MultiplicationConfig;
+  division: DivisionConfig;
+
+  /** [Phase 2] Controls alternative ways of presenting questions without duplicating operation config. */
+  questionStyles?: QuestionStyleConfig;
+
+  /** [Phase 2] Independent number-sense question types that are not simple arithmetic operations. */
+  numberSense?: NumberSenseConfig;
+
+  mode: 'practice' | 'quiz' | 'timed';
+  questionsCount: number;
+  answerEntryMode: 'multiple_choice' | 'keyboard';
+  answerOptionsCount: 2 | 3 | 4 | 5 | 6;
+  /**
+   * Upper bound for the correct answer on operations that use the cap
+   * (addition, subtraction, multiplication, division, squaring, square roots,
+   * and equation-unknown). Not applied to rounding or order of operations.
+   */
+  maxFinalResult: 10 | 20 | 100 | 1000 | 'unlimited';
+  timerEnabled: boolean;
+  timerSecondsPerQuestion: number;
+};
+```
+
+---
+
+## 10. Recommended Learning Plan by Age
+
+The app should generate a recommended learning plan based on the selected age.
+
+The following defaults are suggested for the first version.
+
+### Age 4–5
+
+Recommended focus:
+
+- Simple addition
+- Very small numbers
+- Optional simple subtraction later
+
+Suggested config:
+
+```ts
+{
+  addition: {
+    enabled: true,
+    leftMin: 1,
+    leftMax: 5,
+    rightMin: 1,
+    rightMax: 5
+  },
+  subtraction: {
+    enabled: false,
+    firstMin: 1,
+    firstMax: 5,
+    secondMin: 1,
+    secondMax: 5,
+    allowNegativeAnswers: false
+  },
+  multiplication: {
+    enabled: false,
+    leftMin: 1,
+    leftMax: 5,
+    rightMin: 1,
+    rightMax: 5
+  },
+  division: {
+    enabled: false,
+    answerMin: 1,
+    answerMax: 5,
+    divisorMin: 1,
+    divisorMax: 5
+  },
+  mode: 'practice',
+  questionsCount: 5,
+  answerOptionsCount: 2,
+  maxFinalResult: 10
+}
+```
+
+### Age 6–7
+
+Recommended focus:
+
+- Addition up to 20
+- Subtraction up to 20
+
+Suggested config:
+
+```ts
+{
+  addition: {
+    enabled: true,
+    leftMin: 1,
+    leftMax: 20,
+    rightMin: 1,
+    rightMax: 20
+  },
+  subtraction: {
+    enabled: true,
+    firstMin: 1,
+    firstMax: 20,
+    secondMin: 1,
+    secondMax: 20,
+    allowNegativeAnswers: false
+  },
+  multiplication: {
+    enabled: false,
+    leftMin: 1,
+    leftMax: 10,
+    rightMin: 1,
+    rightMax: 10
+  },
+  division: {
+    enabled: false,
+    answerMin: 1,
+    answerMax: 10,
+    divisorMin: 1,
+    divisorMax: 10
+  },
+  mode: 'practice',
+  questionsCount: 10,
+  answerOptionsCount: 3,
+  maxFinalResult: 20
+}
+```
+
+### Age 8–9
+
+Recommended focus:
+
+- Addition up to 100
+- Subtraction up to 100
+- Basic multiplication up to 10
+
+Suggested config:
+
+```ts
+{
+  addition: {
+    enabled: true,
+    leftMin: 1,
+    leftMax: 100,
+    rightMin: 1,
+    rightMax: 100
+  },
+  subtraction: {
+    enabled: true,
+    firstMin: 1,
+    firstMax: 100,
+    secondMin: 1,
+    secondMax: 100,
+    allowNegativeAnswers: false
+  },
+  multiplication: {
+    enabled: true,
+    leftMin: 1,
+    leftMax: 10,
+    rightMin: 1,
+    rightMax: 10
+  },
+  division: {
+    enabled: false,
+    answerMin: 1,
+    answerMax: 10,
+    divisorMin: 1,
+    divisorMax: 10
+  },
+  mode: 'practice',
+  questionsCount: 10,
+  answerOptionsCount: 4,
+  maxFinalResult: 100
+}
+```
+
+### Age 10–12
+
+Recommended focus:
+
+- Addition up to 100
+- Subtraction up to 100
+- Multiplication up to 12
+- Division with whole-number answers
+
+Suggested config:
+
+```ts
+{
+  addition: {
+    enabled: true,
+    leftMin: 1,
+    leftMax: 100,
+    rightMin: 1,
+    rightMax: 100
+  },
+  subtraction: {
+    enabled: true,
+    firstMin: 1,
+    firstMax: 100,
+    secondMin: 1,
+    secondMax: 100,
+    allowNegativeAnswers: false
+  },
+  multiplication: {
+    enabled: true,
+    leftMin: 1,
+    leftMax: 12,
+    rightMin: 1,
+    rightMax: 12
+  },
+  division: {
+    enabled: true,
+    answerMin: 1,
+    answerMax: 12,
+    divisorMin: 1,
+    divisorMax: 12
+  },
+  mode: 'practice',
+  questionsCount: 10,
+  answerOptionsCount: 4,
+  maxFinalResult: 1000
+}
+```
+
+---
+
+## 11. Learning Plan UI Requirements
+
+The learning plan screen should allow the user to configure each operation independently.
+
+Suggested screen title:
+
+> Learning plan
+
+Suggested layout:
+
+```text
+Learning plan
+
+[✓] Addition
+    First number: 1–100
+    Second number: 1–100
+
+[✓] Subtraction
+    First number: 1–100
+    Second number: 1–20
+    Answers below zero: No
+
+[✓] Multiplication
+    First number: 1–10
+    Second number: 1–10
+
+[ ] Division
+    Answer: 1–10
+    Divisor: 1–10
+
+Practice mode: Practice
+Questions: 10
+Answer choices: 4
+Maximum answer (final result): Up to 100   [ Up to 10 | Up to 20 | Up to 100 | Up to 1000 | Unlimited ]
+
+[Start practice]
+```
+
+Each operation should have:
+
+- Enable/disable toggle
+- Range configuration
+- Example question preview, if possible
+
+Example question preview:
+
+```text
+Example: 8 + 5 = ?
+```
+
+---
+
+## 12. Range Selection Requirements
+
+The app should support predefined range options at first.
+
+A custom slider can be added later, but buttons are simpler and easier to understand.
+
+Suggested range buttons:
+
+### Addition
+
+- 1–5
+- 1–10
+- 1–20
+- 1–50
+- 1–100
+
+### Subtraction
+
+For first number:
+
+- 1–10
+- 1–20
+- 1–50
+- 1–100
+
+For second number:
+
+- 1–5
+- 1–10
+- 1–20
+- 1–50
+- 1–100
+
+### Multiplication
+
+- 1–5
+- 1–10
+- 1–12
+
+### Division
+
+For answer range:
+
+- 1–5
+- 1–10
+- 1–12
+
+For divisor range:
+
+- 1–5
+- 1–10
+- 1–12
+
+### Maximum final result (correct answer limit)
+
+In addition to per-operation number ranges, the app should let the learner or parent cap how large the **correct answer** may be for most arithmetic. This is a separate control from operand ranges: it limits the **outcome** of each question, not the operands themselves.
+
+The learning plan screen should offer **five preset choices**, implemented as simple buttons (same interaction style as other preset range controls):
+
+- **Up to 10** — for capped operations, correct answers must be between 0 and 10 (or between −10 and 10 when “answers below zero” is allowed for subtraction).
+- **Up to 20** — same idea with a limit of 20.
+- **Up to 100** — limit of 100.
+- **Up to 1000** — limit of 1000.
+- **Unlimited** — no numeric ceiling; generation and validation do not reject answers for being too large.
+
+Recommended defaults by age (aligned with §10):
+
+| Age group | Suggested `maxFinalResult` |
+| --- | ---: |
+| 4–5 | 10 |
+| 6–7 | 20 |
+| 8–9 | 100 |
+| 10–12 | 1000 |
+
+#### Which operations use the cap
+
+The maximum final result applies when generating and validating these enabled operations:
+
+- Addition
+- Subtraction
+- Multiplication
+- Division
+- Squaring
+- Square roots
+- Equations with an unknown (`x`)
+
+It does **not** apply to:
+
+- **Rounding** — the correct answer is the rounded value (e.g. 50 for “Round 47 to the nearest 10”), which is determined by the rounding range and unit, not by the cap.
+- **Order of operations** — the correct answer is `a + b × c` (multiply before add); operand limits are configured separately and are not checked against the cap.
+
+For capped operations, question generation must only produce questions whose `correctAnswer` fits the cap (and existing operation rules). Multiple-choice distractors for capped operations should stay within the same band when possible so wrong answers remain plausible.
+
+For rounding and order of operations, generation does not filter by the cap, settings validation does not show cap-related warnings for those operations, and distractors are not clipped to the cap band.
+
+If the user picks a finite cap that cannot be satisfied together with other **capped** enabled operations and ranges, the app should show a clear validation message per operation (e.g. addition, multiplication) rather than failing silently. Rounding and order of operations never trigger those cap warnings.
+
+---
+
+## 13. Practice and Quiz Modes
+
+The app should support two session modes.
+
+### 13.1 Practice Mode
+
+Practice mode is the default mode.
+
+In practice mode:
+
+1. App shows one question.
+2. User selects an answer.
+3. App immediately shows whether the answer is correct or wrong.
+4. App shows the correct answer if the selected answer is wrong.
+5. User continues to the next question.
+
+Practice mode is optimized for learning.
+
+### 13.2 Quiz Mode
+
+Quiz mode should be supported after or alongside practice mode.
+
+In quiz mode:
+
+1. App shows a fixed number of questions.
+2. User answers each question.
+3. App does not immediately show correct/wrong feedback after each question.
+4. App displays the result at the end.
+
+Quiz mode is optimized for checking knowledge.
+
+Suggested result display:
+
+```text
+You answered 8 out of 10 correctly.
+Score: 80%
+Great job!
+```
+
+---
+
+## 14. Question Count Requirements
+
+The app should allow the number of questions in a session to be configured.
+
+Suggested options:
+
+- 5 questions
+- 10 questions
+- 15 questions
+- 20 questions
+
+Default recommendation:
+
+| Age Group | Default Question Count |
+|---|---:|
+| 4–5 | 5 |
+| 6–7 | 10 |
+| 8–9 | 10 |
+| 10–12 | 10 |
+
+---
+
+## 15. Answer Input Requirements
+
+The default answer input should be multiple choice.
+
+The app should show possible answers instead of requiring the child to type the answer.
+
+Reasons:
+
+- Easier on mobile devices
+- Avoids keyboard issues
+- Better for younger children
+- Faster and more game-like experience
+- Reduces frustration
+
+Typing the answer can be added later as an optional harder mode.
+
+### 15.1 Answer Options Count
+
+The number of possible answers should be configurable.
+
+Supported options:
+
+- 2 answer choices
+- 3 answer choices
+- 4 answer choices
+
+Recommended defaults:
+
+| Age Group | Answer Choices |
+|---|---:|
+| 4–5 | 2 |
+| 6–7 | 3 |
+| 8–9 | 4 |
+| 10–12 | 4 |
+
+Example with 2 answers:
+
+```text
+2 + 3 = ?
+
+[4] [5]
+```
+
+Example with 4 answers:
+
+```text
+7 × 6 = ?
+
+[36] [42] [48] [56]
+```
+
+---
+
+## 16. Answer Option Generation Requirements
+
+For each question, the app should generate:
+
+- One correct answer
+- A set of wrong answers
+- A shuffled list of possible answers
+
+The correct answer must always be included exactly once.
+
+Wrong answers should:
+
+- Be close enough to the correct answer to be meaningful
+- Not duplicate the correct answer
+- Not duplicate each other
+- Not be negative unless negative answers are part of the configured learning plan
+
+Example:
+
+Question:
+
+```text
+8 + 7 = ?
+```
+
+Correct answer:
+
+```text
+15
+```
+
+Possible answers:
+
+```text
+[13] [15] [16] [18]
+```
+
+The order of answers should be randomized.
+
+---
+
+## 17. Question Generation Requirements
+
+### 17.0 Maximum final result
+
+When `maxFinalResult` is a finite number (10, 20, 100, or 1000), generated questions for **capped** operations must have a `correctAnswer` within the allowed band:
+
+- If subtraction **negative answers are disabled**, require `0 ≤ correctAnswer ≤ maxFinalResult`.
+- If subtraction **negative answers are enabled**, require `-maxFinalResult ≤ correctAnswer ≤ maxFinalResult`.
+
+When `maxFinalResult` is **unlimited**, no numeric ceiling is applied in generation or validation for capped operations.
+
+**Exempt operations** — rounding and order of operations never use this cap. Their correct answers follow only their own configuration (value range and nearest unit for rounding; operand max for order of operations). The generator does not reject or resample those questions because an answer exceeds the cap.
+
+For capped operations, operand ranges may still be wide; the generator should **sample** operands until the resulting answer fits the cap, or the learning plan screen should warn that the ranges and cap cannot be satisfied together.
+
+### 17.6 Rounding generation
+
+Logic:
+
+```text
+n = random whole number from configured value range
+unit = nearest 10 and/or 100 (per enabled rounding modes)
+correctAnswer = round n to unit
+```
+
+Example:
+
+```text
+Round 47 to the nearest 10.
+correctAnswer = 50
+```
+
+The maximum final result setting does not constrain rounding questions or their multiple-choice distractors.
+
+### 17.7 Order of operations generation
+
+Logic (PEMDAS — multiply before add):
+
+```text
+a, b, c = random integers from 1…operandMax
+correctAnswer = a + b × c
+question = "a + b × c = ?"
+```
+
+Example:
+
+```text
+3 + 4 × 5 = ?
+correctAnswer = 23   (not 35 from left-to-right)
+```
+
+Wrong multiple-choice options should include common mistakes (e.g. `(a + b) × c`, `a + b + c`). The maximum final result setting does not constrain these answers or distractors.
+
+### 17.1 Operation Selection
+
+When a session starts, the app should identify all enabled operations.
+
+If only one operation is enabled, all questions should use that operation.
+
+If multiple operations are enabled, the app should randomly select from the enabled operations.
+
+Example:
+
+Enabled operations:
+
+- Addition
+- Subtraction
+- Multiplication
+
+Disabled operations:
+
+- Division
+
+The app should generate a mix of addition, subtraction, and multiplication questions.
+
+### 17.2 Addition Generation
+
+Logic:
+
+```text
+left = random number from left range
+right = random number from right range
+correctAnswer = left + right
+```
+
+Question format:
+
+```text
+left + right = ?
+```
+
+### 17.3 Subtraction Generation
+
+Logic when negative answers are disabled:
+
+```text
+first = random number from first range
+second = random number from second range
+
+if second > first:
+  swap first and second
+
+correctAnswer = first - second
+```
+
+Question format:
+
+```text
+first - second = ?
+```
+
+Logic when negative answers are enabled:
+
+```text
+first = random number from first range
+second = random number from second range
+correctAnswer = first - second
+```
+
+### 17.4 Multiplication Generation
+
+Logic:
+
+```text
+left = random number from left range
+right = random number from right range
+correctAnswer = left × right
+```
+
+Question format:
+
+```text
+left × right = ?
+```
+
+### 17.5 Division Generation
+
+Logic:
+
+```text
+answer = random number from answer range
+divisor = random number from divisor range
+dividend = answer × divisor
+correctAnswer = answer
+```
+
+Question format:
+
+```text
+dividend ÷ divisor = ?
+```
+
+This ensures whole-number answers.
+
+### 17.8 [Phase 2] Division With Remainders Generation
+
+[Phase 2] Division with remainders should be enabled only when the division setting `allowRemainders` is true.
+
+Suggested generation logic:
+
+```text
+divisor = random number from divisor range
+quotient = random number from answer range
+remainder = random number from 1 to divisor - 1
+dividend = quotient × divisor + remainder
+question = dividend ÷ divisor = ? remainder ?
+correctAnswer = quotient and remainder
+```
+
+Example:
+
+```text
+divisor = 5
+quotient = 3
+remainder = 2
+dividend = 17
+question = 17 ÷ 5 = ? remainder ?
+correct answer = 3 remainder 2
+```
+
+When `allowRemainders` is false, the current whole-number division generation should be used.
+
+### 17.9 [Phase 2] Missing Number Generation
+
+[Phase 2] Missing-number questions should reuse enabled arithmetic operation configs.
+
+Examples:
+
+```text
+8 + ? = 13
+? - 5 = 12
+6 × ? = 42
+? ÷ 4 = 7
+```
+
+Generation approach:
+
+1. Generate a normal valid question using the existing operation rules.
+2. Hide one operand instead of the final answer.
+3. Use the hidden value as the correct answer.
+4. Generate multiple-choice distractors around the hidden value.
+
+This keeps range rules, negative-answer rules, division rules, and maximum-final-result rules consistent.
+
+### 17.10 [Phase 2] True / False and Find-the-Mistake Generation
+
+[Phase 2] True/false and find-the-mistake questions should reuse generated questions from the existing operations.
+
+Example true/false questions:
+
+```text
+8 + 7 = 15
+8 + 7 = 16
+```
+
+Example find-the-mistake question:
+
+```text
+3 + 4 × 5 = 35. Is this correct?
+```
+
+The app should generate both correct and incorrect statements. Incorrect statements should use plausible mistakes, such as:
+
+- Off-by-one errors
+- Nearby multiplication table errors
+- Addition instead of multiplication
+- Left-to-right evaluation in order-of-operations questions
+- Wrong rounding direction
+
+### 17.11 [Phase 2] Word Problem Generation
+
+[Phase 2] Word problems should reuse the same arithmetic operation configs but present the question as a short story.
+
+Example:
+
+```text
+Generated operation: 8 + 5
+Word problem: Mia has 8 stickers and gets 5 more. How many stickers does she have now?
+Correct answer: 13
+```
+
+Word problems should be short, age-appropriate, and avoid unnecessary reading difficulty.
+
+Recommended first word-problem categories:
+
+- Addition: getting more items
+- Subtraction: losing or giving away items
+- Multiplication: groups of equal size
+- Division: sharing equally
+
+### 17.12 [Phase 2] Independent Category Generation
+
+[Phase 2] Some question categories should have their own generators because they are not just alternate presentations of existing operations.
+
+Independent generators should be used for:
+
+- Counting
+- Odd/even
+- Number sequences
+- Place value
+- Fractions
+- Decimals
+- Percentages
+- Time
+- Money
+- Geometry
+
+These categories should still follow the same answer-option rules from §16.
+
+---
+
+## 18. Session Behavior Requirements
+
+A session is a set of generated questions based on the current learning plan.
+
+A session should include:
+
+- Current question number
+- Total question count
+- Current score or progress indicator
+- Question text
+- Possible answers
+- Feedback area
+
+Example:
+
+```text
+Question 3 of 10
+
+8 + 6 = ?
+
+[12] [13] [14] [16]
+```
+
+### 18.1 Correct Answer Feedback
+
+In practice mode, when the user selects the correct answer, the app should show positive feedback.
+
+Example messages:
+
+- Correct!
+- Great job!
+- Well done!
+- Nice work!
+
+### 18.2 Wrong Answer Feedback
+
+In practice mode, when the user selects the wrong answer, the app should show the correct answer.
+
+Example:
+
+```text
+Not quite. The correct answer is 14.
+```
+
+The tone should be encouraging, not negative.
+
+### 18.3 Moving to Next Question
+
+After feedback is shown, the user should be able to continue to the next question.
+
+Possible behavior:
+
+- Show a “Next” button.
+- Or automatically continue after a short delay.
+
+Recommended first version:
+
+```text
+Use a Next button.
+```
+
+A Next button gives the child time to understand the feedback.
+
+---
+
+## 19. Scoring Requirements
+
+The app should track session results.
+
+For each session, the app should track:
+
+- Total questions
+- Correct answers
+- Wrong answers
+- Score percentage
+
+Score formula:
+
+```text
+scorePercentage = correctAnswers / totalQuestions × 100
+```
+
+Example:
+
+```text
+Correct answers: 8
+Total questions: 10
+Score: 80%
+```
+
+At the end of a session, the app should show a result summary.
+
+Example:
+
+```text
+Great job, Alex!
+
+You answered 8 out of 10 correctly.
+Score: 80%
+```
+
+---
+
+## 20. Progress and Persistence Requirements
+
+For the first version, the app should save basic local user preferences.
+
+The app should remember:
+
+- Child name or nickname
+- Selected age
+- Current learning plan
+- Last selected mode
+- Last selected question count
+- Last selected answer options count
+
+The app should not force the user to repeat onboarding every time.
+
+On app start:
+
+- If onboarding is completed, app should go to the main screen.
+- If onboarding is not completed, app should start onboarding.
+
+---
+
+## 21. Main Screens
+
+The app should include the following screens.
+
+### 21.1 Onboarding: Name Screen
+
+Purpose:
+
+- Capture child name or nickname.
+
+Main action:
+
+- Continue
+
+### 21.2 Onboarding: Age Screen
+
+Purpose:
+
+- Capture child age.
+- Generate recommended learning plan.
+
+Main action:
+
+- Continue
+
+### 21.3 Recommended Plan Screen
+
+Purpose:
+
+- Show that the app prepared a learning plan.
+- Allow the user to start immediately or customize.
+
+Main actions:
+
+- Start learning
+- Customize
+
+### 21.4 Learning Plan / Settings Screen
+
+Purpose:
+
+- Configure operations.
+- Configure ranges per operation.
+- Configure mode, question count, and answer choices.
+
+Main action:
+
+- Save / Start practice
+
+### 21.5 Practice Session Screen
+
+Purpose:
+
+- Show one question at a time.
+- Allow the user to select an answer.
+- Show immediate feedback in practice mode.
+
+### 21.6 Quiz Session Screen
+
+Purpose:
+
+- Show one question at a time.
+- Allow the user to select an answer.
+- Show result at the end instead of after every question.
+
+### 21.7 Result Screen
+
+Purpose:
+
+- Show final session result.
+- Encourage the user.
+- Allow retry or return to main screen.
+
+Main actions:
+
+- Practice again
+- Change learning plan
+- Go home
+
+---
+
+## 22. MVP Scope
+
+The first version should include:
+
+- Name or nickname onboarding
+- Age selection
+- Recommended learning plan by age
+- Learning plan customization
+- Addition questions
+- Subtraction questions
+- Multiplication questions
+- Division questions with whole-number answers
+- Multiple-choice answers
+- Configurable answer options count: 2, 3, or 4
+- Configurable maximum final result (correct answer cap): up to 10, 20, 100, 1000, or unlimited — applied to addition, subtraction, multiplication, division, squaring, square roots, and equation-unknown; **not** applied to rounding or order of operations
+- Rounding and order-of-operations practice
+- Practice mode with immediate feedback
+- Basic quiz mode or quiz mode as near-MVP feature
+- Result screen
+- Local persistence of user settings
+
+[Phase 2] The following should be planned as later additions and should not block the MVP:
+
+- Missing-number questions
+- True/false questions
+- Find-the-mistake questions
+- Word problems
+- Number comparison
+- Counting and number sequences
+- Odd/even questions
+- Place value and expanded form
+- Division with remainders
+- Fractions
+- Decimals
+- Percentages
+- Time and money
+- Geometry basics
+
+---
+
+## 23. Features to Avoid in the First Version
+
+The first version should avoid unnecessary complexity.
+
+Do not include in MVP:
+
+- Complex grading system
+- Too many subcategories
+- Advanced sliders for every range
+- Typed answer input as default
+- User accounts
+- Cloud sync
+- Leaderboards
+- Social features
+- Complex achievements system
+- Too many configuration steps during onboarding
+
+These can be added later if needed.
+
+---
+
+## 24. Future Enhancements
+
+Possible future improvements:
+
+- [Phase 2] Missing-number questions, reusing existing operation configs
+- [Phase 2] True/false questions, reusing existing operation configs
+- [Phase 2] Find-the-mistake questions, especially for order of operations and rounding
+- [Phase 2] Word problems, reusing addition, subtraction, multiplication, and division configs
+- [Phase 2] Division with remainders, controlled by a division setting instead of a separate operation
+- [Phase 2] Number comparison using `<`, `>`, and `=`
+- [Phase 2] Counting forward and backward
+- [Phase 2] Number sequences
+- [Phase 2] Odd/even questions
+- [Phase 2] Place value and expanded form
+- [Phase 2] Fractions
+- [Phase 2] Decimals
+- [Phase 2] Percentages
+- [Phase 2] Time and money questions
+- [Phase 2] Geometry basics
+- [Phase 2] Typed answer mode
+- [Phase 2] Timed challenge mode
+- [Phase 2] Daily practice streaks
+- [Phase 2] Badges and rewards
+- [Phase 2] More advanced progress tracking
+- [Phase 2] Parent dashboard
+- [Phase 2] Multiple child profiles
+- [Phase 2] Custom worksheets
+- [Phase 2] Adaptive difficulty based on performance
+- [Phase 2] Visual math problems with objects or pictures
+
+---
+
+## 25. Open Product Decisions
+
+The following decisions should be confirmed during design or implementation:
+
+1. Should quiz mode be included in MVP or added after practice mode?
+2. Should answer choices be only 2–4, or should 5 be supported later?
+3. Should subtraction support negative answers in the first version, or should the setting exist but be disabled by default?
+4. Should the app use predefined range buttons only, or include custom range sliders later?
+5. Should the result screen show only score or also list incorrect questions?
+6. Should the app support multiple child profiles in the first version or later?
+7. Should the maximum final result cap apply only to addition, or to all capped operations as implemented today (excluding rounding and order of operations)?
+8. [Phase 2] Which question styles should be added first: missing number, true/false, find-the-mistake, or word problems?
+9. [Phase 2] Should division with remainders use multiple-choice answers, typed quotient/remainder input, or a custom two-part answer UI?
+10. [Phase 2] Should word problems be generated from templates only, or should the app support a larger content bank later?
+11. [Phase 2] Should number-sense categories be shown in the same learning plan screen or in a separate “More practice types” section?
+12. [Phase 2] Should fractions, decimals, percentages, time, money, and geometry be grouped under “Advanced practice” to keep the UI simple?
+
+---
+
+## 26. Summary
+
+The app should provide a simple and friendly math learning experience for children aged 4 to 12.
+
+The most important product decision is to keep the first experience simple:
+
+```text
+Name → Age → Recommended learning plan → Start learning
+```
+
+The learning plan should be flexible but not overwhelming. Each math operation should be configurable separately, with its own enabled state and number ranges.
+
+The app should use multiple-choice answers by default, provide immediate feedback in practice mode, and show a clear result summary at the end of each session.
+
+The first version should focus on core math practice and avoid unnecessary complexity.
+

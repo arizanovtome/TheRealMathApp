@@ -1,0 +1,17 @@
+{
+  "title": "Recent performance",
+  "subtitle": "Based on your saved sessions on this device (up to {{limit}} recent runs).",
+  "overallAvg": "Overall last {{n}} sessions: {{avg}}% average score",
+  "noSessions": "Finish a practice or quiz session to see it listed here.",
+  "keepStreak": "Practice on consecutive days to keep it going.",
+  "startStreak": "Practice today or tomorrow to start a streak.",
+  "growStreak": "Practice on consecutive days to grow your streak",
+  "streakDays": "{{streak}}-day streak",
+  "streakOneDay": "1-day streak — nice start!",
+  "lastAvg": "Last {{n}} avg: {{pct}}%",
+  "lastSessionsAvg": "Last {{n}} sessions average: {{pct}}%",
+  "recentScores": "Recent scores (newest first)",
+  "sessionA11y": "{{mode}}, {{pct}} percent",
+  "opNoProblems": "{{label}}, no problems yet",
+  "opStats": "{{label}}, {{pct}}% correct over {{attempted}} problems"
+}

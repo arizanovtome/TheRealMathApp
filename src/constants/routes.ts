@@ -1,0 +1,17 @@
+export const ROUTES = {
+  home: '/',
+  onboardingName: '/onboarding/name',
+  onboardingLanguage: '/onboarding/language',
+  onboardingAge: '/onboarding/age',
+  onboardingRecommendedPlan: '/onboarding/recommended-plan',
+  learningPlan: '/learning-plan',
+  practice: '/practice',
+  quiz: '/quiz',
+  timed: '/timed',
+  progress: '/progress',
+  result: '/result',
+  learn: '/learn',
+  learnTopic: (id: string) => `/learn/${id}` as const,
+  learnPractice: '/learn/practice',
+  privacy: '/privacy',
+} as const;
