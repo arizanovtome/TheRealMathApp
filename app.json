@@ -7,11 +7,6 @@
     "icon": "./src/assets/icon.png",
     "scheme": "therealmathapp",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.tome.arizanov.TheRealMathApp"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tome.arizanov.TheRealMathApp",
@@ -24,9 +19,7 @@
         "backgroundColor": "#15372B",
         "foregroundImage": "./src/assets/android-adaptive-icon.png"
       },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
-      "package": "com.tome.arizanov.TheRealMathApp"
+      "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",
