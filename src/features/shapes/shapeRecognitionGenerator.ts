@@ -1,7 +1,7 @@
 import type { MathLearningConfig } from '@/features/learning-plan/learningPlan.types';
 import { getEnabledBasicShapes } from '@/features/shapes/shapeRecognitionConfig.utils';
 import { basicShapeLabel } from '@/features/shapes/shapeRecognitionLabels';
-import type { BasicShape } from '@/features/shapes/shapeRecognition.types';
+import { BASIC_SHAPES, type BasicShape } from '@/features/shapes/shapeRecognition.types';
 import { SHAPE_COLORS, type ShapeColor } from '@/features/shapes/shapeColors';
 import type { ShapeRecognitionMathQuestion } from '@/features/questions/question.types';
 import { i18n } from '@/i18n';
@@ -76,7 +76,7 @@ export function tryGenerateShapeRecognitionQuestion(
           config.answerOptionsCount,
           (item) => labelColorAndShape(item.color, item.shape),
         )
-      : buildShapeMcOptions(correctAnswer, enabledShapes, config.answerOptionsCount, labelShape);
+      : buildShapeMcOptions(correctAnswer, BASIC_SHAPES, config.answerOptionsCount, labelShape);
 
   if (!answerOptions.includes(correctAnswer)) return null;
 

@@ -9,6 +9,7 @@ import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import type { TFunction } from 'i18next';
 
+import { LanguageOnboarding } from '@/components/onboarding/LanguageOnboarding';
 import { stackScreenTitle } from '@/constants/stackScreenTitles';
 import { initI18n, i18n } from '@/i18n';
 import { useAppTranslation } from '@/i18n/useAppTranslation';
@@ -65,11 +66,28 @@ function I18nGate({ children }: { children: React.ReactNode }) {
   return <I18nextProvider i18n={i18n}>{children}</I18nextProvider>;
 }
 
+/**
+ * Keeps the first-run language choice out of the stack: choosing a locale rewrites
+ * every header title, and on Android that update crashes react-native-screens when
+ * it coincides with a screen transition.
+ */
+function LocaleGate({ children }: { children: React.ReactNode }) {
+  const hasChosenLocale = useAppStore((s) => s.hasChosenLocale);
+
+  if (!hasChosenLocale) {
+    return <LanguageOnboarding />;
+  }
+
+  return <>{children}</>;
+}
+
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <I18nGate>
-        <RootStack />
+        <LocaleGate>
+          <RootStack />
+        </LocaleGate>
       </I18nGate>
       <StatusBar style="light" />
     </SafeAreaProvider>

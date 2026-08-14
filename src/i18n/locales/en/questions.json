@@ -29,6 +29,77 @@
     "triangularPrism": "triangle base {{base}} cm and height {{height}} cm, length {{length}} cm",
     "triangularPyramid": "triangle base {{base}} cm and height {{height}} cm, pyramid height {{pyramidHeight}} cm"
   },
+  "geometryFormulas": {
+    "perimeter": {
+      "square": "4 × side",
+      "rectangle": "2 × (length + width)",
+      "triangle": "side a + side b + side c",
+      "circle": "2 × π × radius",
+      "rhombus": "4 × side",
+      "kite": "2 × a + 2 × b",
+      "parallelogram": "2 × (side a + side b)",
+      "trapezoid": "side a + side b + side c + side d"
+    },
+    "area": {
+      "square": "side × side",
+      "rectangle": "length × width",
+      "triangle": "½ × base × height",
+      "circle": "π × radius × radius",
+      "rhombus": "½ × diagonal 1 × diagonal 2",
+      "kite": "½ × diagonal 1 × diagonal 2",
+      "parallelogram": "base × height",
+      "trapezoid": "½ × (base 1 + base 2) × height"
+    },
+    "volume": {
+      "cube": "side × side × side",
+      "cuboid": "a × b × c",
+      "pyramid": "⅓ × base side² × height",
+      "triangular_pyramid": "⅓ × ½ × base × height × pyramid height",
+      "cone": "⅓ × π × radius² × height",
+      "cylinder": "π × radius² × height",
+      "triangular_prism": "½ × base × height × length"
+    }
+  },
+  "geometryLearn": {
+    "intros": {
+      "perimeter": "Perimeter is the distance around the outside of a flat shape. In practice you may be asked for the formula or to calculate it when side lengths are given (1–10).",
+      "area": "Area is the space inside a flat shape, measured in square units. Formula questions ask which expression to use; calculate questions plug in the dimensions.",
+      "volume": "Volume is the space inside a 3D shape, measured in cubic units. Square pyramid uses a square base; triangular pyramid is also called a tetrahedron when all faces are triangles; cone and cylinder answers may use π."
+    },
+    "piHint": "Calculate answers use π forms (e.g. 10π), not decimals.",
+    "fallbackExplanation": "Use the formula with the labeled dimensions on the diagram.",
+    "explanations": {
+      "perimeter": {
+        "square": "Perimeter is the distance around the outside. A square has four equal sides a, so add a + a + a + a, or 4 × a.",
+        "rectangle": "Walk all the way around: two sides of length a and two of length b. That is 2 × a + 2 × b, or 2 × (a + b).",
+        "triangle": "Add the lengths of all three sides a, b, and c. There is no shortcut unless two or more sides happen to be equal.",
+        "circle": "The distance around a circle is called the circumference. Multiply the diameter by π, or use 2 × π × r.",
+        "rhombus": "A rhombus has four equal sides a, like a tilted square. Perimeter is 4 × a.",
+        "kite": "A kite has two pairs of equal adjacent sides: two sides of length a meet at the top, and two longer sides of length b meet at the bottom. Perimeter is 2 × a + 2 × b.",
+        "parallelogram": "Opposite sides match in pairs: two sides of length a and two of length b. Perimeter is 2 × a + 2 × b, or 2 × (a + b).",
+        "trapezoid": "A trapezoid has four sides with one pair parallel: a and b are the top and bottom bases. The slanted legs are c and d. Perimeter = a + b + c + d."
+      },
+      "area": {
+        "square": "Area counts square units that fit inside. A square with side a covers a rows of a squares, so area = a × a.",
+        "rectangle": "Imagine rows of unit squares: a tells how many across, b how many down. Area = a × b.",
+        "triangle": "A triangle is half of a matching rectangle with the same base a and height h. Area = ½ × a × h.",
+        "circle": "Every circle with radius r covers π × r × r square units. That is why we write π × r².",
+        "rhombus": "Diagonals d1 and d2 cross at right angles. Area equals half of d1 × d2.",
+        "kite": "Like a rhombus, a kite has diagonals d1 and d2 that cross at right angles. Area = ½ × d1 × d2.",
+        "parallelogram": "Use base a and the height h perpendicular to it (not the slanted side). Area = a × h.",
+        "trapezoid": "Sides a and b are the parallel bases (top and bottom). Average them, then multiply by the height h between them: ½ × (a + b) × h."
+      },
+      "volume": {
+        "cube": "A cube is like a 3D square. Multiply a × a × a to count cubic units inside.",
+        "cuboid": "A box shape: multiply a × b × c to fill it with unit cubes.",
+        "pyramid": "A square pyramid is one third of a box with the same square base a and height h: ⅓ × a² × h.",
+        "cone": "A cone is one third of a cylinder with the same circular base r and height h: ⅓ × π × r² × h.",
+        "cylinder": "Find the circular base area (π × r²), then stack it up through height h: π × r² × h.",
+        "triangular_prism": "First find the triangle face area (½ × a × h), then stretch it along length c.",
+        "triangular_pyramid": "Use triangle base a, triangle height b, and pyramid height h: one third of ½ × a × b × h."
+      }
+    }
+  },
   "hintCheckTyped": "Checks your typed answer and shows feedback",
   "hintSubmitSelected": "Submits your selected answer",
   "hintCheckSelected": "Checks your selected answer and shows feedback",

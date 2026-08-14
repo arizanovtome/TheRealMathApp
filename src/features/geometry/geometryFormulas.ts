@@ -6,72 +6,106 @@ import type {
   VolumeShape,
 } from '@/features/geometry/geometry.types';
 import { VOLUME_SHAPES } from '@/features/geometry/geometry.types';
+import { i18n } from '@/i18n';
+import type { SupportedLocale } from '@/i18n/types';
 
 export type GeometryFormulaEntry = {
   /** Canonical key for scoring (lowercase, normalized). */
   canonical: string;
-  /** Shown in multiple-choice options. */
+  /** Shown in multiple-choice options (locale-aware). */
   label: string;
 };
 
-const PERIMETER_FORMULAS: Record<PerimeterShape, GeometryFormulaEntry> = {
-  square: { canonical: '4s', label: '4 × side' },
-  rectangle: { canonical: '2(l+w)', label: '2 × (length + width)' },
-  triangle: { canonical: 'a+b+c', label: 'side a + side b + side c' },
-  circle: { canonical: '2πr', label: '2 × π × radius' },
-  rhombus: { canonical: '4s', label: '4 × side' },
-  kite: { canonical: '2a+2b', label: '2 × a + 2 × b' },
-  parallelogram: { canonical: '2(a+b)', label: '2 × (side a + side b)' },
-  trapezoid: { canonical: 'a+b+c+d', label: 'side a + side b + side c + side d' },
+type FormulaDef = {
+  canonical: string;
+  shape: GeometryShape;
 };
 
-const AREA_FORMULAS: Record<AreaShape, GeometryFormulaEntry> = {
-  square: { canonical: 's²', label: 'side × side' },
-  rectangle: { canonical: 'l×w', label: 'length × width' },
-  triangle: { canonical: '½×b×h', label: '½ × base × height' },
-  circle: { canonical: 'πr²', label: 'π × radius × radius' },
-  rhombus: { canonical: '½×d₁×d₂', label: '½ × diagonal 1 × diagonal 2' },
-  kite: { canonical: '½×d₁×d₂', label: '½ × diagonal 1 × diagonal 2' },
-  parallelogram: { canonical: 'b×h', label: 'base × height' },
-  trapezoid: { canonical: '½×(a+b)×h', label: '½ × (base 1 + base 2) × height' },
+const PERIMETER_FORMULAS: Record<PerimeterShape, FormulaDef> = {
+  square: { canonical: '4s', shape: 'square' },
+  rectangle: { canonical: '2(l+w)', shape: 'rectangle' },
+  triangle: { canonical: 'a+b+c', shape: 'triangle' },
+  circle: { canonical: '2πr', shape: 'circle' },
+  rhombus: { canonical: '4s', shape: 'rhombus' },
+  kite: { canonical: '2a+2b', shape: 'kite' },
+  parallelogram: { canonical: '2(a+b)', shape: 'parallelogram' },
+  trapezoid: { canonical: 'a+b+c+d', shape: 'trapezoid' },
 };
 
-const VOLUME_FORMULAS: Record<VolumeShape, GeometryFormulaEntry> = {
-  cube: { canonical: 's³', label: 'side × side × side' },
-  cuboid: { canonical: 'a×b×c', label: 'a × b × c' },
-  pyramid: { canonical: '⅓×s²×h', label: '⅓ × base side² × height' },
+const AREA_FORMULAS: Record<AreaShape, FormulaDef> = {
+  square: { canonical: 's²', shape: 'square' },
+  rectangle: { canonical: 'l×w', shape: 'rectangle' },
+  triangle: { canonical: '½×b×h', shape: 'triangle' },
+  circle: { canonical: 'πr²', shape: 'circle' },
+  rhombus: { canonical: '½×d₁×d₂', shape: 'rhombus' },
+  kite: { canonical: '½×d₁×d₂', shape: 'kite' },
+  parallelogram: { canonical: 'b×h', shape: 'parallelogram' },
+  trapezoid: { canonical: '½×(a+b)×h', shape: 'trapezoid' },
+};
+
+const VOLUME_FORMULAS: Record<VolumeShape, FormulaDef> = {
+  cube: { canonical: 's³', shape: 'cube' },
+  cuboid: { canonical: 'a×b×c', shape: 'cuboid' },
+  pyramid: { canonical: '⅓×s²×h', shape: 'pyramid' },
   triangular_pyramid: {
     canonical: '⅓×½×b×h×H',
-    label: '⅓ × ½ × base × height × pyramid height',
+    shape: 'triangular_pyramid',
   },
-  cone: { canonical: '⅓×πr²h', label: '⅓ × π × radius² × height' },
-  cylinder: { canonical: 'πr²h', label: 'π × radius² × height' },
+  cone: { canonical: '⅓×πr²h', shape: 'cone' },
+  cylinder: { canonical: 'πr²h', shape: 'cylinder' },
   triangular_prism: {
     canonical: '½×b×h×l',
-    label: '½ × base × height × length',
+    shape: 'triangular_prism',
   },
 };
+
+function localizedFormulaLabel(
+  measure: GeometryMeasure,
+  shape: GeometryShape,
+  locale?: SupportedLocale,
+): string {
+  return i18n.t(`questions:geometryFormulas.${measure}.${shape}`, locale ? { lng: locale } : undefined);
+}
+
+function toEntry(
+  measure: GeometryMeasure,
+  def: FormulaDef,
+  locale?: SupportedLocale,
+): GeometryFormulaEntry {
+  return {
+    canonical: def.canonical,
+    label: localizedFormulaLabel(measure, def.shape, locale),
+  };
+}
 
 export function getFormulaForShape(
   measure: GeometryMeasure,
   shape: GeometryShape,
+  locale?: SupportedLocale,
 ): GeometryFormulaEntry | null {
   if (measure === 'perimeter' && shape in PERIMETER_FORMULAS) {
-    return PERIMETER_FORMULAS[shape as PerimeterShape];
+    return toEntry(measure, PERIMETER_FORMULAS[shape as PerimeterShape], locale);
   }
   if (measure === 'area' && shape in AREA_FORMULAS) {
-    return AREA_FORMULAS[shape as AreaShape];
+    return toEntry(measure, AREA_FORMULAS[shape as AreaShape], locale);
   }
   if (measure === 'volume' && shape in VOLUME_FORMULAS) {
-    return VOLUME_FORMULAS[shape as VolumeShape];
+    return toEntry(measure, VOLUME_FORMULAS[shape as VolumeShape], locale);
   }
   return null;
 }
 
-export function listFormulasForMeasure(measure: GeometryMeasure): GeometryFormulaEntry[] {
-  if (measure === 'perimeter') return Object.values(PERIMETER_FORMULAS);
-  if (measure === 'area') return Object.values(AREA_FORMULAS);
-  return VOLUME_SHAPES.map((shape) => VOLUME_FORMULAS[shape]);
+export function listFormulasForMeasure(
+  measure: GeometryMeasure,
+  locale?: SupportedLocale,
+): GeometryFormulaEntry[] {
+  if (measure === 'perimeter') {
+    return Object.values(PERIMETER_FORMULAS).map((def) => toEntry(measure, def, locale));
+  }
+  if (measure === 'area') {
+    return Object.values(AREA_FORMULAS).map((def) => toEntry(measure, def, locale));
+  }
+  return VOLUME_SHAPES.map((shape) => toEntry(measure, VOLUME_FORMULAS[shape], locale));
 }
 
 export function shapeLabel(shape: GeometryShape): string {

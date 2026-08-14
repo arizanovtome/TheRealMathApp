@@ -22,7 +22,6 @@ export function stackScreenTitle(routeName: string, t: TFunction): string {
     'learning-plan': t('navigation:settings'),
     result: t('navigation:results'),
     'onboarding/name': t('navigation:profileSetup'),
-    'onboarding/language': t('navigation:chooseLanguage'),
     'onboarding/age': t('navigation:yourAge'),
     'onboarding/recommended-plan': t('navigation:yourPlan'),
     learn: t('navigation:learn'),

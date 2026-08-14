@@ -60,19 +60,21 @@ function geometryConfig(
 
 describe('geometryGenerator', () => {
   it('formats rectangle area questions with locale-aware text', async () => {
-    await i18n.changeLanguage('en');
-    expect(
-      buildCalculateQuestionText('area', 'rectangle', { length: 6, width: 2 }),
-    ).toBe('A rectangle has length 6 cm and width 2 cm. What is its area?');
+    try {
+      await i18n.changeLanguage('en');
+      expect(
+        buildCalculateQuestionText('area', 'rectangle', { length: 6, width: 2 }),
+      ).toBe('A rectangle has length 6 cm and width 2 cm. What is its area?');
 
-    await i18n.changeLanguage('mk');
-    expect(
-      buildCalculateQuestionText('area', 'rectangle', { length: 6, width: 2 }),
-    ).toBe(
-      'Правоаголник има должина 6 cm и ширина 2 cm. Која е неговата плоштина?',
-    );
-
-    await i18n.changeLanguage('en');
+      await i18n.changeLanguage('mk');
+      expect(
+        buildCalculateQuestionText('area', 'rectangle', { length: 6, width: 2 }),
+      ).toBe(
+        'Правоаголник има должина 6 см и ширина 2 см. Која е неговата плоштина?',
+      );
+    } finally {
+      await i18n.changeLanguage('en');
+    }
   });
 
   it('generates formula questions with multiple choices', () => {

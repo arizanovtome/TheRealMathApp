@@ -1,5 +1,4 @@
 import type { GeometryMeasure, GeometryShape } from '@/features/geometry/geometry.types';
-import { buildGeometryFormulaTables } from '@/features/learn/geometryLearnContent';
 import { buildTrigonometryFormulaTables } from '@/features/learn/trigonometryLearnContent';
 import type { TrigonometryDiagram } from '@/features/trigonometry/trigonometry.types';
 import type { LearnPracticeTarget } from '@/features/learn/learnPractice.utils';
@@ -259,7 +258,7 @@ const LEARN_TOPICS_UNSORTED: LearnTutorial[] = [
           'Sides use a, b, c, and d (same letter = equal length). r is radius, h is height, and d1 and d2 mark diagonals on a rhombus or kite.',
       },
     ],
-    formulaTables: buildGeometryFormulaTables(),
+    formulaTables: undefined,
     examples: [
       {
         prompt: 'Perimeter of a square with side 5',

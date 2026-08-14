@@ -138,5 +138,5 @@
     "star": "Star",
     "oval": "Oval"
   },
-  "colors": { "red": "Red", "blue": "Blue", "green": "Green", "yellow": "Yellow" }
+  "colors": { "red": "Red", "blue": "Blue", "green": "Green", "yellow": "Yellow", "orange": "Orange", "purple": "Purple" }
 }

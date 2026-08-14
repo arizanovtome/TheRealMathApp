@@ -31,7 +31,6 @@ export default function HomeScreen() {
   const learningConfig = useAppStore(selectActiveLearningConfig);
   const sessionHistory = useAppStore(selectActiveSessionHistory);
   const onboardingComplete = useAppStore((s) => s.isOnboardingCompleted);
-  const hasChosenLocale = useAppStore((s) => s.hasChosenLocale);
   const profiles = useAppStore((s) => s.profiles);
 
   const adaptationSuggestion = useMemo(() => {
@@ -45,10 +44,6 @@ export default function HomeScreen() {
         <ActivityIndicator size="large" color={colors.primary} accessibilityLabel={t('common:loadingSettings')} />
       </SafeAreaView>
     );
-  }
-
-  if (!hasChosenLocale) {
-    return <Redirect href={ROUTES.onboardingLanguage} />;
   }
 
   if (!onboardingComplete || profiles.length === 0) {

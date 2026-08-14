@@ -1,5 +1,6 @@
 import type { SupportedLocale } from '@/i18n/types';
 import type { LearnTutorial } from '@/features/learn/learnTopics';
+import { buildGeometryFormulaTables } from '@/features/learn/geometryLearnContent';
 
 type LearnOverride = Partial<
   Pick<LearnTutorial, 'title' | 'summary' | 'formula' | 'sections' | 'examples'>
@@ -23,12 +24,12 @@ export const LEARN_TOPIC_OVERRIDES_MK: Partial<Record<LearnTutorial['id'], Learn
     ],
   },
   subtraction: {
-    title: 'Оdzемaње',
+    title: 'Одземање',
     summary: 'Наоѓање разлика кога одземаме.',
     sections: [
       {
         heading: 'Што е одземање?',
-        body: 'Оdzемaњетo кажува колку останува откако ќе отстраните некоја количина, или колку е еден број поголем од друг.',
+        body: 'Одземањето кажува колку останува откако ќе отстраните некоја количина, или колку е еден број поголем од друг.',
       },
     ],
   },
@@ -128,7 +129,7 @@ export const LEARN_TOPIC_OVERRIDES_MK: Partial<Record<LearnTutorial['id'], Learn
     ],
   },
   equations_x: {
-    title: 'Equations со x',
+    title: 'Равенки со x',
     summary: 'Најдете го скриениот број што ја прави равенката точна.',
     sections: [
       {
@@ -149,15 +150,25 @@ export const LEARN_TOPIC_OVERRIDES_MK: Partial<Record<LearnTutorial['id'], Learn
   },
   geometry: {
     title: 'Геометрија',
-    summary: 'Обиколка, площина и волумен — формули и presmetki за секоја форма.',
+    summary: 'Обиколка, плоштина и волумен — формули и пресметки за секоја форма.',
     sections: [
       {
-        heading: 'Два типa прашања',
-        body: 'Прашањата за формула бараат која формула да се користи. Прашањата за presmetka даваат димензии (1–10) и бараат presmetka.',
+        heading: 'Два типа прашања',
+        body: 'Прашањата за формула бараат која формула да се користи. Прашањата за пресметка даваат димензии (1–10) и бараат пресметка.',
       },
       {
-        heading: 'Ознаки на дијagram',
-        body: 'Страните се a, b, c, d. r е радиус, h е висина, d1 и d2 се дијagonalite.',
+        heading: 'Ознаки на дијаграмот',
+        body: 'Страните се a, b, c и d (иста буква = еднаква должина). r е радиус, h е висина, а d1 и d2 се дијагоналите на ромб или делтоид.',
+      },
+    ],
+    examples: [
+      {
+        prompt: 'Обиколка на квадрат со страна 5',
+        solution: '4 × 5 = 20',
+      },
+      {
+        prompt: 'Плоштина на круг со радиус 3 (пресметка, π форма)',
+        solution: '9π',
       },
     ],
   },
@@ -268,14 +279,23 @@ export const LEARN_TOPIC_OVERRIDES_MK: Partial<Record<LearnTutorial['id'], Learn
 };
 
 export function applyLearnLocale(topic: LearnTutorial, locale: SupportedLocale): LearnTutorial {
-  if (locale !== 'mk') return topic;
-  const override = LEARN_TOPIC_OVERRIDES_MK[topic.id];
-  if (!override) return topic;
-  return {
-    ...topic,
-    ...override,
-    sections: override.sections ?? topic.sections,
-    examples: override.examples ?? topic.examples,
-    formulaTables: override.formulaTables ?? topic.formulaTables,
-  };
+  const override = locale === 'mk' ? LEARN_TOPIC_OVERRIDES_MK[topic.id] : undefined;
+  const merged: LearnTutorial = override
+    ? {
+        ...topic,
+        ...override,
+        sections: override.sections ?? topic.sections,
+        examples: override.examples ?? topic.examples,
+        formulaTables: override.formulaTables ?? topic.formulaTables,
+      }
+    : topic;
+
+  if (topic.id === 'geometry') {
+    return {
+      ...merged,
+      formulaTables: buildGeometryFormulaTables(locale),
+    };
+  }
+
+  return merged;
 }

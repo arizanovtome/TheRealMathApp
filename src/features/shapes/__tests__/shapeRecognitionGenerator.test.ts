@@ -25,6 +25,32 @@ describe('shapeRecognitionGenerator', () => {
     expect(['Circle', 'Square', 'Rectangle', 'Triangle']).toContain(q!.correctAnswer);
   });
 
+  it('uses disabled shapes as distractors to provide six shape answers', () => {
+    const config = getRecommendedLearningPlan(5);
+    config.answerOptionsCount = 6;
+    config.shapeRecognition = {
+      enabled: true,
+      shapeQuestions: true,
+      colorQuestions: false,
+      colorAndShapeQuestions: false,
+      shapes: {
+        circle: true,
+        square: true,
+        rectangle: true,
+        triangle: true,
+        star: true,
+        oval: false,
+      },
+    };
+
+    const q = tryGenerateShapeRecognitionQuestion(config);
+
+    expect(q?.shape).not.toBe('oval');
+    expect(q?.answerOptions).toHaveLength(6);
+    expect(q?.answerOptions).toContain('Oval');
+    expect(new Set(q?.answerOptions).size).toBe(6);
+  });
+
   it('returns null when no shapes are enabled', () => {
     const config = getRecommendedLearningPlan(5);
     config.shapeRecognition = {
@@ -56,7 +82,25 @@ describe('shapeRecognitionGenerator', () => {
     const q = tryGenerateShapeRecognitionQuestion(config);
     expect(q?.subtype).toBe('color');
     expect(q?.questionText).toBe('What color is this shape?');
-    expect(['Red', 'Blue', 'Green', 'Yellow']).toContain(q?.correctAnswer);
+    expect(['Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple']).toContain(q?.correctAnswer);
+    expect(q?.answerOptions).toContain(q?.correctAnswer);
+  });
+
+  it('generates six color answers when six options are selected', () => {
+    const config = getRecommendedLearningPlan(5);
+    config.answerOptionsCount = 6;
+    config.shapeRecognition = {
+      ...config.shapeRecognition,
+      enabled: true,
+      shapeQuestions: false,
+      colorQuestions: true,
+      colorAndShapeQuestions: false,
+    };
+
+    const q = tryGenerateShapeRecognitionQuestion(config);
+
+    expect(q?.answerOptions).toHaveLength(6);
+    expect(new Set(q?.answerOptions).size).toBe(6);
     expect(q?.answerOptions).toContain(q?.correctAnswer);
   });
 

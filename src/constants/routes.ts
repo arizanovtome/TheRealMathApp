@@ -1,7 +1,6 @@
 export const ROUTES = {
   home: '/',
   onboardingName: '/onboarding/name',
-  onboardingLanguage: '/onboarding/language',
   onboardingAge: '/onboarding/age',
   onboardingRecommendedPlan: '/onboarding/recommended-plan',
   learningPlan: '/learning-plan',

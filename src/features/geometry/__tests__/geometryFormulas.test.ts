@@ -7,6 +7,7 @@ import {
   shapeUsesPiForm,
 } from '@/features/geometry/geometryFormulas';
 import type { GeometryShape } from '@/features/geometry/geometry.types';
+import { i18n } from '@/i18n';
 
 describe('geometryFormulas', () => {
   it('provides formulas for every perimeter shape', () => {
@@ -84,5 +85,20 @@ describe('geometryFormulas', () => {
     expect(shapeLabel('trapezoid')).toBe('trapezoid');
     expect(shapeLabel('triangular_prism')).toBe('triangular prism');
     expect(shapeLabel('triangular_pyramid')).toBe('triangular pyramid');
+  });
+
+  it('localizes formula labels for Macedonian', async () => {
+    try {
+      await i18n.changeLanguage('en');
+      expect(getFormulaForShape('area', 'square')?.label).toBe('side × side');
+
+      await i18n.changeLanguage('mk');
+      expect(getFormulaForShape('area', 'square')?.label).toBe('страна × страна');
+      expect(getFormulaForShape('area', 'rhombus')?.label).toBe(
+        '½ × дијагонала 1 × дијагонала 2',
+      );
+    } finally {
+      await i18n.changeLanguage('en');
+    }
   });
 });
