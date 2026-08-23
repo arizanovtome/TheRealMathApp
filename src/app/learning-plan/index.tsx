@@ -1,6 +1,6 @@
 import { Redirect, Stack, useNavigation, useRouter } from "expo-router";
 import { useCallback, useRef, useState } from "react";
-import { Alert, Pressable, StyleSheet } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet } from "react-native";
 import { usePreventRemove } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -32,6 +32,7 @@ export default function LearningPlanScreen() {
   const [dirty, setDirty] = useState(false);
   const [draftCanSave, setDraftCanSave] = useState(false);
   const allowNavigationRef = useRef(false);
+  const scrollRef = useRef<ScrollView>(null);
   const draftRef = useRef<{
     config: MathLearningConfig;
     personal: ChildProfilePersonal;
@@ -121,7 +122,7 @@ export default function LearningPlanScreen() {
           ),
         }}
       />
-      <AppScreen scroll>
+      <AppScreen scroll scrollProps={{ ref: scrollRef }}>
       <AppText variant="title">{t("settings:title")}</AppText>
       <AppText variant="body" muted>
         {t("settings:subtitle")}
@@ -139,6 +140,7 @@ export default function LearningPlanScreen() {
 
       <LearningPlanEditor
         key={activeProfile.id}
+        scrollRef={scrollRef}
         initialConfig={initial}
         profile={activeProfile}
         onSave={handleSave}

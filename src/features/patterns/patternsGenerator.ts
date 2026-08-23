@@ -141,7 +141,7 @@ function generateShapePattern(config: MathLearningConfig): Omit<PatternMathQuest
     questionText: i18n.t('questions:whatShapeComesNext'),
     sequenceDisplay,
     correctAnswer: correct,
-    answerOptions: buildShapeMcOptions(correct, enabledShapes, Math.min(4, enabledShapes.length)),
+    answerOptions: buildShapeMcOptions(correct, enabledShapes, Math.min(config.answerOptionsCount, enabledShapes.length)),
     requiresMultipleChoice: true,
     sequenceShapes,
   };

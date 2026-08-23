@@ -6,6 +6,7 @@ import {
 import type { EquivalentExpressionSubtype } from '../equivalentExpressions.types';
 import { applyPracticeFocusOverride } from '@/features/learning-plan/learningPlan.utils';
 import { getRecommendedLearningPlan } from '@/features/learning-plan/recommendedLearningPlan';
+import { gcd } from '@/features/questions/fractions';
 import { createSessionQuestions } from '@/features/questions/questionGenerator';
 import { submittedAnswerIsCorrect } from '@/features/questions/questionScoring';
 
@@ -35,7 +36,15 @@ describe('equivalent expressions generator', () => {
     expect(question!.requiresMultipleChoice).toBe(true);
     expect(question!.answerOptions).toContain(question!.correctAnswer);
     expect(new Set(question!.answerOptions).size).toBe(question!.answerOptions.length);
-    expect(question!.answerOptions.length).toBeGreaterThanOrEqual(4);
+    expect(question!.answerOptions.length).toBe(config.answerOptionsCount);
+  });
+
+  it('respects answerOptionsCount when fewer than all distractors are needed', () => {
+    const fourChoices = { ...config, answerOptionsCount: 4 as const };
+    for (const subtype of ALL_SUBTYPES) {
+      const question = tryGenerateEquivalentExpressionQuestion(fourChoices, subtype);
+      expect(question!.answerOptions).toHaveLength(4);
+    }
   });
 
   it('uses the correct binomial-square identities', () => {
@@ -79,14 +88,30 @@ describe('equivalent expressions generator', () => {
     }
   });
 
-  it('factors to an expression that expands to the prompt', () => {
-    for (let i = 0; i < 30; i++) {
+  it('factors using the greatest common factor', () => {
+    for (let i = 0; i < 50; i++) {
       const question = generateEquivalentExpressionQuestion('factorization');
       const prompt = /^(\d+)x \+ (\d+) =$/.exec(question.questionText)!;
-      const answer = /^(\d+)\((\d+)x \+ (\d+)\)$/.exec(question.correctAnswer)!;
-      expect(Number(answer[1]) * Number(answer[2])).toBe(Number(prompt[1]));
-      expect(Number(answer[1]) * Number(answer[3])).toBe(Number(prompt[2]));
+      const a = Number(prompt[1]);
+      const b = Number(prompt[2]);
+      const g = gcd(a, b);
+      const cx = a / g;
+      const c0 = b / g;
+      const expected = cx === 1 ? `${g}(x + ${c0})` : `${g}(${cx}x + ${c0})`;
+      expect(question.correctAnswer).toBe(expected);
     }
+  });
+
+  it('factors 72x + 72 as 72(x + 1) when those terms are generated', () => {
+    for (let i = 0; i < 200; i++) {
+      const question = generateEquivalentExpressionQuestion('factorization');
+      if (question.questionText !== '72x + 72 =') continue;
+      expect(question.correctAnswer).toBe('72(x + 1)');
+      expect(question.answerOptions).toContain('72(x + 1)');
+      expect(question.answerOptions).not.toContain('72(x + 9)');
+      return;
+    }
+    expect(true).toBe(true);
   });
 
   it('excludes disabled subtypes', () => {

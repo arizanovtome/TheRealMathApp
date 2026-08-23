@@ -100,6 +100,10 @@
       }
     }
   },
+  "multiplicationLearn": {
+    "tableHeading": "Table of {{n}}",
+    "tableIntro": "Multiplying {{n}} by each number from 1 to 10."
+  },
   "hintCheckTyped": "Checks your typed answer and shows feedback",
   "hintSubmitSelected": "Submits your selected answer",
   "hintCheckSelected": "Checks your selected answer and shows feedback",

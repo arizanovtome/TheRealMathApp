@@ -28,7 +28,7 @@
   "amazing": "Amazing!",
   "correct": "Correct!",
   "yourAnswer": "Your answer",
-  "fractionPlaceholder": "e.g. 3/4 or 2",
+  "fractionPlaceholder": "e.g. 3/4, 0.25, or 2",
   "equationPlaceholder": "e.g. 4 or 20:5",
   "equationHint": "Type after x= (for example 4 or 20:5).",
   "fractionHint": "Enter a fraction like 3/4 or a whole number.",
@@ -121,7 +121,8 @@
     "pattern": "Patterns & sequences",
     "differentiation": "Differentiation",
     "integration": "Integration",
-    "trigonometry": "Trigonometry"
+    "trigonometry": "Trigonometry",
+    "logarithm": "Logarithms"
   },
   "findAndCount": "Find and count", "left": "Left", "right": "Right", "groupA": "Group A", "groupB": "Group B", "same": "Same", "odd": "Odd", "even": "Even",
   "questionStyles": {
@@ -138,5 +139,7 @@
     "star": "Star",
     "oval": "Oval"
   },
-  "colors": { "red": "Red", "blue": "Blue", "green": "Green", "yellow": "Yellow", "orange": "Orange", "purple": "Purple" }
+  "colors": { "red": "Red", "blue": "Blue", "green": "Green", "yellow": "Yellow", "orange": "Orange", "purple": "Purple" },
+  "colorsPlural": { "red": "red", "blue": "blue", "green": "green", "yellow": "yellow", "orange": "orange", "purple": "purple" },
+  "shapesPlural": { "circle": "circles", "square": "squares", "rectangle": "rectangles", "triangle": "triangles", "star": "stars", "oval": "ovals" }
 }

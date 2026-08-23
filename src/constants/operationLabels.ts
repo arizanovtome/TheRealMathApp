@@ -23,6 +23,7 @@ export const OPERATION_LABELS: Record<MathOperation, string> = {
   differentiation: 'Differentiation',
   integration: 'Integration',
   trigonometry: 'Trigonometry',
+  logarithm: 'Logarithms',
 };
 
 export function getOperationLabel(operation: MathOperation, t: TFunction): string {

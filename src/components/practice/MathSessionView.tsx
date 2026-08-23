@@ -7,7 +7,6 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  TextInput,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -24,6 +23,10 @@ import { AppText } from "@/components/common/AppText";
 import { AnswerOptionButton } from "@/components/practice/AnswerOptionButton";
 import { FeedbackMessage } from "@/components/practice/FeedbackMessage";
 import { QuestionCard } from "@/components/practice/QuestionCard";
+import {
+  SessionAnswerTextInput,
+  SessionEquationAnswerInput,
+} from "@/components/practice/SessionAnswerTextInput";
 import { ROUTES } from "@/constants/routes";
 import type { MathOperation } from "@/features/learning-plan/learningPlan.types";
 import { ALL_MATH_OPERATIONS } from "@/features/learning-plan/learningPlan.types";
@@ -51,6 +54,7 @@ import {
   isPatternQuestion,
   isCalculusQuestion,
   isTrigonometryQuestion,
+  isLogarithmQuestion,
   isEquationTwoUnknownQuestion,
   requiresMultipleChoiceQuestion,
   usesCompactQuestionCard,
@@ -75,7 +79,7 @@ import { fonts } from "@/theme/fonts";
 import { radii, spacing } from "@/theme/spacing";
 import { useAppTranslation } from "@/i18n/useAppTranslation";
 import { parseNumberAnswer } from "@/utils/parseIntegerAnswer";
-import { parseFractionAnswer } from "@/utils/parseFractionAnswer";
+import { isCompleteFractionAnswer, parseFractionAnswer } from "@/utils/parseFractionAnswer";
 
 function parseFocusOperationParam(
   raw: string | string[] | undefined,
@@ -182,6 +186,7 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
   const selectedRef = useRef<number | string | null>(null);
   const showFeedbackRef = useRef(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     selectedRef.current = selected;
@@ -224,7 +229,7 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
         if (question.kind === "geometry") return question.correctAnswer;
         if (question.kind === "equation_unknown") return question.fallbackWrongExpression;
         if (question.kind === "equation_two_unknown") return question.correctAnswer + 1;
-        if (question.kind === "comparison" || question.kind === "equivalent_expression" || question.kind === "fraction_visual" || question.kind === "shape_recognition" || question.kind === "clock" || question.kind === "pattern" || question.kind === "calculus" || question.kind === "trigonometry" || question.kind === "number_sense") {
+        if (question.kind === "comparison" || question.kind === "equivalent_expression" || question.kind === "fraction_visual" || question.kind === "shape_recognition" || question.kind === "clock" || question.kind === "pattern" || question.kind === "calculus" || question.kind === "trigonometry" || question.kind === "logarithm" || question.kind === "number_sense") {
           return question.answerOptions[0] ?? question.correctAnswer;
         }
         return "";
@@ -251,7 +256,9 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
         question.kind === "clock" ||
         question.kind === "pattern" ||
         question.kind === "calculus" ||
-        question.kind === "trigonometry" || question.kind === "number_sense"
+        question.kind === "trigonometry" ||
+        question.kind === "logarithm" ||
+        question.kind === "number_sense"
       ) {
         const wrongFromMc = question.answerOptions.find(
           (o) => !submittedAnswerIsCorrect(question, o),
@@ -454,6 +461,14 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
     }
   };
 
+  const handlePrimaryAction = () => {
+    if (mode === "practice" && !showFeedback && showKeyboardInput) {
+      handleCheckPracticeKeyboard();
+      return;
+    }
+    handleNext();
+  };
+
   const handleNext = () => {
     clearQuestionTimer();
     if (!current || !effectiveConfig) return;
@@ -539,6 +554,7 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
   const scrollContentStyle = [
     styles.scrollInner,
     showKeyboardInput && keyboardOpen ? { paddingTop: insets.top } : null,
+    keyboardOpen ? { paddingBottom: spacing.xl * 3 } : null,
   ];
 
   const answerPlaceholder =
@@ -592,7 +608,7 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
   const fractionInputReady =
     isArithmeticQuestion(current) &&
     isFractionQuestion(current) &&
-    parseFractionAnswer(answerInputText) !== null;
+    isCompleteFractionAnswer(answerInputText);
   const numericInputReady =
     (isArithmeticQuestion(current) &&
       !isFractionQuestion(current) &&
@@ -609,26 +625,33 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
       : fractionInputReady || numericInputReady);
   const nextDisabled = showKeyboardInput
     ? mode === "practice"
-      ? selected === null || !showFeedback
+      ? !showFeedback
+        ? !(equationInputReady || fractionInputReady || numericInputReady)
+        : false
       : !quizKeyboardReady
     : requireConfirmMc && mode === "practice" && !showFeedback
       ? selected === null
       : selected === null || (mode === "practice" && !showFeedback);
 
-  const primaryActionLabel =
-    requireConfirmMc && mode === "practice" && !showFeedback && !showKeyboardInput
-      ? t("common:confirm")
-      : isLast
-        ? t("common:seeResults")
-        : t("common:next");
+  const awaitingCheck =
+    mode === "practice" && !showFeedback && (showKeyboardInput || requireConfirmMc);
+
+  const primaryActionLabel = awaitingCheck
+    ? showKeyboardInput
+      ? t("common:checkAnswer")
+      : t("common:confirm")
+    : isLast
+      ? t("common:seeResults")
+      : t("common:next");
 
   return (
     <KeyboardAvoidingView
       style={styles.keyboardRoot}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={headerHeight}
     >
       <ScrollView
+        ref={scrollRef}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={scrollContentStyle}
         showsVerticalScrollIndicator={false}
@@ -711,73 +734,50 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
                 >
                   x=
                 </AppText>
-                <TextInput
+                <SessionEquationAnswerInput
+                  scrollRef={scrollRef}
                   accessibilityLabel={t("common:valueForX")}
                   editable={!inputLocked}
-                  keyboardType="numbers-and-punctuation"
-                  inputMode="text"
-                  returnKeyType="done"
-                  textContentType="none"
-                  autoCorrect={false}
-                  autoComplete="off"
-                  importantForAutofill="no"
                   onSubmitEditing={() => {
                     if (mode === "practice" && !showFeedback)
-                      handleCheckPracticeKeyboard();
+                      handlePrimaryAction();
                   }}
                   placeholder={answerPlaceholder}
                   placeholderTextColor={colors.textMuted}
                   value={answerInputText}
-                  onChangeText={(t) => {
-                    setAnswerInputText(t);
+                  onChangeText={(text) => {
+                    setAnswerInputText(text);
                     if (inputError) setInputError("");
                   }}
-                  style={[
-                    styles.answerInputEquation,
-                    inputLocked && styles.answerInputLocked,
-                  ]}
+                  style={styles.answerInputEquation}
+                  lockedStyle={styles.answerInputLocked}
                 />
               </View>
             ) : (
-              <TextInput
+              <SessionAnswerTextInput
+                question={current}
+                scrollRef={scrollRef}
                 accessibilityLabel={t("common:yourAnswer")}
                 editable={!inputLocked}
-                keyboardType="numbers-and-punctuation"
-                inputMode="numeric"
-                returnKeyType="done"
-                textContentType="none"
-                autoCorrect={false}
-                autoComplete="off"
-                importantForAutofill="no"
                 onSubmitEditing={() => {
                   if (mode === "practice" && !showFeedback)
-                    handleCheckPracticeKeyboard();
+                    handlePrimaryAction();
                 }}
                 placeholder={answerPlaceholder}
                 placeholderTextColor={colors.textMuted}
                 value={answerInputText}
-                onChangeText={(t) => {
-                  setAnswerInputText(t);
+                onChangeText={(text) => {
+                  setAnswerInputText(text);
                   if (inputError) setInputError("");
                 }}
-                style={[
-                  styles.answerInput,
-                  inputLocked && styles.answerInputLocked,
-                ]}
+                style={styles.answerInput}
+                lockedStyle={styles.answerInputLocked}
               />
             )}
             {inputError ? (
               <AppText variant="body" style={styles.inputError}>
                 {inputError}
               </AppText>
-            ) : null}
-            {mode === "practice" && !showFeedback ? (
-              <AppButton
-                label={t("common:checkAnswer")}
-                variant="secondary"
-                onPress={handleCheckPracticeKeyboard}
-                accessibilityHint={t("questions:hintCheckTyped")}
-              />
             ) : null}
           </View>
         ) : isArithmeticQuestion(current) ? (
@@ -802,6 +802,7 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
           isPatternQuestion(current) ||
           isCalculusQuestion(current) ||
           isTrigonometryQuestion(current) ||
+          isLogarithmQuestion(current) ||
           current.kind === "number_sense" ||
           isEquationTwoUnknownQuestion(current) ? (
           <View style={styles.optionsStacked}>
@@ -851,11 +852,13 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
 
         <AppButton
           label={primaryActionLabel}
-          onPress={handleNext}
+          onPress={handlePrimaryAction}
           disabled={nextDisabled}
           accessibilityHint={
-            requireConfirmMc && mode === "practice" && !showFeedback && !showKeyboardInput
-              ? t("questions:hintCheckSelected")
+            awaitingCheck
+              ? showKeyboardInput
+                ? t("questions:hintCheckTyped")
+                : t("questions:hintCheckSelected")
               : mode === "practice"
                 ? t("questions:hintNextAfterFeedback")
                 : t("questions:hintNext")

@@ -94,7 +94,7 @@ describe('questionScoring', () => {
     expect(result.operationStats?.addition).toEqual({ attempted: 2, wrong: 1 });
   });
 
-  it('scores fraction answers from multiple choice strings', () => {
+  it('scores fraction answers from decimal or fraction strings', () => {
     const q: MathQuestion = {
       kind: 'arithmetic',
       id: 'f1',
@@ -108,6 +108,7 @@ describe('questionScoring', () => {
     };
     expect(submittedAnswerIsCorrect(q, '3/4')).toBe(true);
     expect(submittedAnswerIsCorrect(q, '6/8')).toBe(true);
+    expect(submittedAnswerIsCorrect(q, '0.75')).toBe(true);
     expect(submittedAnswerIsCorrect(q, '1/2')).toBe(false);
     expect(correctAnswerDisplayLabel(q)).toBe('3/4');
   });

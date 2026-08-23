@@ -7,7 +7,6 @@ import {
     Platform,
     ScrollView,
     StyleSheet,
-    TextInput,
     View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -24,6 +23,10 @@ import { AppText } from "@/components/common/AppText";
 import { AnswerOptionButton } from "@/components/practice/AnswerOptionButton";
 import { FeedbackMessage } from "@/components/practice/FeedbackMessage";
 import { QuestionCard } from "@/components/practice/QuestionCard";
+import {
+  SessionAnswerTextInput,
+  SessionEquationAnswerInput,
+} from "@/components/practice/SessionAnswerTextInput";
 import { ROUTES } from "@/constants/routes";
 import type { MathOperation } from "@/features/learning-plan/learningPlan.types";
 import { ALL_MATH_OPERATIONS } from "@/features/learning-plan/learningPlan.types";
@@ -49,6 +52,7 @@ import {
   isPatternQuestion,
   isCalculusQuestion,
   isTrigonometryQuestion,
+  isLogarithmQuestion,
   isGeometryQuestion,
   requiresMultipleChoiceQuestion,
   usesCompactQuestionCard,
@@ -67,7 +71,7 @@ import { fonts } from "@/theme/fonts";
 import { radii, spacing } from "@/theme/spacing";
 import { useAppTranslation } from "@/i18n/useAppTranslation";
 import { parseNumberAnswer } from "@/utils/parseIntegerAnswer";
-import { parseFractionAnswer } from "@/utils/parseFractionAnswer";
+import { isCompleteFractionAnswer, parseFractionAnswer } from "@/utils/parseFractionAnswer";
 
 const FEEDBACK_MS = 600;
 
@@ -113,6 +117,7 @@ export function TimedMathSessionView() {
   const useKeyboard = effectiveConfig?.answerEntryMode === "keyboard";
 
   const [keyboardOpen, setKeyboardOpen] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     if (!useKeyboard) {
@@ -354,6 +359,7 @@ export function TimedMathSessionView() {
   const scrollContentStyle = [
     styles.scrollInner,
     showKeyboardInput && keyboardOpen ? { paddingTop: insets.top } : null,
+    keyboardOpen ? { paddingBottom: spacing.xl * 3 } : null,
   ];
 
   if (!effectiveConfig || !validation?.valid || !current) {
@@ -398,7 +404,7 @@ export function TimedMathSessionView() {
 
   const parsedKeyboard =
     isArithmeticQuestion(current) && isFractionQuestion(current)
-      ? parseFractionAnswer(answerInputText) !== null
+      ? isCompleteFractionAnswer(answerInputText)
       : parseNumberAnswer(answerInputText) !== null;
   const equationBodyNorm = normalizeEquationAnswerInput(
     answerInputText.replace(/^\s*x\s*=\s*/i, ""),
@@ -421,13 +427,30 @@ export function TimedMathSessionView() {
         : parsedKeyboard !== null;
   const inputLocked = showFeedback && showKeyboardInput;
 
+  const showSubmitAction = !showFeedback && (showKeyboardInput || requireConfirmMc);
+  const submitActionLabel = showKeyboardInput
+    ? t("common:checkAnswer")
+    : t("common:confirm");
+  const submitActionDisabled = showKeyboardInput
+    ? !keyboardReady
+    : selected === null;
+
+  const handleSubmitAction = () => {
+    if (showKeyboardInput) {
+      handleCheckKeyboard();
+    } else {
+      handleConfirmMc();
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.keyboardRoot}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={headerHeight}
     >
       <ScrollView
+        ref={scrollRef}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={scrollContentStyle}
         showsVerticalScrollIndicator={false}
@@ -506,72 +529,48 @@ export function TimedMathSessionView() {
                 >
                   x=
                 </AppText>
-                <TextInput
+                <SessionEquationAnswerInput
+                  scrollRef={scrollRef}
                   accessibilityLabel={t("common:valueForX")}
                   editable={!inputLocked}
-                  keyboardType="numbers-and-punctuation"
-                  inputMode="text"
-                  returnKeyType="done"
-                  textContentType="none"
-                  autoCorrect={false}
-                  autoComplete="off"
-                  importantForAutofill="no"
                   onSubmitEditing={() => {
-                    if (!showFeedback) handleCheckKeyboard();
+                    if (!showFeedback && showKeyboardInput) handleSubmitAction();
                   }}
                   placeholder={answerPlaceholder}
                   placeholderTextColor={colors.textMuted}
                   value={answerInputText}
-                  onChangeText={(t) => {
-                    setAnswerInputText(t);
+                  onChangeText={(text) => {
+                    setAnswerInputText(text);
                     if (inputError) setInputError("");
                   }}
-                  style={[
-                    styles.answerInputEquation,
-                    inputLocked && styles.answerInputLocked,
-                  ]}
+                  style={styles.answerInputEquation}
+                  lockedStyle={styles.answerInputLocked}
                 />
               </View>
             ) : (
-              <TextInput
+              <SessionAnswerTextInput
+                question={current}
+                scrollRef={scrollRef}
                 accessibilityLabel={t("common:yourAnswer")}
                 editable={!inputLocked}
-                keyboardType="numbers-and-punctuation"
-                inputMode="numeric"
-                returnKeyType="done"
-                textContentType="none"
-                autoCorrect={false}
-                autoComplete="off"
-                importantForAutofill="no"
                 onSubmitEditing={() => {
-                  if (!showFeedback) handleCheckKeyboard();
+                  if (!showFeedback && showKeyboardInput) handleSubmitAction();
                 }}
                 placeholder={answerPlaceholder}
                 placeholderTextColor={colors.textMuted}
                 value={answerInputText}
-                onChangeText={(t) => {
-                  setAnswerInputText(t);
+                onChangeText={(text) => {
+                  setAnswerInputText(text);
                   if (inputError) setInputError("");
                 }}
-                style={[
-                  styles.answerInput,
-                  inputLocked && styles.answerInputLocked,
-                ]}
+                style={styles.answerInput}
+                lockedStyle={styles.answerInputLocked}
               />
             )}
             {inputError ? (
               <AppText variant="body" style={styles.inputError}>
                 {inputError}
               </AppText>
-            ) : null}
-            {!showFeedback ? (
-              <AppButton
-                label={t("common:checkAnswer")}
-                variant="secondary"
-                onPress={handleCheckKeyboard}
-                disabled={!keyboardReady}
-                accessibilityHint={t("questions:hintCheckTyped")}
-              />
             ) : null}
           </View>
         ) : isArithmeticQuestion(current) ? (
@@ -596,6 +595,7 @@ export function TimedMathSessionView() {
           isPatternQuestion(current) ||
           isCalculusQuestion(current) ||
           isTrigonometryQuestion(current) ||
+          isLogarithmQuestion(current) ||
           current.kind === "number_sense" ||
           isEquationTwoUnknownQuestion(current) ? (
           <View style={styles.optionsStacked}>
@@ -643,12 +643,16 @@ export function TimedMathSessionView() {
           </View>
         )}
 
-        {requireConfirmMc && !showFeedback ? (
+        {showSubmitAction ? (
           <AppButton
-            label={t("common:confirm")}
-            onPress={handleConfirmMc}
-            disabled={selected === null}
-            accessibilityHint={t("questions:hintSubmitSelected")}
+            label={submitActionLabel}
+            onPress={handleSubmitAction}
+            disabled={submitActionDisabled}
+            accessibilityHint={
+              showKeyboardInput
+                ? t("questions:hintCheckTyped")
+                : t("questions:hintSubmitSelected")
+            }
           />
         ) : null}
 

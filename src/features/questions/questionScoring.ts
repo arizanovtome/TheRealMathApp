@@ -1,8 +1,9 @@
+import { calculusAnswersMatch } from '@/features/calculus/calculusFormat';
 import {
   formulasMatch,
   piFormsMatch,
 } from '@/features/geometry/geometryFormulas';
-import { calculusAnswersMatch } from '@/features/calculus/calculusFormat';
+import { logAnswersMatch } from '@/features/logarithm/logarithmFormat';
 import { trigAnswersMatch } from '@/features/trigonometry/trigonometryFormulas';
 import type { MathOperation } from '@/features/learning-plan/learningPlan.types';
 import {
@@ -27,13 +28,14 @@ import {
   isPatternQuestion,
   isCalculusQuestion,
   isTrigonometryQuestion,
+  isLogarithmQuestion,
   isNumberSenseQuestion,
   isFractionQuestion,
   isGeometryQuestion,
   isRemainderQuestion,
 } from '@/features/questions/question.types';
 import { parseIntegerAnswer } from '@/utils/parseIntegerAnswer';
-import { parseFractionAnswer } from '@/utils/parseFractionAnswer';
+import { fractionAnswerMatches } from '@/utils/parseFractionAnswer';
 
 export type OperationAttemptStats = {
   attempted: number;
@@ -67,7 +69,7 @@ export function correctAnswerDisplayLabel(q: MathQuestion): string {
   if (isGeometryQuestion(q)) {
     return String(q.correctAnswer);
   }
-  if (isComparisonQuestion(q) || isEquivalentExpressionQuestion(q) || isFractionVisualQuestion(q) || isShapeRecognitionQuestion(q) || isClockQuestion(q) || isPatternQuestion(q) || isCalculusQuestion(q) || isTrigonometryQuestion(q) || isNumberSenseQuestion(q)) {
+  if (isComparisonQuestion(q) || isEquivalentExpressionQuestion(q) || isFractionVisualQuestion(q) || isShapeRecognitionQuestion(q) || isClockQuestion(q) || isPatternQuestion(q) || isCalculusQuestion(q) || isTrigonometryQuestion(q) || isLogarithmQuestion(q) || isNumberSenseQuestion(q)) {
     return String(q.correctAnswer);
   }
   if (isEquationTwoUnknownQuestion(q)) {
@@ -83,7 +85,7 @@ export function answerOptionDisplayLabel(q: MathQuestion, option: number | strin
   if (isArithmeticQuestion(q) && typeof option === 'number' && !Number.isInteger(option)) {
     return formatNumber(option);
   }
-  if (isFractionVisualQuestion(q) || isComparisonQuestion(q) || isEquivalentExpressionQuestion(q) || isShapeRecognitionQuestion(q) || isClockQuestion(q) || isPatternQuestion(q) || isCalculusQuestion(q) || isTrigonometryQuestion(q) || isNumberSenseQuestion(q)) {
+  if (isFractionVisualQuestion(q) || isComparisonQuestion(q) || isEquivalentExpressionQuestion(q) || isShapeRecognitionQuestion(q) || isClockQuestion(q) || isPatternQuestion(q) || isCalculusQuestion(q) || isTrigonometryQuestion(q) || isLogarithmQuestion(q) || isNumberSenseQuestion(q)) {
     return String(option);
   }
   return String(option);
@@ -93,7 +95,7 @@ export function chosenAnswerDisplayLabel(q: MathQuestion, chosen: number | strin
   if (chosen === null) return '—';
   if (isArithmeticQuestion(q)) return answerOptionDisplayLabel(q, chosen);
   if (isGeometryQuestion(q)) return String(chosen);
-  if (isComparisonQuestion(q) || isEquivalentExpressionQuestion(q) || isFractionVisualQuestion(q) || isShapeRecognitionQuestion(q) || isClockQuestion(q) || isPatternQuestion(q) || isCalculusQuestion(q) || isTrigonometryQuestion(q) || isNumberSenseQuestion(q)) return String(chosen);
+  if (isComparisonQuestion(q) || isEquivalentExpressionQuestion(q) || isFractionVisualQuestion(q) || isShapeRecognitionQuestion(q) || isClockQuestion(q) || isPatternQuestion(q) || isCalculusQuestion(q) || isTrigonometryQuestion(q) || isLogarithmQuestion(q) || isNumberSenseQuestion(q)) return String(chosen);
   if (isEquationTwoUnknownQuestion(q)) return String(chosen);
   const raw = typeof chosen === 'string' ? chosen : String(chosen);
   const body = normalizeEquationAnswerInput(raw.replace(/^\s*x\s*=\s*/i, ''));
@@ -105,12 +107,7 @@ export function submittedAnswerIsCorrect(q: MathQuestion, answer: number | strin
   if (isArithmeticQuestion(q)) {
     if (isFractionQuestion(q) && q.correctFraction) {
       if (typeof answer !== 'string') return false;
-      const parsed = parseFractionAnswer(answer);
-      if (!parsed) return false;
-      return (
-        parsed.numerator === q.correctFraction.numerator &&
-        parsed.denominator === q.correctFraction.denominator
-      );
+      return fractionAnswerMatches(answer, q.correctFraction);
     }
     if (isRemainderQuestion(q) && q.quotientRemainder) {
       if (typeof answer !== 'string') return false;
@@ -140,9 +137,14 @@ export function submittedAnswerIsCorrect(q: MathQuestion, answer: number | strin
   if (isNumberSenseQuestion(q)) {
     return String(answer).trim() === q.correctAnswer.trim();
   }
-  if (isComparisonQuestion(q) || isEquivalentExpressionQuestion(q) || isFractionVisualQuestion(q) || isShapeRecognitionQuestion(q) || isClockQuestion(q) || isPatternQuestion(q) || isCalculusQuestion(q) || isTrigonometryQuestion(q)) {
+  if (isComparisonQuestion(q) || isEquivalentExpressionQuestion(q) || isFractionVisualQuestion(q) || isShapeRecognitionQuestion(q) || isClockQuestion(q) || isPatternQuestion(q) || isCalculusQuestion(q) || isTrigonometryQuestion(q) || isLogarithmQuestion(q)) {
     if (typeof answer !== 'string') return false;
-    return trigAnswersMatch(answer, q.correctAnswer) || calculusAnswersMatch(answer, q.correctAnswer) || answer === q.correctAnswer;
+    return (
+      trigAnswersMatch(answer, q.correctAnswer) ||
+      calculusAnswersMatch(answer, q.correctAnswer) ||
+      logAnswersMatch(answer, q.correctAnswer) ||
+      answer === q.correctAnswer
+    );
   }
   if (isEquationTwoUnknownQuestion(q)) {
     const n =

@@ -28,7 +28,7 @@
   "amazing": "Неверојатно!",
   "correct": "Точно!",
   "yourAnswer": "Ваш одговор",
-  "fractionPlaceholder": "на пр. 3/4 или 2",
+  "fractionPlaceholder": "на пр. 3/4, 0.25 или 2",
   "equationPlaceholder": "на пр. 4 или 20:5",
   "equationHint": "Внесете по x= (на пример 4 или 20:5).",
   "fractionHint": "Внесете дропка како 3/4 или цел број.",
@@ -121,7 +121,8 @@
     "pattern": "Шеми и низи",
     "differentiation": "Диференцирање",
     "integration": "Интегрирање",
-    "trigonometry": "Тригонометрија"
+    "trigonometry": "Тригонометрија",
+    "logarithm": "Логаритми"
   },
   "findAndCount": "Најди и изброј", "left": "Лево", "right": "Десно", "groupA": "Група А", "groupB": "Група Б", "same": "Исто", "odd": "Непарен", "even": "Парен",
   "questionStyles": {
@@ -138,5 +139,7 @@
     "star": "Ѕвезда",
     "oval": "Овал"
   },
-  "colors": { "red": "Црвена", "blue": "Сина", "green": "Зелена", "yellow": "Жолта", "orange": "Портокалова", "purple": "Виолетова" }
+  "colors": { "red": "Црвена", "blue": "Сина", "green": "Зелена", "yellow": "Жолта", "orange": "Портокалова", "purple": "Виолетова" },
+  "colorsPlural": { "red": "црвени", "blue": "сини", "green": "зелени", "yellow": "жолти", "orange": "портокалови", "purple": "виолетови" },
+  "shapesPlural": { "circle": "кругови", "square": "квадрати", "rectangle": "правоаголници", "triangle": "триаголници", "star": "ѕвезди", "oval": "овални" }
 }

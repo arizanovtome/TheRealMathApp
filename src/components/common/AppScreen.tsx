@@ -1,6 +1,12 @@
 import type { PropsWithChildren } from 'react';
 import type { ScrollViewProps } from 'react-native';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
 import { colors } from '@/theme/colors';
@@ -15,27 +21,40 @@ type AppScreenProps = PropsWithChildren<{
   scrollProps?: ScrollViewProps;
   /** Use when the stack header is hidden (e.g. home) so content clears the status bar/notch. */
   includeTopSafeArea?: boolean;
+  /** Extra offset when avoiding the keyboard (e.g. stack header height). */
+  keyboardVerticalOffset?: number;
 }>;
 
-export function AppScreen({ children, scroll, scrollProps, includeTopSafeArea = false }: AppScreenProps) {
+export function AppScreen({
+  children,
+  scroll,
+  scrollProps,
+  includeTopSafeArea = false,
+  keyboardVerticalOffset = 0,
+}: AppScreenProps) {
   const edges = includeTopSafeArea ? SAFE_AREA_EDGES_FULL : SAFE_AREA_EDGES_HEADER;
 
   return (
     <SafeAreaView style={styles.safe} edges={edges}>
-      <View style={styles.wrap}>
-        <View style={styles.boardFrame}>
-          {scroll ? (
-            <ScrollView
-              contentContainerStyle={styles.scrollContent}
-              keyboardShouldPersistTaps="handled"
-              {...scrollProps}>
-              {children}
-            </ScrollView>
-          ) : (
-            <View style={styles.fill}>{children}</View>
-          )}
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoid}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={keyboardVerticalOffset}>
+        <View style={styles.wrap}>
+          <View style={styles.boardFrame}>
+            {scroll ? (
+              <ScrollView
+                contentContainerStyle={styles.scrollContent}
+                keyboardShouldPersistTaps="handled"
+                {...scrollProps}>
+                {children}
+              </ScrollView>
+            ) : (
+              <View style={styles.fill}>{children}</View>
+            )}
+          </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -46,6 +65,9 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  keyboardAvoid: {
+    flex: 1,
   },
   wrap: {
     flex: 1,
@@ -59,7 +81,6 @@ const styles = StyleSheet.create({
     borderColor: colors.frame,
     backgroundColor: colors.board,
     overflow: 'hidden',
-    // Subtle wood lip
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,

@@ -3,19 +3,26 @@ import { getEnabledCalculusSubtypes } from '@/features/calculus/calculusConfig.u
 import {
   buildCalculusMcOptions,
   derivativeOfSum,
+  differentiationQuotientDistractors,
   formatSumExpression,
-  integralOfSum,
+  pickDifferentiationQuotientSpec,
   pickDistinctPowerTerms,
   pickRandomPowerTerm,
+  pickRandomTrigFn,
   powerRuleDistractors,
   randomConstant,
   randomCoefficient,
   randomPowerExponent,
+  trigDerivativeDistractors,
 } from '@/features/calculus/calculusExpression.utils';
 import {
   formatCoefficientTimesPower,
+  formatCoefficientTimesTrig,
   formatDerivativePowerAnswer,
   formatDerivativePrompt,
+  formatDerivativeTrigAnswer,
+  formatDifferentiationQuotientAnswer,
+  formatDifferentiationQuotientExpression,
   formatPower,
 } from '@/features/calculus/calculusFormat';
 import type { MathLearningConfig } from '@/features/learning-plan/learningPlan.types';
@@ -81,6 +88,42 @@ function generateSimpleSum(config: MathLearningConfig): Omit<CalculusMathQuestio
   return buildQuestion(config, formatDerivativePrompt(inner), correctAnswer, distractors);
 }
 
+function generateNaturalLogRule(config: MathLearningConfig): Omit<CalculusMathQuestion, 'id'> {
+  return buildQuestion(config, formatDerivativePrompt('ln x'), '1/x', [
+    '1/x',
+    'x',
+    '1',
+    'ln x',
+    '1/x²',
+    '0',
+  ]);
+}
+
+function generateTrigRule(config: MathLearningConfig): Omit<CalculusMathQuestion, 'id'> {
+  const fn = pickRandomTrigFn();
+  const coefficient = randomCoefficient();
+  const inner = formatCoefficientTimesTrig(coefficient, fn);
+  const correctAnswer = formatDerivativeTrigAnswer(fn, coefficient);
+  return buildQuestion(
+    config,
+    formatDerivativePrompt(inner),
+    correctAnswer,
+    trigDerivativeDistractors(fn, coefficient),
+  );
+}
+
+function generateQuotientRule(config: MathLearningConfig): Omit<CalculusMathQuestion, 'id'> {
+  const spec = pickDifferentiationQuotientSpec();
+  const inner = formatDifferentiationQuotientExpression(spec);
+  const correctAnswer = formatDifferentiationQuotientAnswer(spec);
+  return buildQuestion(
+    config,
+    formatDerivativePrompt(inner),
+    correctAnswer,
+    differentiationQuotientDistractors(spec),
+  );
+}
+
 function generateForSubtype(
   config: MathLearningConfig,
   subtype: CalculusSubtype,
@@ -92,6 +135,12 @@ function generateForSubtype(
       return generateConstantRule(config);
     case 'simple_sum':
       return generateSimpleSum(config);
+    case 'natural_log_rule':
+      return generateNaturalLogRule(config);
+    case 'trig_rule':
+      return generateTrigRule(config);
+    case 'quotient_rule':
+      return generateQuotientRule(config);
   }
 }
 

@@ -2,6 +2,7 @@ import type {
   MathLearningConfig,
   MathOperation,
 } from "@/features/learning-plan/learningPlan.types";
+import { DEFAULT_LOGARITHM_CONFIG } from "@/features/learning-plan/learningPlan.types";
 import {
   applyPracticeFocusOverride,
   clampTimerSeconds,
@@ -274,7 +275,8 @@ describe("validateLearningConfig", () => {
     };
     const result = validateLearningConfig(invalid);
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes("question style"))).toBe(true);
+    expect(result.errors.some((e) => e.includes("Addition") || e.includes("Собирање"))).toBe(true);
+    expect(result.errors.some((e) => e.includes("topic"))).toBe(false);
   });
 
   it("rejects division remainders without a divisor of at least 2", () => {
@@ -310,7 +312,9 @@ describe("validateLearningConfig", () => {
         },
       },
     };
-    expect(validateLearningConfig(invalid).valid).toBe(false);
+    const result = validateLearningConfig(invalid);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes("topic"))).toBe(true);
   });
 
   it("does not require equation styles when parent operations are off", () => {
@@ -383,6 +387,35 @@ describe("validateLearningConfig", () => {
 
   it("accepts the recommended defaults", () => {
     expect(validateLearningConfig(basePlan).valid).toBe(true);
+  });
+
+  it("accepts logarithms as the only enabled question source", () => {
+    const logOnly: MathLearningConfig = {
+      ...basePlan,
+      addition: { ...basePlan.addition, enabled: false },
+      subtraction: { ...basePlan.subtraction, enabled: false },
+      multiplication: { ...basePlan.multiplication, enabled: false },
+      division: { ...basePlan.division, enabled: false },
+      square: { ...basePlan.square, enabled: false },
+      squareRoot: { ...basePlan.squareRoot, enabled: false },
+      rounding: { ...basePlan.rounding, enabled: false },
+      orderOfOperations: { ...basePlan.orderOfOperations, enabled: false },
+      equivalentExpressions: { ...basePlan.equivalentExpressions, enabled: false },
+      geometry: { ...basePlan.geometry, enabled: false },
+      comparison: { ...basePlan.comparison, enabled: false },
+      fractionVisual: { ...basePlan.fractionVisual, enabled: false },
+      shapeRecognition: { ...basePlan.shapeRecognition, enabled: false },
+      numberSense: { ...basePlan.numberSense, enabled: false },
+      clock: { ...basePlan.clock, enabled: false },
+      patterns: { ...basePlan.patterns, enabled: false },
+      differentiation: { ...basePlan.differentiation, enabled: false },
+      integration: { ...basePlan.integration, enabled: false },
+      trigonometry: { ...basePlan.trigonometry, enabled: false },
+      logarithm: { ...DEFAULT_LOGARITHM_CONFIG, enabled: true },
+    };
+    const result = validateLearningConfig(logOnly);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toEqual([]);
   });
 
   it("rejects multiplication when no factors are selected", () => {

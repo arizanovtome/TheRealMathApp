@@ -1,6 +1,7 @@
 import type { SupportedLocale } from '@/i18n/types';
 import type { LearnTutorial } from '@/features/learn/learnTopics';
 import { buildGeometryFormulaTables } from '@/features/learn/geometryLearnContent';
+import { buildMultiplicationFormulaTables } from '@/features/learn/multiplicationLearnContent';
 
 type LearnOverride = Partial<
   Pick<LearnTutorial, 'title' | 'summary' | 'formula' | 'sections' | 'examples'>
@@ -39,18 +40,38 @@ export const LEARN_TOPIC_OVERRIDES_MK: Partial<Record<LearnTutorial['id'], Learn
     sections: [
       {
         heading: 'Што е множење?',
-        body: 'Множењето е брз начин да го соберете истиот број повеќе пати. 3 × 4 значи три групи по четири.',
+        body:
+          'Множењето е брз начин да го соберете истиот број повеќе пати. 3 × 4 значи три групи по четири. Кога множите, го собирате истиот број неколку пати — на пример, 4 × 3 = 4 + 4 + 4 = 12, а 5 × 2 = 5 + 5 = 10. Множењето е пократок начин за повторено собирање.',
       },
+    ],
+    examples: [
+      { prompt: '4 × 3 = ?', solution: '12 (4 + 4 + 4)' },
+      { prompt: '6 × 5 = ?', solution: '30' },
     ],
   },
   division: {
     title: 'Делење',
-    summary: 'Поделба на еднакви делови или наоѓање колку групи.',
+    summary: 'Поделба на еднакви делови, наоѓање колку групи или делење со остаток.',
     sections: [
       {
         heading: 'Што е делење?',
         body: 'Делењето ја дели вкупната количина на еднакви делови. Одговорот може да биде колку во секоја група или колку групи.',
       },
+      {
+        heading: 'Количник и остаток',
+        body:
+          'Понекогаш делењето не излегува нацело. Целобројниот дел е количникот, а она што останува е остатокот. На пример, 17 ÷ 5 = 3 ост. 2 бидејќи 5 × 3 = 15 и 17 − 15 = 2.',
+      },
+      {
+        heading: 'Остаток со негативни броеви',
+        body:
+          'Остатокот секогаш се запишува како позитивен број. Кога количникот е негативен, остатокот пак е позитивен. На пример, −23 ÷ 5 = −4 ост. 3 бидејќи (−4) × 5 + 3 = −23.',
+      },
+    ],
+    examples: [
+      { prompt: '12 ÷ 3 = ?', solution: '4' },
+      { prompt: '17 ÷ 5 = ? remainder ?', solution: '3 ост. 2' },
+      { prompt: '−23 ÷ 5 = ? remainder ?', solution: '−4 ост. 3' },
     ],
   },
   squaring: {
@@ -190,9 +211,36 @@ export const LEARN_TOPIC_OVERRIDES_MK: Partial<Record<LearnTutorial['id'], Learn
       },
     ],
   },
+  logarithm: {
+    title: 'Логаритми',
+    summary: 'Обратно на степенување — правила за log, основа 10 и природен log ln со e.',
+    sections: [
+      {
+        heading: 'Што е логаритам?',
+        body:
+          'Логаритамот одговара: „На која степен треба да ја воздигнеме основата за да го добиеме бројот?“ На пример, log₁₀(100) = 2 бидејќи 10² = 100.',
+      },
+      {
+        heading: 'Бројот e',
+        body:
+          'e ≈ 2.718… е посебна константа во calculus. Природниот логаритам ln користи основа e. По дефиниција, ln(e) = 1 и ln(eⁿ) = n.',
+      },
+      {
+        heading: 'Правила за log',
+        body:
+          'Правилата за производ, част и степен ви помагаат да препишете log без калкулатор. Во вежбање може да проширите log(4 × 5) како log 4 + log 5 или да пресметате log₁₀(1000) и ln(e²).',
+      },
+    ],
+    examples: [
+      { prompt: 'log(6 × 5) = ?', solution: 'log 6 + log 5' },
+      { prompt: 'log₁₀(1000) = ?', solution: '3' },
+      { prompt: 'ln(e²) = ?', solution: '2' },
+      { prompt: 'log(x⁴) = ?', solution: '4 log x' },
+    ],
+  },
   fractions: {
     title: 'Дропки',
-    summary: 'Делови од целина и presmetki со дропки.',
+    summary: 'Делови од целина и пресметки со дропки.',
     sections: [
       {
         heading: 'Делови од целина',
@@ -239,6 +287,25 @@ export const LEARN_TOPIC_OVERRIDES_MK: Partial<Record<LearnTutorial['id'], Learn
     ],
     examples: [{ prompt: 'Која боја е синиот триаголник?', solution: 'Сина' }],
   },
+  numbers: {
+    title: 'Броеви',
+    summary: 'Разберете редослед на броеви, недостасувачки вредности и парни и непарни броеви.',
+    sections: [
+      {
+        heading: 'Претходник и следбеник',
+        body: 'Бројот пред еден помал. Бројот после еден поголем.',
+      },
+      {
+        heading: 'Парни и непарни',
+        body: 'Парните броеви можат да се подредат во парови без остаток. Кај непарните останува еден.',
+      },
+    ],
+    examples: [
+      { prompt: 'Кој број е по 6?', solution: '7' },
+      { prompt: '1, 2, ?, 4', solution: '3' },
+      { prompt: 'Дали 8 е парен или непарен?', solution: 'Парен' },
+    ],
+  },
   patterns: {
     title: 'Шеми и низи',
     summary: 'Најдете го правилото и продолжете.',
@@ -256,25 +323,61 @@ export const LEARN_TOPIC_OVERRIDES_MK: Partial<Record<LearnTutorial['id'], Learn
   },
   differentiation: {
     title: 'Диференцирање',
-    summary: 'Наоѓање на стапка на промена — извод.',
+    summary: 'Наоѓање на стапка на промена — извод, вклучувајќи ln x, sin/cos и част.',
     sections: [
       {
         heading: 'Што е извод?',
-        body: 'Изводот кажува колку брzo nešto се менува. На овој нivo се правила, не графици.',
+        body: 'Изводот кажува колку брзо нешто се менува. На овој nivo се правила, не графици.',
+      },
+      {
+        heading: 'Природен log',
+        body: "Изводот на ln x е 1/x. Пример: (ln x)' = 1/x.",
+      },
+      {
+        heading: 'Тригонометриски функции',
+        body: "(sin x)' = cos x и (cos x)' = −sin x.",
+      },
+      {
+        heading: 'Правило za част (делење)',
+        body: "Za f(x)/g(x) važi (f/g)' = (f'g − fg') / g². Low d-High minus High d-Low, over Low squared.",
       },
     ],
-    formula: "(xⁿ)' = n·xⁿ⁻¹",
+    formula: "(f/g)' = (f'g − fg') / g²",
+    examples: [
+      { prompt: "(x²)' = ?", solution: '2x' },
+      { prompt: "(ln x)' = ?", solution: '1/x' },
+      { prompt: "(sin x)' = ?", solution: 'cos x' },
+      { prompt: "(2x/(x + 3))' = ?", solution: '6/(x + 3)²' },
+    ],
   },
   integration: {
     title: 'Интегрирање',
-    summary: 'Обратно диференцирање — antiderivativ + C.',
+    summary: 'Обратно диференцирање — antiderivativ + C, вклучувајќи ln x, sin/cos и част.',
     sections: [
       {
         heading: 'Што е integral?',
         body: 'Интеграцијата е спротивно на диференцирање. Секогаш додаваме + C.',
       },
+      {
+        heading: 'Интеграл на 1/x',
+        body: '∫(1/x) dx = ln|x| + C. На овој nivo честo pišuvame ln x + C za x > 0.',
+      },
+      {
+        heading: 'Тригонометриски функции',
+        body: '∫ sin x dx = −cos x + C и ∫ cos x dx = sin x + C.',
+      },
+      {
+        heading: 'Поедnostavи фракции',
+        body: 'Integracija nema quotient rule. Koga integrалot e frakcija od stepeni na x, prvo poednostavi, pa power rule.',
+      },
     ],
     formula: '∫xⁿ dx = xⁿ⁺¹/(n+1) + C  (n ≠ −1)',
+    examples: [
+      { prompt: '∫x² dx = ?', solution: 'x³/3 + C' },
+      { prompt: '∫(1/x) dx = ?', solution: 'ln x + C' },
+      { prompt: '∫ sin x dx = ?', solution: '−cos x + C' },
+      { prompt: '∫(x³/x) dx = ?', solution: 'x³/3 + C' },
+    ],
   },
 };
 
@@ -294,6 +397,13 @@ export function applyLearnLocale(topic: LearnTutorial, locale: SupportedLocale):
     return {
       ...merged,
       formulaTables: buildGeometryFormulaTables(locale),
+    };
+  }
+
+  if (topic.id === 'multiplication') {
+    return {
+      ...merged,
+      formulaTables: buildMultiplicationFormulaTables(locale),
     };
   }
 

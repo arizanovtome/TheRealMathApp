@@ -28,6 +28,7 @@ The main learning operations are:
 - Square roots (e.g. `√49 = ?`)
 - Rounding (nearest 10, 100, whole, tenth, hundredth)
 - Order of operations (e.g. `3 + 4 × 5 = ?`, multiply before add)
+- **Equivalent expressions** (identities, distribution, factorization — see §22)
 - Equations with one unknown (e.g. `x + 3 = 8`)
 - Equations with two unknowns (`x` and `y`) — when enabled
 - **Geometry** (perimeter, area, volume — formula and calculate questions)
@@ -38,9 +39,10 @@ The main learning operations are:
 - **Clock / time** (analog read and elapsed time — see §31)
 - **Patterns & sequences** (numeric sequences; visual patterns are configured under Shapes — see §32 and §28.6)
 - **Trigonometry** (right-triangle ratios — formula selection and side naming — see §38)
+- **Logarithms** (log rules and numeric log/ln values — see §41)
 - **Differentiation** and **Integration** (symbolic MC — see §34)
 
-**Shipped:** comparison (all subtypes in §25), equations with **two** unknowns (`x` and `y`), **Learn** reference library, visual fraction recognition, shape recognition, clock/time, patterns, decimal toggles on basic operations, trigonometry v1 (§38), privacy policy screen, and compact question cards for visual prompts.
+**Shipped:** comparison (all subtypes in §25), equations with **two** unknowns (`x` and `y`), **Learn** reference library (22 topics), visual fraction recognition, shape recognition, clock/time, patterns, **decimal toggles** on basic operations (1 decimal place), trigonometry v1 (§38), **logarithms** (§41), calculus with power/constant/sum, natural log, trig, and quotient/simplify-fraction rules (§34), privacy policy screen, compact question cards for visual prompts, **confirm before submit** for multiple choice, and **English + Macedonian** UI (§42).
 
 **Planned next:** dedicated decimal/percent practice module beyond rounding and comparison (see §24.6).
 
@@ -62,7 +64,8 @@ The main goals of the app are:
 - Support practice, quiz, and timed session modes.
 - Provide multiple-choice or keyboard answer entry where appropriate.
 - Track session results, recent performance, and gentle adaptation hints.
-- Offer a **Learn** section with explanations and visuals for operations and geometry.
+- Offer a **Learn** section with explanations and visuals for all 22 curriculum topics.
+- Support **English and Macedonian** UI with first-run language selection.
 
 ---
 
@@ -94,16 +97,17 @@ Suggested learning focus by age (defaults only — all topics remain available i
 The recommended first-time user flow is:
 
 1. User opens the app.
-2. App prompts **profile setup**: profile label (e.g. “Subtraction”, “Advanced”), learner name or nickname, and age.
-3. App creates a recommended learning plan based on age (using 4–12 brackets when age falls in that range).
-4. User can either start learning immediately or customize the plan.
-5. User starts practice, quiz, or a timed run from the home screen.
-6. App presents math questions from the active profile’s enabled sources.
-7. User answers via multiple choice or keyboard (depending on settings and question type).
-8. App provides feedback based on the selected mode.
-9. App displays progress or final result.
-10. User can open **Settings** to switch profiles, edit personal info, or change the learning plan.
-11. User can open **Learn** from home to browse tutorials by topic.
+2. App prompts **language selection** on first launch (English or Macedonian).
+3. App prompts **profile setup**: profile label (e.g. “Subtraction”, “Advanced”), learner name or nickname, and age.
+4. App creates a recommended learning plan based on age (using 4–12 brackets when age falls in that range).
+5. User can either start learning immediately or customize the plan.
+6. User starts practice, quiz, or a timed run from the home screen (or **Try in practice** from Learn).
+7. App presents math questions from the active profile’s enabled sources.
+8. User answers via multiple choice or keyboard (depending on settings and question type); optional **Confirm** step for multiple choice.
+9. App provides feedback based on the selected mode.
+10. App displays progress or final result.
+11. User can open **Settings** to switch profiles, edit personal info, or change the learning plan.
+12. User can open **Learn** from home to browse tutorials by topic.
 
 ---
 
@@ -200,8 +204,9 @@ Available operations (each can be enabled or disabled independently):
 - Division
 - Squaring
 - Square roots
-- Rounding (nearest 10 and/or 100)
+- Rounding (nearest 10, 100, whole, tenth, hundredth — see §8.5)
 - Order of operations
+- **Equivalent expressions** (identities, distribution, factorization)
 - Equations with an unknown (`x`), with per-operator toggles when enabled
 - Equations with two unknowns (`x` and `y`) — see §26
 - **Geometry** (perimeter, area, volume — see §8.7)
@@ -212,6 +217,7 @@ Available operations (each can be enabled or disabled independently):
 - **Clock / time** (see §31)
 - **Patterns & sequences** (see §32)
 - **Trigonometry** (see §38)
+- **Logarithms** (see §41)
 - **Differentiation** and **Integration** (see §34)
 
 There should not be a separate “Mixed” operation.
@@ -288,17 +294,15 @@ Possible generated question:
 
 Although addition can often use the same range for both numbers, the app should support separate ranges for flexibility.
 
-**Shipped toggles on the addition card:** standard calculation, regrouping, negative numbers, missing number, equations with `x`, word problems, fractions (with denominator mode).
-
-**Planned toggle:** decimals.
+**Shipped toggles on the addition card:** standard calculation, regrouping, negative numbers, **decimals (1 decimal place)**, missing number, equations with `x`, word problems, fractions (with denominator mode).
 
 **Regrouping:** When Off, generated whole-number addition questions never require carrying. When On, the session mixes questions with and without regrouping.
 
-**Decimals toggle (planned):**
+**Decimals toggle (shipped):**
 
-- **Off:** whole-number operands and answers only (current behavior).
+- **Off:** whole-number operands and answers only.
 - **On:** operands may be decimals drawn from configured ranges; answers may be decimal when the sum is non-integer.
-- Decimal precision: **1 or 2 decimal places** (profile-level or per-operation default — product decision).
+- Decimal precision: **1 decimal place** in v1.
 - Respects **maximum final result** cap where applicable (compare evaluated decimal result to cap).
 - Example: `3.5 + 2.1 = ?` → `5.6`
 
@@ -330,7 +334,7 @@ Required setting:
 Allow answers below zero: Yes / No
 ```
 
-**Shipped toggles on the subtraction card:** same pattern as addition (including regrouping and word problems).
+**Shipped toggles on the subtraction card:** same pattern as addition (including regrouping, **decimals (1 decimal place)**, and word problems).
 
 **Regrouping:** When Off, generated whole-number subtraction questions never require borrowing. When On, the session mixes with and without borrowing.
 
@@ -359,9 +363,7 @@ Examples of invalid questions when negative answers are disabled:
 4 - 12 = ?
 ```
 
-**Planned toggle:** decimals.
-
-**Decimals toggle (planned):**
+**Decimals toggle (shipped):**
 
 - **Off:** whole numbers only.
 - **On:** decimal minuend/subtrahend allowed; result respects **Allow answers below zero** setting.
@@ -395,11 +397,9 @@ Recommended multiplication ranges:
 - 1–10
 - 1–12
 
-**Shipped toggles on the multiplication card:** standard calculation, missing number, equations with `x`, word problems, fractions (with denominator mode).
+**Shipped toggles on the multiplication card:** standard calculation, missing number, equations with `x`, word problems, fractions (with denominator mode), **decimals (1 decimal place)**.
 
-**Planned toggle:** decimals.
-
-**Decimals toggle (planned):**
+**Decimals toggle (shipped):**
 
 - **Off:** whole-number factors and products only.
 - **On:** one or both factors may be decimals; product may be decimal.
@@ -446,17 +446,14 @@ correct answer = 7
 
 This guarantees whole-number division questions when decimals are **off**.
 
-**Shipped toggles on the division card:** standard calculation, missing number, equations with `x`, word problems, fractions (with denominator mode), division remainders.
+**Shipped toggles on the division card:** standard calculation, missing number, equations with `x`, word problems, fractions (with denominator mode), division remainders, **decimals (1 decimal place)**.
 
-**Planned toggle:** decimals.
-
-**Decimals toggle (planned):**
+**Decimals toggle (shipped):**
 
 - **Off:** current **clean whole-number** generation (answer × divisor = dividend) — unchanged.
 - **On:** additional generation modes, e.g.:
   - Decimal dividend with whole divisor → decimal quotient
   - Whole dividend ÷ whole divisor → terminating decimal quotient (when exact)
-  - Optional: decimal divisor (later scope)
 - When decimals are off, never generate questions whose exact answer is non-integer.
 - Example (decimals on): `7.5 ÷ 3 = ?` → `2.5`
 
@@ -465,7 +462,7 @@ This guarantees whole-number division questions when decimals are **off**.
 Rounding should support:
 
 - Enable/disable toggle
-- Round to nearest **10** and/or **100** (at least one when enabled)
+- Round to nearest **10**, **100**, **whole number**, **tenth**, and/or **hundredth** (at least one when enabled)
 - A range of whole numbers to round (e.g. 1–99)
 
 Example question:
@@ -533,9 +530,8 @@ type AdditionConfig = {
   leftMax: number;
   rightMin: number;
   rightMax: number;
-  /** Planned — see §8.1 */
+  /** Shipped — 1 decimal place; see §8.1 */
   allowDecimals?: boolean;
-  decimalPlaces?: 1 | 2;
 };
 
 type SubtractionConfig = {
@@ -545,9 +541,8 @@ type SubtractionConfig = {
   secondMin: number;
   secondMax: number;
   allowNegativeAnswers: boolean;
-  /** Planned — see §8.2 */
+  /** Shipped — see §8.2 */
   allowDecimals?: boolean;
-  decimalPlaces?: 1 | 2;
 };
 
 type MultiplicationConfig = {
@@ -556,9 +551,8 @@ type MultiplicationConfig = {
   leftMax: number;
   rightMin: number;
   rightMax: number;
-  /** Planned — see §8.3 */
+  /** Shipped — see §8.3 */
   allowDecimals?: boolean;
-  decimalPlaces?: 1 | 2;
 };
 
 type DivisionConfig = {
@@ -567,9 +561,8 @@ type DivisionConfig = {
   answerMax: number;
   divisorMin: number;
   divisorMax: number;
-  /** Planned — see §8.4 */
+  /** Shipped — see §8.4 */
   allowDecimals?: boolean;
-  decimalPlaces?: 1 | 2;
 };
 
 type MathLearningConfig = {
@@ -604,10 +597,19 @@ type MathLearningConfig = {
   /** Shipped — see §38 */
   trigonometry: TrigonometryConfig;
 
+  /** Shipped — see §41 */
+  logarithm: LogarithmConfig;
+
+  /** Shipped — see §34 */
+  differentiation: CalculusOpConfig;
+  integration: CalculusOpConfig;
+
   mode: 'practice' | 'quiz' | 'timed';
   questionsCount: number;
   answerEntryMode: 'multiple_choice' | 'keyboard';
-  answerOptionsCount: 2 | 3 | 4 | 5 | 6;
+  answerOptionsCount: 2 | 3 | 4 | 6;
+  /** Shipped — MC only; requires Confirm tap before answer is counted */
+  confirmAnswerBeforeSubmit: boolean;
   maxFinalResult: 10 | 20 | 100 | 1000 | 'unlimited';
   timerEnabled: boolean;
   timerSecondsPerQuestion: number;
@@ -675,12 +677,40 @@ type TrigonometryConfig = {
   questionKinds: { pickFormula: boolean; nameSide: boolean; findAngle: boolean };
 };
 
+/** Shipped — see §41 */
+type LogarithmConfig = {
+  enabled: boolean;
+  productRule: boolean;
+  quotientRule: boolean;
+  powerRule: boolean;
+  /** log₂, log₃, log₅, log₁₀ — integer answers */
+  numericLog: boolean;
+  /** ln(e), ln(e²), etc. */
+  numericLn: boolean;
+};
+
+/** Shipped — see §34 */
+type CalculusOpConfig = {
+  enabled: boolean;
+  powerRule: boolean;
+  constantRule: boolean;
+  simpleSum: boolean;
+  naturalLogRule: boolean;
+  trigRule: boolean;
+  /** Differentiation: quotient rule; Integration: simplify fractions then integrate */
+  quotientRule: boolean;
+};
+
 /** Shipped — see §27; content/navigation, not session generation */
 type LearnTopicId =
+  | 'shapes' | 'numbers' | 'patterns' | 'clock'
   | 'addition' | 'subtraction' | 'multiplication' | 'division'
-  | 'squaring' | 'squareRoots' | 'rounding' | 'orderOfOperations'
-  | 'equationsX' | 'equationsXY' | 'geometry' | 'fractions' | 'comparison'
-  | 'clock' | 'patterns' | 'trigonometry' | 'differentiation' | 'integration';
+  | 'comparison' | 'rounding' | 'fractions'
+  | 'squaring' | 'square_roots' | 'geometry' | 'order_of_operations'
+  | 'equivalent_expressions'
+  | 'equations_x' | 'equations_xy'
+  | 'trigonometry' | 'logarithm'
+  | 'differentiation' | 'integration';
 ```
 
 **Profiles (shipped):** Persisted separately from `MathLearningConfig`:
@@ -926,6 +956,7 @@ Personal info
 Practice mode: Practice | Quiz | Timed
 Questions: 10
 Answer entry: Multiple choice | Keyboard
+Confirm answer (MC): On | Off
 Answer choices: 4
 Maximum answer (final result): Up to 100
 Timer … / Timed duration …
@@ -1060,10 +1091,11 @@ Practice mode is the default mode.
 In practice mode:
 
 1. App shows one question.
-2. User selects an answer.
-3. App immediately shows whether the answer is correct or wrong.
-4. App shows the correct answer if the selected answer is wrong.
-5. User continues to the next question.
+2. User selects an answer (or types in keyboard mode).
+3. If **Confirm answer** is on and the question uses multiple choice, user taps **Confirm** before feedback.
+4. App immediately shows whether the answer is correct or wrong.
+5. App shows the correct answer if the selected answer is wrong.
+6. User continues to the next question.
 
 Practice mode is optimized for learning.
 
@@ -1128,8 +1160,13 @@ Default recommendation:
 
 The app supports two answer entry modes (configurable on the learning plan):
 
-- **Multiple choice** — 2, 3, 4, 5, or 6 answer choices (default for younger users)
-- **Keyboard** — user types numeric answers, fractions (`3/4`), division remainders (`3 R 2`), or equation expressions after `x=`
+- **Multiple choice** — 2, 3, 4, or 6 answer choices (default for younger users)
+- **Keyboard** — user types numeric answers, fractions (`3/4`), division remainders (`3 R 2`), equation expressions after `x=`, or calculus/log symbolic expressions where supported
+
+Optional **Confirm answer** toggle (multiple choice only):
+
+- **Off (default):** tapping an option submits immediately (practice shows feedback at once; timed counts the answer at once).
+- **On:** user selects an option, then taps **Confirm** before the answer is counted. Practice shows feedback after confirm; timed submits on confirm.
 
 Reasons to default to multiple choice:
 
@@ -1139,7 +1176,7 @@ Reasons to default to multiple choice:
 
 ### 15.1 Answer options count
 
-Supported options: **2, 3, 4, 5, 6**.
+Supported options: **2, 3, 4, 6** (not 5).
 
 Recommended defaults:
 
@@ -1164,12 +1201,13 @@ When keyboard mode is selected:
 - Division remainders are enabled (quotient R remainder format is awkward on keyboard).
 - Geometry **formula** questions (always multiple choice).
 - Geometry **π-form** calculate questions (circle, cone, cylinder — always multiple choice, e.g. `10π`).
+- Comparison, equivalent expressions, fraction visuals, shapes, clock, patterns, trigonometry, **logarithms**, and **calculus** questions (always multiple choice in v1).
 
 Settings shows a note when geometry is enabled and keyboard is selected: formula and π questions still use answer choices.
 
-### 15.3 Comparison, fraction visuals, clock, and patterns
+### 15.3 Comparison, fraction visuals, clock, patterns, calculus, and logarithms
 
-Comparison questions (§25), visual fraction identification (§28), clock/time (§31), and patterns (§32) are **multiple choice only** in all modes.
+Comparison questions (§25), visual fraction identification (§28), clock/time (§31), patterns (§32), trigonometry (§38), **logarithms (§41)**, and **calculus (§34)** are **multiple choice only** in all modes.
 
 Example with 2 answers:
 
@@ -1519,7 +1557,7 @@ On app start:
 - If onboarding is completed for the active profile, app goes to the home screen.
 - If onboarding is not completed, app starts profile setup.
 
-**Progress screen (shipped):** Recent sessions, streak and stats by operation (including Geometry), and gentle adaptation hints based on recent performance.
+**Progress screen (shipped):** Recent sessions, streak and stats by operation (including Geometry, Logarithms, Calculus), and **gentle adaptation** hints on the home screen when recent misses cluster on one enabled operation.
 
 ---
 
@@ -1527,7 +1565,17 @@ On app start:
 
 The app includes the following screens.
 
-### 21.1 Profile setup (onboarding and add profile)
+### 21.1 Language selection (first launch)
+
+Purpose:
+
+- Choose **English** or **Macedonian** before the main app navigation loads.
+
+Main action:
+
+- Continue → profile setup
+
+### 21.2 Profile setup (onboarding and add profile)
 
 Purpose:
 
@@ -1543,7 +1591,7 @@ Main action:
 
 - Continue → age screen or recommended plan (depending on flow)
 
-### 21.2 Onboarding: Age screen
+### 21.3 Onboarding: Age screen
 
 Purpose:
 
@@ -1553,7 +1601,7 @@ Main action:
 
 - Continue → recommended plan
 
-### 21.3 Recommended plan screen
+### 21.4 Recommended plan screen
 
 Purpose:
 
@@ -1565,7 +1613,7 @@ Main actions:
 - Start learning
 - Customize
 
-### 21.4 Settings / learning plan screen
+### 21.5 Settings / learning plan screen
 
 Purpose:
 
@@ -1577,14 +1625,14 @@ Main action:
 
 - Save / Start session (practice, quiz, or timed per selected mode)
 
-### 21.5 Home screen
+### 21.6 Home screen
 
 Purpose:
 
 - Start practice, quiz, or timed run with the active profile’s plan.
 - Navigate to Settings, Progress, and **Learn**.
 
-### 21.6 Practice session screen
+### 21.7 Practice session screen
 
 Purpose:
 
@@ -1592,14 +1640,14 @@ Purpose:
 - Multiple choice or keyboard (per settings and question type).
 - Immediate feedback after each answer.
 
-### 21.7 Quiz session screen
+### 21.8 Quiz session screen
 
 Purpose:
 
 - Fixed question count; no per-question feedback until the end.
 - Result screen with score and breakdown.
 
-### 21.8 Timed session screen (shipped)
+### 21.9 Timed session screen (shipped)
 
 Purpose:
 
@@ -1607,13 +1655,13 @@ Purpose:
 - Optional 15-second penalty on wrong answers.
 - Result screen with score and per-question breakdown.
 
-### 21.9 Progress screen (shipped)
+### 21.10 Progress screen (shipped)
 
 Purpose:
 
 - Recent session list, streak and operation stats, gentle adaptation suggestions.
 
-### 21.10 Result screen
+### 21.11 Result screen
 
 Purpose:
 
@@ -1627,7 +1675,7 @@ Main actions:
 - Change learning plan / Settings
 - Go home
 
-### 21.11 Learn (shipped)
+### 21.12 Learn (shipped)
 
 Purpose:
 
@@ -1647,33 +1695,41 @@ Home → Learn → Topic list → Tutorial for selected topic
 The current shipped product includes:
 
 - **Multi-profile** support: profile name, learner name, age; switch / edit / add / remove in Settings
+- **Internationalization:** English and Macedonian UI; first-run language picker; localized Learn tutorials (mk overrides), word problems, privacy policy, and operation labels (§42)
 - Profile setup onboarding (profile name + name + age); age **1–150**; optional recommended plans use **4–12** brackets
 - Recommended learning plan by age; full learning plan customization per profile
-- Operations: addition, subtraction, multiplication, division, squaring, square roots, rounding, order of operations, equations with one unknown (`x`) and two unknowns (`x`, `y`)
-- Per-operation toggles: standard calculation, missing number, word problems, fractions (with denominator mode), regrouping (add/sub), division remainders
+- Operations: addition, subtraction, multiplication, division, squaring, square roots, rounding, order of operations, equations with one unknown (`x`) and two unknowns (`x`, `y`), **equivalent expressions**
+- Per-operation toggles: standard calculation, missing number, word problems, fractions (with denominator mode), regrouping (add/sub), division remainders, **decimals (1 decimal place)**
 - **Comparison:** relational, ordering, expression compare, fraction/percent/measurement subtypes
 - **Shapes:** identify shape, color, or both; continue shape and colored-shape cycles using the selected shape pool
-- **Numbers:** count objects, before/after, missing number, compare quantities, and odd/even
+- **Numbers:** before/after, missing number, odd/even; visual counting and quantity comparison configured under Shapes
 - **Clock / time:** analog read and elapsed time
 - **Patterns & sequences:** arithmetic, geometric, and number patterns; visual shape patterns live under Shapes
-- **Equivalent expressions:** square identities, parentheses transformations, distributive property, difference of squares, and factorization
-- **Settings workflow:** collapsible enabled sections, a header save action, unsaved-changes navigation confirmation, and focused Learn → Try settings
-- **Decimals toggle** on addition, subtraction, multiplication, division (1 decimal place)
-- **Learn** reference library with tutorials (including geometry diagrams)
+- **Settings workflow:** collapsible enabled sections, header save action, unsaved-changes navigation confirmation, and focused Learn → Try settings
+- **Learn** reference library with **22 topics** (easiest → hardest), formula tables, and **Try in practice** for every topic
 - **Fraction recognition:** visual bar models (MC identification)
-- **Differentiation & Integration:** symbolic MC (power rule, constants, simple sums — §34)
-- **Trigonometry v1:** right-triangle diagrams; pick formula and name sides; MC only — no numeric calculation (§38)
+- **Logarithms:** product, quotient, and power rules; numeric log (bases 2, 3, 5, 10) and ln values (§41)
+- **Differentiation & Integration:** symbolic MC — power rule, constants, simple sums, natural log, sin/cos, quotient rule (differentiation) / simplify fractions (integration) (§34)
+- **Trigonometry v1:** right-triangle diagrams; pick formula, name sides, find angle; MC only — no numeric calculation (§38)
 - **Privacy policy** in-app screen (Home)
 - **Compact question card** layout for short prompts with visuals below (clock, shapes, fractions, patterns, trigonometry)
 - **Geometry Phase 1:** perimeter, area, volume; formula + calculate; π-form multiple choice for circle/cone/cylinder
 - Session modes: **practice**, **quiz**, **timed**
-- Answer entry: multiple choice (**2–6** choices) or **keyboard** (with overrides for geometry formula/π and division remainders)
+- Answer entry: multiple choice (**2, 3, 4, 6** choices) or **keyboard** (with overrides for geometry formula/π, division remainders, and MC-only topics)
+- **Confirm before submit** for multiple choice (optional toggle)
 - Configurable question count, per-question timer, timed session duration, timed wrong-answer penalty
 - Maximum final result cap (excluding rounding and order of operations)
-- Progress: session history, streak/stats by operation (including Geometry, Comparison, and Trigonometry), gentle adaptation hints
+- **Gentle adaptation** hints on home (focused practice suggestion from recent misses)
+- Progress: session history, streak/stats by operation (including Geometry, Comparison, Trigonometry, Logarithms, Calculus), gentle adaptation card
 - Local persistence (Zustand + AsyncStorage); legacy single-profile migration
+- **Learn Try in practice:** open-ended single-question loop; optional save-to-profile; does **not** write session history
 
-This section documents what is built today. See **§29** for planned next items.
+**Known partial / not generated:**
+
+- `numberRecognition` toggle exists in Numbers config but is **not generated** (retired subtype)
+- `EquationUnknownConfig.mode` (`off` / `mixed` / `only`) exists in types but has **no settings UI** — behavior is driven by per-operation equation toggles only
+
+This section documents what is built today. See **§29** for the detailed status table.
 
 ---
 
@@ -1697,11 +1753,11 @@ These may be added later when they clearly serve learning goals.
 
 ### 24.1 Shipped (summary)
 
-See **§29 Implementation status** for a detailed shipped vs planned table. Highlights: profiles, geometry Phase 1, comparison, equations with `x` and `xy`, equivalent expressions, Learn and focused Try configuration, fraction visuals, Shapes, Numbers, clock/time, numeric and visual patterns, decimal toggles, trigonometry v1, differentiation/integration, timed mode, keyboard entry, regrouping, word problems, fractions, progress tracking, privacy policy, and compact visual layouts.
+See **§29 Implementation status** for a detailed shipped vs planned table. Highlights: profiles, geometry Phase 1, comparison, equations with `x` and `xy`, equivalent expressions, Learn (22 topics) and focused Try configuration, fraction visuals, Shapes, Numbers, clock/time, numeric and visual patterns, decimal toggles, trigonometry v1, **logarithms**, calculus (ln/trig/quotient), timed mode, keyboard entry, confirm before submit, regrouping, word problems, fractions, progress tracking, gentle adaptation, privacy policy, English + Macedonian UI, and compact visual layouts.
 
 ### 24.2 Shipped (recent)
 
-- Decimal toggles on basic operations (§8.1–§8.4) — **1 decimal place** in v1
+- Decimal toggles on basic operations (§8.1–§8.4) — **1 decimal place**
 - Expanded comparison subtypes (§25.5–§25.8)
 - Clock / time (§31) — analog read + elapsed; no digital-read subtype yet
 - Patterns & sequences (§32)
@@ -1710,10 +1766,14 @@ See **§29 Implementation status** for a detailed shipped vs planned table. High
 - Colored shape patterns with two- or three-item cycles
 - Collapsible Settings sections, top save action, and unsaved-changes confirmation
 - Learn → Try focused settings with optional save to the active profile
-- Differentiation & Integration (§34)
+- Differentiation & Integration expanded (§34): natural log, sin/cos, quotient rule / simplify fractions
+- **Logarithms** (§41): product, quotient, power rules; numeric log and ln
 - Trigonometry v1 (§38) — pick formula, name sides, find angle; diagram labels; MC only
+- **Confirm before submit** for multiple choice
+- **English + Macedonian** UI (§42)
 - In-app privacy policy
 - Compact question card for visual prompts (including trigonometry diagrams)
+- Gentle adaptation card on home (focused practice via `?focus=` parameter)
 
 ### 24.3 Later
 
@@ -1867,18 +1927,9 @@ Home → Learn → Topic list → Tutorial for selected topic
 
 ### 27.2 Topic list
 
-Mirrors curriculum areas, e.g.:
+Mirrors curriculum areas (22 topics, easiest → hardest):
 
-- Addition, Subtraction, Multiplication, Division
-- Squaring, Square roots, Rounding, Order of operations
-- Equations (x), Equations (x and y)
-- Geometry (perimeter, area, volume — sub-pages or overview)
-- Fractions (concepts + visual recognition)
-- Comparison
-- Clock / time (§31)
-- Patterns & sequences (§32)
-- Trigonometry (§38)
-- Differentiation, Integration (§34)
+1. Shapes → 2. Numbers → 3. Patterns → 4. Clock → 5. Addition → 6. Subtraction → 7. Multiplication → 8. Division → 9. Comparison → 10. Rounding → 11. Fractions → 12. Squaring → 13. Square roots → 14. Geometry → 15. Order of operations → 16. Equivalent expressions → 17. Equations (x) → 18. Equations (x and y) → 19. Trigonometry → 20. **Logarithms** → 21. Differentiation → 22. Integration
 
 **Product decision (recommended):** Show **all topics** in Learn regardless of practice settings — Learn is a reference library, not gated by the active learning plan.
 
@@ -1937,32 +1988,37 @@ Multiple choice only (see §15.3).
 | Area | Status | Notes |
 |---|---|---|
 | Multi-profile | **Shipped** | Profile name + learner name + age; switch / edit / add / remove in Settings |
+| Internationalization | **Shipped** | English + Macedonian; first-run language gate; mk Learn overrides (§42) |
 | Onboarding | **Shipped** | Profile setup screen; age 1–150; optional recommended plans use 4–12 brackets |
 | Session modes | **Shipped** | Practice, quiz, timed run |
-| Answer entry | **Shipped** | MC 2–6 or keyboard; geometry formula / π forced MC |
-| Per-operation toggles | **Shipped** | Standard, missing number, word problems, fractions, regrouping (add/sub) |
+| Answer entry | **Shipped** | MC 2/3/4/6 or keyboard; geometry formula / π forced MC; calculus/logs/trig MC only |
+| Confirm before submit | **Shipped** | Optional MC toggle; Confirm then feedback/submit |
+| Per-operation toggles | **Shipped** | Standard, missing number, word problems, fractions, regrouping (add/sub), decimals |
 | Special ops | **Shipped** | Squaring, square roots, rounding, order of ops, equations with one unknown (`x`) |
 | Two-variable equations | **Shipped** | §26 — two-equation systems; both equations include x and y |
+| Equivalent expressions | **Shipped** | Square identities, distribution, factorization, etc. |
 | Comparison (relational, ordering, expression) | **Shipped** | §25.2–§25.4; expression auto from enabled ops |
 | Comparison (fraction/percent/measurement) | **Shipped** | §25.5–§25.8 |
-| Learn / tutorials | **Shipped** | §27 |
+| Learn / tutorials | **Shipped** | §27 — 22 topics; Try in practice on all |
+| Learn Try in practice | **Shipped (partial)** | Open-ended loop; no session history / result screen |
 | Visual fraction recognition | **Shipped** | §28 |
 | Geometry Phase 1 | **Shipped** | Perimeter / area / volume; formula + calculate; dims 1–10; π-form MC |
-| Shapes | **Shipped** | §28.6 — shape/color recognition and visual patterns using the selected shape pool |
-| Numbers / early number sense | **Shipped** | §39 — counting, before/after, missing number, quantity comparison, odd/even |
-| Decimals toggle (add/sub/mul/div) | **Shipped (partial)** | §8.1–§8.4 — **1 decimal place** only |
+| Shapes | **Shipped** | §28.6 — shape/color recognition and visual patterns |
+| Numbers / early number sense | **Shipped (partial)** | §39 — before/after, missing, odd/even; `numberRecognition` not generated |
+| Decimals toggle (add/sub/mul/div) | **Shipped** | §8.1–§8.4 — **1 decimal place** only |
 | Clock / time | **Shipped (partial)** | §31 — analog read + elapsed; no digital-read subtype |
-| Patterns & sequences | **Shipped** | §32 — numeric patterns; visual and colored-shape cycles are configured under Shapes |
-| Equivalent expressions | **Shipped** | Square identities, parentheses transformations, distributive property, difference of squares, factorization |
-| Settings save/navigation UX | **Shipped** | Collapsible sections, header save icon, unsaved-changes save/leave/cancel modal |
-| Learn focused Try settings | **Shipped** | Topic-only settings with save-to-profile or start-without-saving actions |
-| Differentiation & Integration | **Shipped** | §34 — symbolic MC |
-| Trigonometry v1 | **Shipped (partial)** | §38 — pick formula, name sides, find angle; MC only; no numeric calculation |
+| Patterns & sequences | **Shipped** | §32 — numeric patterns; visual cycles under Shapes |
+| Settings save/navigation UX | **Shipped** | Collapsible sections, header save icon, unsaved-changes modal |
+| Logarithms | **Shipped** | §41 — product/quotient/power rules; numeric log (bases 2,3,5,10) and ln |
+| Differentiation & Integration | **Shipped** | §34 — power/constant/sum, ln, sin/cos, quotient/simplify-fraction |
+| Trigonometry v1 | **Shipped (partial)** | §38 — pick formula, name sides, find angle; MC only |
 | Privacy policy (in-app) | **Shipped** | Home → Privacy policy |
-| Compact question card | **Shipped** | Short prompts + visual below (clock, shapes, fractions, patterns, trigonometry) |
-| Progress | **Shipped** | Session history, streak/stats by operation, gentle adaptation |
+| Compact question card | **Shipped** | Short prompts + visual below |
+| Gentle adaptation | **Shipped** | Home card → focused practice when recent misses cluster |
+| Progress | **Shipped** | Session history, streak/stats by operation, adaptation hints |
 | Persistence | **Shipped** | Zustand + AsyncStorage; legacy single-profile migration |
-| Badges, parent dashboard, cloud sync | **Later** | §24.6 |
+| Equation-unknown mode (`off`/`mixed`/`only`) | **Partial** | Type only; no UI or runtime use |
+| Badges, parent dashboard, cloud sync | **Later** | §24.3 |
 
 ---
 
@@ -1971,7 +2027,7 @@ Multiple choice only (see §15.3).
 **Resolved (shipped):**
 
 1. Quiz mode — included in shipped product.
-2. Answer choices — **2–6** supported.
+2. Answer choices — **2, 3, 4, 6** supported (not 5).
 3. Multiple learner profiles — shipped (multi-profile on one device).
 4. Comparison core subtypes — shipped (§25.2–§25.4).
 5. Two-variable equations — shipped (§26).
@@ -1984,8 +2040,11 @@ Multiple choice only (see §15.3).
 12. Expanded comparison subtypes — shipped (§25.5–§25.8).
 13. Privacy policy screen — shipped.
 14. Quiz/timed result screen question review — shipped on immediate result screen (§37 notes history drill-down is later).
-15. Differentiation & Integration — shipped (§34).
+15. Differentiation & Integration — shipped (§34): power, constant, sum, ln, trig, quotient/simplify-fraction.
 16. Trigonometry v1 — shipped (§38): formula selection and side naming; no numeric calculation yet.
+17. **Logarithms — shipped (§41).**
+18. **Confirm before submit — shipped.**
+19. **English + Macedonian UI — shipped (§42).**
 
 **Still open:**
 
@@ -1995,14 +2054,15 @@ Multiple choice only (see §15.3).
 4. Should the maximum final result cap apply only to addition, or to all capped operations as implemented today (excluding rounding and order of operations)?
 5. Comparison: confirm “Left / Right / Equal” vs symbol labels for expression compare.
 6. Two-variable equations: separate card vs mode on existing Equations card.
-7. Decimal places default: 1 vs 2 vs user-selectable?
-8. Division with decimals: decimal divisor in v1 or quotients only?
+7. Decimal places: add **2 decimal places** option or keep 1 only?
+8. Division with decimals: decimal divisor in a future release or quotients only?
 9. Measurement: metric-only first vs imperial?
 10. Clock: 12h default for all ages or follow locale?
 11. Expression compare: keep auto-only or add override toggle?
-12. Calculus: max power **n** in generators (v1 uses 2–5)?
-13. Integration MC: is `+ C` always required in correct answers?
-14. Calculus settings: separate cards (current) vs combined “Calculus” card?
+12. ~~Calculus: max power **n** in generators?~~ **Resolved:** exponents 2–5 in v1.
+13. ~~Integration MC: is `+ C` always required?~~ **Resolved:** yes, where applicable.
+14. ~~Calculus settings: separate cards vs combined?~~ **Resolved:** separate Differentiation and Integration cards.
+15. Logarithm: add separate base toggles (2/3/5/10) vs single “Find log value” toggle?
 
 ---
 
@@ -2116,23 +2176,31 @@ Roll up under operation label **Shapes**.
 
 ### 34.1 Purpose
 
-Introduce basic **symbolic** differentiation and integration using the power rule and simple constants — for older or self-directed learners. Off by default in all age recommended plans.
+Introduce basic **symbolic** differentiation and integration — for older or self-directed learners. Off by default in all age recommended plans.
 
 ### 34.2 Question types
 
 **Differentiation (MC only):**
 
-- Power rule: `d/dx(x^n) = ?` → e.g. `2x` for n=2
-- Constant rule: `d/dx(c) = ?` → `0`
-- Constant multiple: `d/dx(k·x^n) = ?`
-- Simple sum (optional toggle): `d/dx(x² + 3x) = ?`
+- Power rule: `(x^n)' = ?` → e.g. `(x³)' = 3x²`
+- Constant rule: `(c)' = ?` → `0`
+- Constant multiple: `(k·x^n)' = ?`
+- Simple sum (optional toggle): `(x² + 3x)' = ?`
+- Natural log: `(ln x)' = ?` → `1/x`
+- Trig: `(sin x)' = cos x`, `(cos x)' = −sin x` (with optional coefficient)
+- **Quotient rule:** ratios that **cannot** be simplified to a single power first, e.g. `(2x/(x + 3))' = 6/(x + 3)²` using `(f/g)' = (f'g − fg') / g²`
 
 **Integration (MC only):**
 
 - Power rule: `∫ x^n dx = ?` → e.g. `x³/3 + C` (n ≥ 1)
 - Constant: `∫ k dx = ?` → `kx + C`
 - Constant multiple: `∫ k·x^n dx = ?`
+- Natural log: `∫ (1/x) dx = ?` → `ln x + C`
+- Trig: `∫ sin x dx = −cos x + C`, `∫ cos x dx = sin x + C`
+- **Simplify fractions:** e.g. `∫ (x³/x) dx = ∫ x² dx = x³/3 + C` (integration has no quotient rule — simplify first)
 - Answers include **`+ C`** where applicable
+
+Exponents **2–5**, coefficients **2–5**, constants **1–12**. Questions use prime notation `(expression)' = ?`.
 
 ### 34.3 Settings
 
@@ -2143,15 +2211,18 @@ Separate **Differentiation** and **Integration** cards. Each has:
 | Master on/off | Include in session pool |
 | Power rule | `x^n` terms |
 | Constant rule | Constants / `∫ k dx` |
-| Simple sum | Two-term expressions (differentiation) or sum of integrable terms |
+| Simple sum | Two-term expressions |
+| Natural log | `(ln x)'` / `∫(1/x) dx` |
+| sin & cos | Trig derivatives and integrals |
+| Quotient rule (differentiation) / Simplify fractions (integration) | See §34.2 |
 
 ### 34.4 Answer entry
 
-Symbolic **multiple choice only** (expressions like `2x`, `x³/3 + C`). Keyboard not used in v1.
+Symbolic **multiple choice only** (expressions like `2x`, `6/(x + 3)²`, `x³/3 + C`). Keyboard not used in v1.
 
 ### 34.5 Learn
 
-Separate **Differentiation** and **Integration** tutorials: intuition, power rule, worked examples, “Try in practice” links.
+Separate **Differentiation** and **Integration** tutorials: rules, quotient-rule formula table with mnemonic (“Low d-High minus High d-Low, over Low squared”), worked examples, “Try in practice” links.
 
 ### 34.6 Progress
 
@@ -2206,7 +2277,7 @@ Default ratio toggles: sin and cos on; tan and cot off.
 
 ### 38.5 Answer entry
 
-**Multiple choice only** (2–6 options). Long formula text uses a **stacked** vertical layout. Keyboard entry is not used.
+**Multiple choice only** (2, 3, 4, or 6 options). Long formula text uses a **stacked** vertical layout. Keyboard entry is not used.
 
 ### 38.6 Learn
 
@@ -2351,6 +2422,71 @@ The general upper limit uses the shared discrete slider UI with stops at **5, 10
 
 ---
 
+## 41. Logarithms (shipped — v1)
+
+### 41.1 Purpose
+
+Practice **logarithm rules** and **evaluating log/ln expressions** symbolically — for older or self-directed learners. Off by default in all age recommended plans.
+
+### 41.2 Question types (MC only)
+
+| Subtype | Example | Setting toggle |
+|---|---|---|
+| Product rule | `log(4 × 5) = ?` → `log 4 + log 5` | `productRule` |
+| Quotient rule | `log(20/4) = ?` → `log 20 − log 4` | `quotientRule` |
+| Power rule | `log(x³) = ?` → `3 log x` | `powerRule` |
+| Find log value | `log₂(8) = ?` → `3` (bases 2, 3, 5, 10) | `numericLog` |
+| Find ln value | `ln(e²) = ?` → `2` | `numericLn` |
+
+Distractors avoid equivalent wrong forms (e.g. `log 45` when correct is `log 4 + log 5`).
+
+### 41.3 Settings
+
+Dedicated **Logarithms** card:
+
+- Master on/off
+- Per-subtype toggles: Product rule, Quotient rule, Power rule, **Find log value**, **Find ln value**
+
+### 41.4 Answer entry
+
+**Multiple choice only.** Log MC labels show the expression only (no redundant `x=` prefix).
+
+### 41.5 Learn
+
+**Logarithms** topic in Learn (§27): product, quotient, and power rules; numeric examples; formula table; “Try in practice” opens focused logarithm session.
+
+### 41.6 Progress
+
+Roll up under operation label **Logarithms**.
+
+---
+
+## 42. Internationalization (shipped)
+
+### 42.1 Supported locales
+
+- **English (`en`)** — default source strings
+- **Macedonian (`mk`)** — full UI translation
+
+### 42.2 Language selection
+
+- **First launch:** language picker before main navigation (required for Android stability).
+- **Settings:** language can be changed at any time; persisted in app store.
+
+### 42.3 Localized content
+
+| Area | Localization |
+|---|---|
+| UI chrome | `common`, `navigation`, `home`, `onboarding`, `settings`, `practice`, `progress`, `privacy`, `questions` namespaces |
+| Learn tutorials | Macedonian overrides in `overrides.mk.ts`; English source in `learnTopics.ts` |
+| Word problems | Macedonian template set |
+| Privacy policy | Localized sections |
+| Operation labels | i18n via `operationLabel()` |
+
+Mathematical notation in generated questions uses shared formatters; not every symbol is locale-specific beyond the questions namespace.
+
+---
+
 ## 33. Summary
 
 The app provides a simple, friendly math learning experience for **learners of all ages**, with optional age-based recommended plans and flexible profiles for multiple learners on one device.
@@ -2358,11 +2494,11 @@ The app provides a simple, friendly math learning experience for **learners of a
 First-time flow:
 
 ```text
-Profile setup (name + age) → Recommended learning plan → Home → Practice / Quiz / Timed / Learn / Settings / Progress
+Language → Profile setup (name + age) → Recommended learning plan → Home → Practice / Quiz / Timed / Learn / Settings / Progress
 ```
 
-The learning plan is flexible but not overwhelming: each operation (plus geometry, comparison, and other topic cards) is configurable separately, with per-operation toggles for question styles. Multiple-choice answers are the default; keyboard mode is available where appropriate. Practice gives immediate feedback; quiz and timed modes summarize at the end.
+The learning plan is flexible but not overwhelming: each operation (plus geometry, comparison, logarithms, calculus, and other topic cards) is configurable separately, with per-operation toggles for question styles. Multiple-choice answers are the default; keyboard mode is available where appropriate. Optional **Confirm answer** for multiple choice. Practice gives immediate feedback; quiz and timed modes summarize at the end.
 
-**Shipped today:** arithmetic, decimals toggle (1 place), fractions on operation cards, regrouping, word problems, equations with `x` and `xy`, equivalent expressions, geometry, comparison, Shapes with color and pattern questions, Numbers / early number sense, clock/time, numeric patterns, trigonometry v1, differentiation/integration, focused Learn/Try configuration, multi-profile, progress tracking, privacy policy, unsaved-settings protection, and compact visual layouts.
+**Shipped today:** arithmetic, decimals toggle (1 place), fractions on operation cards, regrouping, word problems, equations with `x` and `xy`, equivalent expressions, geometry, comparison, Shapes with color and pattern questions, Numbers / early number sense, clock/time, numeric patterns, trigonometry v1, **logarithms**, calculus (power/constant/sum/ln/trig/quotient), focused Learn/Try configuration (22 topics), multi-profile, progress tracking, gentle adaptation, privacy policy, unsaved-settings protection, compact visual layouts, **English + Macedonian** UI.
 
 **Later:** dedicated decimal/percent module, money word problems, Learn quality pass (§35), richer timed stats (§36), history question drill-down (§37), gamification, cloud sync, parent dashboard.

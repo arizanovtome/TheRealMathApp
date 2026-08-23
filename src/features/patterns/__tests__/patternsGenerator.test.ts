@@ -38,7 +38,7 @@ describe('patternsGenerator', () => {
     expect(q!.answerOptions).toContain(q!.correctAnswer);
   });
 
-  it('always offers all four shape icons as answer choices', () => {
+  it('caps shape pattern answer choices at answerOptionsCount', () => {
     const config = getRecommendedLearningPlan(5);
     config.shapeRecognition.enabled = true;
     config.answerOptionsCount = 2;
@@ -54,9 +54,9 @@ describe('patternsGenerator', () => {
     for (let i = 0; i < 20; i++) {
       const q = tryGeneratePatternQuestion(config);
       expect(q?.subtype).toBe('shape_pattern');
-      expect(q!.answerOptions).toHaveLength(4);
+      expect(q!.answerOptions).toHaveLength(2);
       expect(q!.answerOptions).toContain(q!.correctAnswer);
-      expect(new Set(q!.answerOptions).size).toBe(4);
+      expect(new Set(q!.answerOptions).size).toBe(2);
     }
   });
 
@@ -162,7 +162,7 @@ describe('patternsGenerator', () => {
     expect(observedCycleLengths).toEqual(new Set([2, 3]));
   });
 
-  it.each<AnswerOptionsCount>([2, 3, 4, 5, 6])(
+  it.each<AnswerOptionsCount>([2, 3, 4, 6])(
     'provides exactly %i unique color-and-shape answers when configured',
     (answerOptionsCount) => {
       const config = getRecommendedLearningPlan(8);

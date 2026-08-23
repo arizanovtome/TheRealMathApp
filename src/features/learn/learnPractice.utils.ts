@@ -50,6 +50,7 @@ function disableAllQuestionSources(config: MathLearningConfig): MathLearningConf
     differentiation: { ...config.differentiation, enabled: false },
     integration: { ...config.integration, enabled: false },
     trigonometry: { ...config.trigonometry, enabled: false },
+    logarithm: { ...config.logarithm, enabled: false },
     geometry: { ...config.geometry, enabled: false },
   };
 }
@@ -227,5 +228,6 @@ export function mergeFocusedOperationIntoProfile(
     case 'differentiation': return { ...profileConfig, differentiation: focusedConfig.differentiation };
     case 'integration': return { ...profileConfig, integration: focusedConfig.integration };
     case 'trigonometry': return { ...profileConfig, trigonometry: focusedConfig.trigonometry };
+    case 'logarithm': return { ...profileConfig, logarithm: focusedConfig.logarithm };
   }
 }

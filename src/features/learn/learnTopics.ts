@@ -1,5 +1,7 @@
 import type { GeometryMeasure, GeometryShape } from '@/features/geometry/geometry.types';
+import { buildDifferentiationFormulaTables } from '@/features/learn/calculusLearnContent';
 import { buildTrigonometryFormulaTables } from '@/features/learn/trigonometryLearnContent';
+import { buildLogarithmFormulaTables } from '@/features/logarithm/logarithmLearnContent';
 import type { TrigonometryDiagram } from '@/features/trigonometry/trigonometry.types';
 import type { LearnPracticeTarget } from '@/features/learn/learnPractice.utils';
 import { LEARN_TOPIC_IDS_EASIEST_TO_HARDEST } from '@/constants/topicOrder';
@@ -92,11 +94,13 @@ const LEARN_TOPICS_UNSORTED: LearnTutorial[] = [
     sections: [
       {
         heading: 'What is multiplication?',
-        body: 'Multiplication is a fast way to add the same number many times. 3 × 4 means three groups of four.',
+        body:
+          'Multiplication is a fast way to add the same number many times. 3 × 4 means three groups of four. When you multiply, you add the same number several times — for example, 4 × 3 = 4 + 4 + 4 = 12, and 5 × 2 = 5 + 5 = 10. Multiplication is a shortcut for repeated addition.',
       },
     ],
+    formulaTables: undefined,
     examples: [
-      { prompt: '3 × 4 = ?', solution: '12' },
+      { prompt: '4 × 3 = ?', solution: '12 (4 + 4 + 4)' },
       { prompt: '6 × 5 = ?', solution: '30' },
     ],
     tryInPractice: { kind: 'operation', operation: 'multiplication' },
@@ -104,16 +108,27 @@ const LEARN_TOPICS_UNSORTED: LearnTutorial[] = [
   {
     id: 'division',
     title: 'Division',
-    summary: 'Sharing equally or finding how many groups.',
+    summary: 'Sharing equally, finding how many groups, or splitting with a remainder.',
     sections: [
       {
         heading: 'What is division?',
         body: 'Division splits a total into equal parts. The answer can be how many in each group or how many groups.',
       },
+      {
+        heading: 'Quotient and remainder',
+        body:
+          'Sometimes division does not come out evenly. The whole-number part is the quotient and what is left over is the remainder. For example, 17 ÷ 5 = 3 R 2 because 5 × 3 = 15 and 17 − 15 = 2.',
+      },
+      {
+        heading: 'Remainders with negative numbers',
+        body:
+          'The remainder is always written as a positive number. When the quotient is negative, the remainder is still positive. For example, −23 ÷ 5 = −4 R 3 because (−4) × 5 + 3 = −23.',
+      },
     ],
     examples: [
       { prompt: '12 ÷ 3 = ?', solution: '4' },
-      { prompt: '20 ÷ 4 = ?', solution: '5' },
+      { prompt: '17 ÷ 5 = ? remainder ?', solution: '3 R 2' },
+      { prompt: '−23 ÷ 5 = ? remainder ?', solution: '−4 R 3' },
     ],
     tryInPractice: { kind: 'operation', operation: 'division' },
   },
@@ -316,6 +331,36 @@ const LEARN_TOPICS_UNSORTED: LearnTutorial[] = [
     tryInPractice: { kind: 'operation', operation: 'trigonometry' },
   },
   {
+    id: 'logarithm',
+    title: 'Logarithms',
+    summary: 'Inverse of exponentiation — log rules, base 10, and the natural log ln with e.',
+    sections: [
+      {
+        heading: 'What is a logarithm?',
+        body:
+          'A logarithm answers: “To what power must the base be raised to get this number?” For example, log₁₀(100) = 2 because 10² = 100. Logarithms undo exponentiation, just as square roots undo squaring.',
+      },
+      {
+        heading: 'The number e',
+        body:
+          'e ≈ 2.718… is a special constant that appears throughout calculus. The natural logarithm ln uses base e. By definition, ln(e) = 1 and ln(eⁿ) = n.',
+      },
+      {
+        heading: 'Using log rules',
+        body:
+          'Product, quotient, and power rules let you rewrite logs without a calculator. Practice may ask you to expand log(4 × 5) as log 4 + log 5, simplify log(x³) as 3 log x, or evaluate log₁₀(1000) and ln(e²).',
+      },
+    ],
+    formulaTables: buildLogarithmFormulaTables(),
+    examples: [
+      { prompt: 'log(6 × 5) = ?', solution: 'log 6 + log 5' },
+      { prompt: 'log₁₀(1000) = ?', solution: '3' },
+      { prompt: 'ln(e²) = ?', solution: '2' },
+      { prompt: 'log(x⁴) = ?', solution: '4 log x' },
+    ],
+    tryInPractice: { kind: 'operation', operation: 'logarithm' },
+  },
+  {
     id: 'fractions',
     title: 'Fractions',
     summary: 'Parts of a whole and fraction calculations.',
@@ -471,14 +516,31 @@ const LEARN_TOPICS_UNSORTED: LearnTutorial[] = [
         body: "Differentiate each term separately and add the results. Example: (x² + 3x)' = 2x + 3.",
       },
       {
+        heading: 'Natural log',
+        body: "The derivative of ln x is 1/x. Example: (ln x)' = 1/x. This connects to the special constant e and to integration of 1/x.",
+      },
+      {
+        heading: 'Trigonometric functions',
+        body: "(sin x)' = cos x and (cos x)' = −sin x. With a constant multiplier: (3 sin x)' = 3 cos x.",
+      },
+      {
+        heading: 'Quotient rule (division rule)',
+        body: "Use when differentiating a ratio of two functions f(x)/g(x). The rule is (f/g)' = (f'g − fg') / g² — “Low d-High minus High d-Low, over Low squared,” where Low is the denominator and High is the numerator. Example: for 2x/(x + 3), f = 2x, g = x + 3, so (2·(x + 3) − 2x·1)/(x + 3)² = 6/(x + 3)².",
+      },
+      {
         heading: 'Same idea, different notation',
         body: "Practice questions use prime notation: (expression)' = ?. Textbooks often write d/dx(expression) instead — for example, d/dx(x³) = 3x² means the same as (x³)' = 3x².",
       },
     ],
-    formula: "(xⁿ)' = n·xⁿ⁻¹",
+    formula: "(f/g)' = (f'g − fg') / g²",
+    formulaTables: buildDifferentiationFormulaTables(),
     examples: [
       { prompt: "(x²)' = ?", solution: '2x' },
       { prompt: "(x³)' = ?", solution: '3x²' },
+      { prompt: "(ln x)' = ?", solution: '1/x' },
+      { prompt: "(sin x)' = ?", solution: 'cos x' },
+      { prompt: "(cos x)' = ?", solution: '−sin x' },
+      { prompt: "(2x/(x + 3))' = ?", solution: '6/(x + 3)²' },
       { prompt: "(5)' = ?", solution: '0' },
       { prompt: "(x² + 4x)' = ?", solution: '2x + 4' },
     ],
@@ -495,7 +557,19 @@ const LEARN_TOPICS_UNSORTED: LearnTutorial[] = [
       },
       {
         heading: 'Power rule',
-        body: 'Add 1 to the exponent, divide by the new exponent, then add + C. Example: ∫x² dx = x³/3 + C.',
+        body: 'Add 1 to the exponent, divide by the new exponent, then add + C. Example: ∫x² dx = x³/3 + C. This rule does not apply when the exponent is −1.',
+      },
+      {
+        heading: 'Integrating 1/x',
+        body: 'When the exponent is −1, the integral is a logarithm: ∫(1/x) dx = ln|x| + C. At this level we often write ln x + C for x > 0.',
+      },
+      {
+        heading: 'Trigonometric functions',
+        body: '∫ sin x dx = −cos x + C and ∫ cos x dx = sin x + C. A constant multiplier stays in front: ∫ 3 sin x dx = −3 cos x + C.',
+      },
+      {
+        heading: 'Simplify fractions',
+        body: 'Integration has no quotient rule like differentiation. When the integrand is a fraction of powers of x, simplify the fraction first, then use the power rule. Example: ∫(x³/x) dx = ∫ x² dx = x³/3 + C.',
       },
       {
         heading: 'Constants',
@@ -509,6 +583,10 @@ const LEARN_TOPICS_UNSORTED: LearnTutorial[] = [
     formula: '∫xⁿ dx = xⁿ⁺¹/(n+1) + C  (n ≠ −1)',
     examples: [
       { prompt: '∫x² dx = ?', solution: 'x³/3 + C' },
+      { prompt: '∫(1/x) dx = ?', solution: 'ln x + C' },
+      { prompt: '∫ sin x dx = ?', solution: '−cos x + C' },
+      { prompt: '∫ cos x dx = ?', solution: 'sin x + C' },
+      { prompt: '∫(x³/x) dx = ?', solution: 'x³/3 + C' },
       { prompt: '∫x dx = ?', solution: 'x²/2 + C' },
       { prompt: '∫4 dx = ?', solution: '4x + C' },
       { prompt: '∫2x² dx = ?', solution: '2x³/3 + C' },

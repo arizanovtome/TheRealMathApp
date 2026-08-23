@@ -10,6 +10,8 @@ import {
 } from '@/features/calculus/calculus.types';
 import type { TrigonometryConfig } from '@/features/trigonometry/trigonometry.types';
 import { DEFAULT_TRIGONOMETRY_CONFIG } from '@/features/trigonometry/trigonometry.types';
+import type { LogarithmConfig } from '@/features/logarithm/logarithm.types';
+import { DEFAULT_LOGARITHM_CONFIG } from '@/features/logarithm/logarithm.types';
 
 export type { GeometryConfig };
 export { DEFAULT_GEOMETRY_CONFIG };
@@ -19,6 +21,8 @@ export type { CalculusOpConfig };
 export { DEFAULT_DIFFERENTIATION_CONFIG, DEFAULT_INTEGRATION_CONFIG };
 export type { TrigonometryConfig };
 export { DEFAULT_TRIGONOMETRY_CONFIG };
+export type { LogarithmConfig };
+export { DEFAULT_LOGARITHM_CONFIG };
 
 export type MathOperation =
   | 'addition'
@@ -39,7 +43,8 @@ export type MathOperation =
   | 'pattern'
   | 'differentiation'
   | 'integration'
-  | 'trigonometry';
+  | 'trigonometry'
+  | 'logarithm';
 
 /** Every {@link MathOperation} — use for stats rollups and progress UI ordering. */
 export const ALL_MATH_OPERATIONS: readonly MathOperation[] = [
@@ -62,6 +67,7 @@ export const ALL_MATH_OPERATIONS: readonly MathOperation[] = [
   'differentiation',
   'integration',
   'trigonometry',
+  'logarithm',
 ] as const;
 
 export type SpecialQuestionMode = 'off' | 'mixed' | 'only';
@@ -321,7 +327,9 @@ export const TIMED_WRONG_ANSWER_PENALTY_SECONDS = 15;
 /** Multiple-choice chip count, or keyboard entry (no choice buttons). */
 export type AnswerEntryMode = 'multiple_choice' | 'keyboard';
 
-export type AnswerOptionsCount = 2 | 3 | 4 | 5 | 6;
+/** Supported multiple-choice counts (maximum shown per question). */
+export const ANSWER_OPTIONS_COUNT_OPTIONS = [2, 3, 4, 6] as const;
+export type AnswerOptionsCount = (typeof ANSWER_OPTIONS_COUNT_OPTIONS)[number];
 
 /** Legacy upper bound. New plans use `addition.answerMax`; this stays for persisted plans. */
 export const FINAL_RESULT_CAP_OPTIONS = [10, 20, 100, 1000] as const;
@@ -487,6 +495,7 @@ export type MathLearningConfig = {
   differentiation: CalculusOpConfig;
   integration: CalculusOpConfig;
   trigonometry: TrigonometryConfig;
+  logarithm: LogarithmConfig;
   mode: LearningMode;
   questionsCount: number;
   answerEntryMode: AnswerEntryMode;

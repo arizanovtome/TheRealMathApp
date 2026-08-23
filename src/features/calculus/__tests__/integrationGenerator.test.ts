@@ -14,6 +14,9 @@ describe('integrationGenerator', () => {
       powerRule: true,
       constantRule: true,
       simpleSum: false,
+      naturalLogRule: false,
+      trigRule: false,
+      quotientRule: false,
     };
     const q = tryGenerateIntegrationQuestion(config);
     expect(q).not.toBeNull();
@@ -22,5 +25,40 @@ describe('integrationGenerator', () => {
     expect(q!.questionText).toMatch(/∫/);
     expect(q!.correctAnswer).toMatch(/\+ C$/);
     expect(q!.answerOptions).toContain(q!.correctAnswer);
+  });
+
+  it('generates trig integral questions', () => {
+    const config = getRecommendedLearningPlan(12);
+    config.integration = {
+      enabled: true,
+      powerRule: false,
+      constantRule: false,
+      simpleSum: false,
+      naturalLogRule: false,
+      trigRule: true,
+      quotientRule: false,
+    };
+    let q = tryGenerateIntegrationQuestion(config);
+    for (let i = 0; i < 20 && !q?.questionText.includes('sin') && !q?.questionText.includes('cos'); i++) {
+      q = tryGenerateIntegrationQuestion(config);
+    }
+    expect(q!.questionText).toMatch(/sin|cos/);
+    expect(q!.correctAnswer).toMatch(/\+ C$/);
+  });
+
+  it('generates quotient integral questions', () => {
+    const config = getRecommendedLearningPlan(12);
+    config.integration = {
+      enabled: true,
+      powerRule: false,
+      constantRule: false,
+      simpleSum: false,
+      naturalLogRule: false,
+      trigRule: false,
+      quotientRule: true,
+    };
+    const q = tryGenerateIntegrationQuestion(config);
+    expect(q!.questionText).toMatch(/\//);
+    expect(q!.correctAnswer).toMatch(/\+ C$/);
   });
 });

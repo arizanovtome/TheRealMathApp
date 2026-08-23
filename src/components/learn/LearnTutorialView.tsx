@@ -5,7 +5,7 @@ import { AppText } from '@/components/common/AppText';
 import { Card } from '@/components/common/Card';
 import { GeometryShapeDiagram } from '@/components/learn/GeometryShapeDiagram';
 import { TrigonometryShapeDiagram } from '@/components/learn/TrigonometryShapeDiagram';
-import type { LearnTutorial } from '@/features/learn/learnTopics';
+import type { LearnFormulaRow, LearnTutorial } from '@/features/learn/learnTopics';
 import { useAppTranslation } from '@/i18n/useAppTranslation';
 import { spacing } from '@/theme/spacing';
 
@@ -13,6 +13,16 @@ type LearnTutorialViewProps = {
   tutorial: LearnTutorial;
   onTryInPractice?: () => void;
 };
+
+function isCompactFormulaRow(row: LearnFormulaRow): boolean {
+  return (
+    !row.shape &&
+    !row.diagram &&
+    !row.trigonometryDiagram &&
+    !row.explanation &&
+    !row.hint
+  );
+}
 
 export function LearnTutorialView({ tutorial, onTryInPractice }: LearnTutorialViewProps) {
   const { t } = useAppTranslation('common');
@@ -32,46 +42,6 @@ export function LearnTutorialView({ tutorial, onTryInPractice }: LearnTutorialVi
           <AppText variant="subtitle">{tutorial.formula}</AppText>
         </Card>
       ) : null}
-
-      {tutorial.formulaTables?.map((table) => (
-        <Card key={table.heading}>
-          <AppText variant="subtitle">{table.heading}</AppText>
-          {table.intro ? (
-            <AppText variant="body" muted style={styles.tableIntro}>
-              {table.intro}
-            </AppText>
-          ) : null}
-          {table.rows.map((row) => (
-            <View key={`${table.heading}-${row.shape}`} style={styles.formulaRow}>
-              <AppText variant="label" style={styles.shapeName}>
-                {row.shape}
-              </AppText>
-              {row.diagram ? (
-                <GeometryShapeDiagram
-                  measure={row.diagram.measure}
-                  shape={row.diagram.shape}
-                />
-              ) : null}
-              {row.trigonometryDiagram ? (
-                <TrigonometryShapeDiagram diagram={row.trigonometryDiagram} />
-              ) : null}
-              <AppText variant="body" style={styles.formulaText}>
-                {row.formula}
-              </AppText>
-              {row.explanation ? (
-                <AppText variant="body" muted style={styles.explanation}>
-                  {row.explanation}
-                </AppText>
-              ) : null}
-              {row.hint ? (
-                <AppText variant="body" muted style={styles.formulaHint}>
-                  {row.hint}
-                </AppText>
-              ) : null}
-            </View>
-          ))}
-        </Card>
-      ))}
 
       {tutorial.sections.map((section) => (
         <Card key={section.heading}>
@@ -94,6 +64,59 @@ export function LearnTutorialView({ tutorial, onTryInPractice }: LearnTutorialVi
         </Card>
       ) : null}
 
+      {tutorial.formulaTables?.map((table) => (
+        <Card key={table.heading}>
+          <AppText variant="subtitle">{table.heading}</AppText>
+          {table.intro ? (
+            <AppText variant="body" muted style={styles.tableIntro}>
+              {table.intro}
+            </AppText>
+          ) : null}
+          <View style={styles.tableRows}>
+            {table.rows.map((row, rowIndex) => {
+              const compact = isCompactFormulaRow(row);
+              return (
+                <View
+                  key={`${table.heading}-${rowIndex}`}
+                  style={compact ? styles.formulaRowCompact : styles.formulaRow}
+                >
+                  {row.shape ? (
+                    <AppText variant="label" style={styles.shapeName}>
+                      {row.shape}
+                    </AppText>
+                  ) : null}
+                  {row.diagram ? (
+                    <GeometryShapeDiagram
+                      measure={row.diagram.measure}
+                      shape={row.diagram.shape}
+                    />
+                  ) : null}
+                  {row.trigonometryDiagram ? (
+                    <TrigonometryShapeDiagram diagram={row.trigonometryDiagram} />
+                  ) : null}
+                  <AppText
+                    variant="body"
+                    style={compact ? styles.formulaTextCompact : styles.formulaText}
+                  >
+                    {row.formula}
+                  </AppText>
+                  {row.explanation ? (
+                    <AppText variant="body" muted style={styles.explanation}>
+                      {row.explanation}
+                    </AppText>
+                  ) : null}
+                  {row.hint ? (
+                    <AppText variant="body" muted style={styles.formulaHint}>
+                      {row.hint}
+                    </AppText>
+                  ) : null}
+                </View>
+              );
+            })}
+          </View>
+        </Card>
+      ))}
+
       {onTryInPractice ? (
         <AppButton label={t('tryInPractice')} onPress={onTryInPractice} variant="secondary" />
       ) : null}
@@ -111,20 +134,31 @@ const styles = StyleSheet.create({
   },
   tableIntro: {
     marginTop: spacing.xs,
-    marginBottom: spacing.sm,
+  },
+  tableRows: {
+    marginTop: spacing.xs,
   },
   formulaRow: {
-    marginTop: spacing.sm,
-    paddingTop: spacing.sm,
+    paddingVertical: spacing.sm,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(128,128,128,0.35)',
     gap: spacing.xs,
+  },
+  formulaRowCompact: {
+    paddingVertical: spacing.xs,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(128,128,128,0.35)',
+    alignItems: 'center',
   },
   shapeName: {
     textTransform: 'capitalize',
   },
   formulaText: {
     fontWeight: '600',
+  },
+  formulaTextCompact: {
+    fontWeight: '600',
+    textAlign: 'center',
   },
   explanation: {
     lineHeight: 22,

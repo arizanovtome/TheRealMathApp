@@ -3,13 +3,14 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { AppText } from '@/components/common/AppText';
 import { OperationConfigCard } from '@/components/learning-plan/OperationConfigCard';
 import type { CalculusOpConfig } from '@/features/calculus/calculus.types';
-import type { MathOperation } from '@/features/learning-plan/learningPlan.types';
 import { useAppTranslation } from '@/i18n/useAppTranslation';
 import { colors } from '@/theme/colors';
 import { radii, spacing } from '@/theme/spacing';
 
+type CalculusSettingsOperation = 'differentiation' | 'integration';
+
 type CalculusSettingsCardProps = {
-  operation: MathOperation;
+  operation: CalculusSettingsOperation;
   description?: string;
   config: CalculusOpConfig;
   onChange: (config: CalculusOpConfig) => void;
@@ -20,7 +21,14 @@ type CalculusSettingsCardProps = {
 const SUBTYPE_TOGGLES = [
   { key: 'powerRule' as const, labelKey: 'settings:powerRule' },
   { key: 'constantRule' as const, labelKey: 'settings:constants' },
+  { key: 'naturalLogRule' as const, labelKey: 'settings:naturalLogRule' },
+  { key: 'trigRule' as const, labelKey: 'settings:calculusTrigRule' },
 ] as const;
+
+const QUOTIENT_TOGGLE_BY_OPERATION = {
+  differentiation: { key: 'quotientRule' as const, labelKey: 'settings:calculusQuotientRule' },
+  integration: { key: 'quotientRule' as const, labelKey: 'settings:calculusFractionSimplify' },
+} as const;
 
 export function CalculusSettingsCard({
   operation,
@@ -75,6 +83,33 @@ export function CalculusSettingsCard({
               </Pressable>
             );
           })}
+          {(() => {
+            const { key, labelKey } = QUOTIENT_TOGGLE_BY_OPERATION[operation];
+            const label = t(labelKey);
+            const selected = config[key];
+            return (
+              <Pressable
+                key={key}
+                accessibilityRole="button"
+                accessibilityLabel={label}
+                accessibilityState={{ selected }}
+                disabled={disabled}
+                onPress={() => onChange({ ...config, [key]: !config[key] })}
+                style={[
+                  styles.chip,
+                  selected && styles.chipSelected,
+                  disabled && styles.chipDisabled,
+                ]}
+              >
+                <AppText
+                  variant="label"
+                  style={selected ? styles.chipTextSelected : styles.chipText}
+                >
+                  {label}
+                </AppText>
+              </Pressable>
+            );
+          })()}
           {showSimpleSum ? (
             <Pressable
               accessibilityRole="button"

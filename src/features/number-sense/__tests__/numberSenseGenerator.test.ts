@@ -75,4 +75,36 @@ describe('numberSenseGenerator', () => {
       expect(matches).toBe(Number(q.correctAnswer));
     }
   });
+
+  it('sets requiresMultipleChoice per subtype', () => {
+    const config = getRecommendedLearningPlan(5);
+    config.shapeRecognition.enabled = true;
+
+    config.numberSense = { enabled: true, numberRecognition: false, countObjects: false, beforeAfter: false, missingNumber: false, compareQuantities: false, oddEven: true, maxNumber: 20 };
+    expect(tryGenerateNumberSenseQuestion(config)?.requiresMultipleChoice).toBe(true);
+
+    config.numberSense = { enabled: true, numberRecognition: false, countObjects: false, beforeAfter: true, missingNumber: false, compareQuantities: false, oddEven: false, maxNumber: 20 };
+    expect(tryGenerateNumberSenseQuestion(config)?.requiresMultipleChoice).toBe(false);
+
+    config.numberSense = { enabled: true, numberRecognition: false, countObjects: false, beforeAfter: false, missingNumber: false, compareQuantities: true, oddEven: false, maxNumber: 20 };
+    expect(tryGenerateNumberSenseQuestion(config)?.requiresMultipleChoice).toBe(true);
+  });
+
+  it('keeps fixed option counts for odd/even and compare-quantities', () => {
+    const config = getRecommendedLearningPlan(5);
+    config.shapeRecognition.enabled = true;
+    config.answerOptionsCount = 6;
+
+    config.numberSense = { enabled: true, numberRecognition: false, countObjects: false, beforeAfter: false, missingNumber: false, compareQuantities: false, oddEven: true, maxNumber: 20 };
+    for (let i = 0; i < 20; i++) {
+      const q = tryGenerateNumberSenseQuestion(config)!;
+      expect(q.answerOptions).toHaveLength(2);
+    }
+
+    config.numberSense = { enabled: true, numberRecognition: false, countObjects: false, beforeAfter: false, missingNumber: false, compareQuantities: true, oddEven: false, maxNumber: 20 };
+    for (let i = 0; i < 20; i++) {
+      const q = tryGenerateNumberSenseQuestion(config)!;
+      expect(q.answerOptions).toHaveLength(3);
+    }
+  });
 });

@@ -15,6 +15,7 @@ import type {
   TrigonometryDiagram,
   TrigonometryQuestionSubtype,
 } from '@/features/trigonometry/trigonometry.types';
+import type { LogarithmSubtype } from '@/features/logarithm/logarithm.types';
 import type { QuotientRemainder } from '@/features/questions/divisionRemainder';
 import type { EquivalentExpressionSubtype } from '@/features/equivalent-expressions/equivalentExpressions.types';
 
@@ -148,7 +149,7 @@ export type PatternMathQuestion = {
   requiresMultipleChoice: true;
 };
 export type ColoredShapeItem = { shape: BasicShape; color: ShapeColor };
-export type NumberSenseMathQuestion = { kind: 'number_sense'; id: string; operation: 'number_sense'; subtype: 'numberRecognition'|'countObjects'|'beforeAfter'|'missingNumber'|'compareQuantities'|'oddEven'; questionText: string; correctAnswer: string; answerOptions: string[]; requiresMultipleChoice: true; countTarget?: ColoredShapeItem; countingShapes?: ColoredShapeItem[]; quantityShapeGroups?: { first: ColoredShapeItem[]; second: ColoredShapeItem[] } };
+export type NumberSenseMathQuestion = { kind: 'number_sense'; id: string; operation: 'number_sense'; subtype: 'numberRecognition'|'countObjects'|'beforeAfter'|'missingNumber'|'compareQuantities'|'oddEven'; questionText: string; correctAnswer: string; answerOptions: string[]; requiresMultipleChoice: boolean; countTarget?: ColoredShapeItem; countingShapes?: ColoredShapeItem[]; quantityShapeGroups?: { first: ColoredShapeItem[]; second: ColoredShapeItem[] } };
 
 export type CalculusMathQuestion = {
   kind: 'calculus';
@@ -185,6 +186,17 @@ export type TrigonometryMathQuestion = {
   diagram: TrigonometryDiagram;
 };
 
+export type LogarithmMathQuestion = {
+  kind: 'logarithm';
+  id: string;
+  operation: 'logarithm';
+  subtype: LogarithmSubtype;
+  questionText: string;
+  correctAnswer: string;
+  answerOptions: string[];
+  requiresMultipleChoice: true;
+};
+
 export type MathQuestion =
   | ArithmeticMathQuestion
   | EquationUnknownMathQuestion
@@ -198,7 +210,8 @@ export type MathQuestion =
   | PatternMathQuestion
   | NumberSenseMathQuestion
   | CalculusMathQuestion
-  | TrigonometryMathQuestion;
+  | TrigonometryMathQuestion
+  | LogarithmMathQuestion;
 
 export function isArithmeticQuestion(q: MathQuestion): q is ArithmeticMathQuestion {
   return q.kind === 'arithmetic';
@@ -253,6 +266,10 @@ export function isTrigonometryQuestion(q: MathQuestion): q is TrigonometryMathQu
   return q.kind === 'trigonometry';
 }
 
+export function isLogarithmQuestion(q: MathQuestion): q is LogarithmMathQuestion {
+  return q.kind === 'logarithm';
+}
+
 /** Prompt-only card; main content (clock, shape, bar, sequence) renders below. */
 export function usesCompactQuestionCard(q: MathQuestion): boolean {
   if (isFractionVisualQuestion(q)) return true;
@@ -263,18 +280,7 @@ export function usesCompactQuestionCard(q: MathQuestion): boolean {
   return false;
 }
 
-export function requiresMultipleChoiceQuestion(q: MathQuestion): boolean {
-  if (isGeometryQuestion(q)) return q.requiresMultipleChoice;
-  if (isComparisonQuestion(q)) return true;
-  if (isEquivalentExpressionQuestion(q)) return true;
-  if (isFractionVisualQuestion(q)) return true;
-  if (isShapeRecognitionQuestion(q)) return true;
-  if (isClockQuestion(q)) return true;
-  if (isPatternQuestion(q)) return true;
-  if (isCalculusQuestion(q)) return true;
-  if (isTrigonometryQuestion(q)) return true;
-  return false;
-}
+export { requiresMultipleChoiceQuestion } from '@/features/questions/questionAnswerInput';
 
 export function isFractionQuestion(q: ArithmeticMathQuestion): boolean {
   return q.answerKind === 'fraction';

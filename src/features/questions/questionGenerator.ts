@@ -14,6 +14,8 @@ import { tryGenerateDifferentiationQuestion } from '@/features/calculus/differen
 import { tryGenerateIntegrationQuestion } from '@/features/calculus/integrationGenerator';
 import { hasTrigonometrySource } from '@/features/trigonometry/trigonometryConfig.utils';
 import { tryGenerateTrigonometryQuestion } from '@/features/trigonometry/trigonometryGenerator';
+import { hasLogarithmSource } from '@/features/logarithm/logarithmConfig.utils';
+import { tryGenerateLogarithmQuestion } from '@/features/logarithm/logarithmGenerator';
 import { hasPatternsQuestionSource } from '@/features/patterns/patternsConfig.utils';
 import { tryGeneratePatternQuestion } from '@/features/patterns/patternsGenerator';
 import {
@@ -177,6 +179,7 @@ type PatternSourcePick = { source: 'pattern' };
 type DifferentiationSourcePick = { source: 'differentiation' };
 type IntegrationSourcePick = { source: 'integration' };
 type TrigonometrySourcePick = { source: 'trigonometry' };
+type LogarithmSourcePick = { source: 'logarithm' };
 
 type QuestionSource =
   | ArithmeticSource
@@ -192,7 +195,8 @@ type QuestionSource =
   | PatternSourcePick
   | DifferentiationSourcePick
   | IntegrationSourcePick
-  | TrigonometrySourcePick;
+  | TrigonometrySourcePick
+  | LogarithmSourcePick;
 
 function buildQuestionSourcePool(config: MathLearningConfig): QuestionSource[] {
   const pool: QuestionSource[] = [];
@@ -238,6 +242,9 @@ function buildQuestionSourcePool(config: MathLearningConfig): QuestionSource[] {
   }
   if (hasTrigonometrySource(config)) {
     pool.push({ source: 'trigonometry' });
+  }
+  if (hasLogarithmSource(config)) {
+    pool.push({ source: 'logarithm' });
   }
   return pool;
 }
@@ -756,6 +763,11 @@ export function generatePreviewQuestion(config: MathLearningConfig): { questionT
       if (trig) return { questionText: trig.questionText };
       continue;
     }
+    if (pick.source === 'logarithm') {
+      const log = tryGenerateLogarithmQuestion(config);
+      if (log) return { questionText: log.questionText };
+      continue;
+    }
     if (pick.source === 'equation_two_unknown') {
       const draft = generateEquationTwoUnknownQuestion(config, pick.operation);
       if (
@@ -941,6 +953,11 @@ function tryGenerateFromSource(config: MathLearningConfig, src: QuestionSource):
   }
   if (src.source === 'trigonometry') {
     return tryGenerateTrigonometryQuestion(config);
+  }
+  if (src.source === 'logarithm') {
+    const log = tryGenerateLogarithmQuestion(config);
+    if (!log) return null;
+    return { ...log, id: nextQuestionId() };
   }
   if (src.source === 'equation_two_unknown') {
     const draft = generateEquationTwoUnknownQuestion(config, src.operation);

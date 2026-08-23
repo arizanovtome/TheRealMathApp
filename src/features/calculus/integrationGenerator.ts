@@ -6,16 +6,24 @@ import {
   integralOfSum,
   integralPowerDistractors,
   pickDistinctPowerTerms,
+  pickIntegrationFractionTerms,
+  pickRandomTrigFn,
+  quotientIntegralDistractors,
   randomConstant,
   randomCoefficient,
   randomPowerExponent,
+  trigIntegralDistractors,
 } from '@/features/calculus/calculusExpression.utils';
 import {
   formatCoefficientTimesPower,
+  formatCoefficientTimesTrig,
   formatIntegralConstantAnswer,
   formatIntegralPowerAnswer,
   formatIntegralPrompt,
+  formatIntegralQuotientAnswer,
+  formatIntegralTrigAnswer,
   formatPower,
+  formatQuotientFraction,
 } from '@/features/calculus/calculusFormat';
 import type { MathLearningConfig } from '@/features/learning-plan/learningPlan.types';
 import type { CalculusMathQuestion } from '@/features/questions/question.types';
@@ -81,6 +89,46 @@ function generateSimpleSum(config: MathLearningConfig): Omit<CalculusMathQuestio
   return buildQuestion(config, formatIntegralPrompt(inner), correctAnswer, distractors);
 }
 
+function generateNaturalLogRule(config: MathLearningConfig): Omit<CalculusMathQuestion, 'id'> {
+  return buildQuestion(config, formatIntegralPrompt('1/x'), 'ln x + C', [
+    'ln x + C',
+    '1/x + C',
+    'x + C',
+    'ln x',
+    '−1/x² + C',
+    '1/x² + C',
+  ]);
+}
+
+function generateTrigRule(config: MathLearningConfig): Omit<CalculusMathQuestion, 'id'> {
+  const fn = pickRandomTrigFn();
+  const coefficient = randomCoefficient();
+  const inner = formatCoefficientTimesTrig(coefficient, fn);
+  const correctAnswer = formatIntegralTrigAnswer(fn, coefficient);
+  return buildQuestion(
+    config,
+    formatIntegralPrompt(inner),
+    correctAnswer,
+    trigIntegralDistractors(fn, coefficient),
+  );
+}
+
+function generateQuotientRule(config: MathLearningConfig): Omit<CalculusMathQuestion, 'id'> {
+  const { numeratorCoeff, numeratorExp, denominatorExp } = pickIntegrationFractionTerms();
+  const inner = formatQuotientFraction(numeratorCoeff, numeratorExp, denominatorExp);
+  const correctAnswer = formatIntegralQuotientAnswer(
+    numeratorCoeff,
+    numeratorExp,
+    denominatorExp,
+  );
+  return buildQuestion(
+    config,
+    formatIntegralPrompt(inner),
+    correctAnswer,
+    quotientIntegralDistractors(numeratorCoeff, numeratorExp, denominatorExp),
+  );
+}
+
 function generateForSubtype(
   config: MathLearningConfig,
   subtype: CalculusSubtype,
@@ -92,6 +140,12 @@ function generateForSubtype(
       return generateConstantRule(config);
     case 'simple_sum':
       return generateSimpleSum(config);
+    case 'natural_log_rule':
+      return generateNaturalLogRule(config);
+    case 'trig_rule':
+      return generateTrigRule(config);
+    case 'quotient_rule':
+      return generateQuotientRule(config);
   }
 }
 

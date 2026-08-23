@@ -1,6 +1,7 @@
 import { getEnabledEquivalentExpressionSubtypes } from './equivalentExpressionsConfig.utils';
 import type { EquivalentExpressionSubtype } from './equivalentExpressions.types';
-import type { MathLearningConfig } from '@/features/learning-plan/learningPlan.types';
+import type { AnswerOptionsCount, MathLearningConfig } from '@/features/learning-plan/learningPlan.types';
+import { gcd } from '@/features/questions/fractions';
 import type { EquivalentExpressionMathQuestion } from '@/features/questions/question.types';
 import { pickRandom, randomIntInclusive } from '@/utils/random';
 
@@ -15,11 +16,32 @@ function shuffled<T>(values: readonly T[]): T[] {
   return copy;
 }
 
+function buildExpressionMcOptions(
+  correctAnswer: string,
+  distractors: string[],
+  optionCount: AnswerOptionsCount,
+): string[] {
+  const pool = [...new Set(distractors.filter((d) => d !== correctAnswer))];
+  const options = [correctAnswer];
+  const shuffledPool = shuffled(pool);
+  while (options.length < optionCount && shuffledPool.length > 0) {
+    options.push(shuffledPool.pop()!);
+  }
+  return shuffled(options);
+}
+
+/** Fully factored form using the GCF, e.g. 72x + 72 → 72(x + 1). */
+function formatFactored(g: number, coeffX: number, constTerm: number): string {
+  const inner = coeffX === 1 ? `x + ${constTerm}` : `${coeffX}x + ${constTerm}`;
+  return `${g}(${inner})`;
+}
+
 function makeQuestion(
   subtype: EquivalentExpressionSubtype,
   questionText: string,
   correctAnswer: string,
   distractors: string[],
+  optionCount: AnswerOptionsCount,
 ): Draft {
   return {
     kind: 'equivalent_expression',
@@ -27,12 +49,15 @@ function makeQuestion(
     subtype,
     questionText,
     correctAnswer,
-    answerOptions: shuffled([...new Set([correctAnswer, ...distractors])]),
+    answerOptions: buildExpressionMcOptions(correctAnswer, distractors, optionCount),
     requiresMultipleChoice: true,
   };
 }
 
-function parenthesesQuestion(subtype: 'parentheses_after_addition' | 'parentheses_after_subtraction'): Draft {
+function parenthesesQuestion(
+  subtype: 'parentheses_after_addition' | 'parentheses_after_subtraction',
+  optionCount: AnswerOptionsCount,
+): Draft {
   const a = randomIntInclusive(20, 100);
   const b = randomIntInclusive(2, 20);
   const c = randomIntInclusive(2, 20);
@@ -46,24 +71,25 @@ function parenthesesQuestion(subtype: 'parentheses_after_addition' | 'parenthese
     `${a} + ${b} − ${c}`,
     `${a} − ${b} + ${c}`,
     `${a} − ${b} − ${c}`,
-  ]);
+  ], optionCount);
 }
 
 export function generateEquivalentExpressionQuestion(
   subtype: EquivalentExpressionSubtype,
+  optionCount: AnswerOptionsCount = 4,
 ): Draft {
   switch (subtype) {
     case 'square_of_sum':
       return makeQuestion(subtype, '(a + b)² =', 'a² + 2ab + b²', [
         'a² + b²', 'a² + ab + b²', 'a² − 2ab + b²', '(a + b)(a − b)',
-      ]);
+      ], optionCount);
     case 'square_of_difference':
       return makeQuestion(subtype, '(a − b)² =', 'a² − 2ab + b²', [
         'a² − b²', 'a² + 2ab + b²', 'a² − 2ab − b²', '(a + b)(a − b)',
-      ]);
+      ], optionCount);
     case 'parentheses_after_addition':
     case 'parentheses_after_subtraction':
-      return parenthesesQuestion(subtype);
+      return parenthesesQuestion(subtype, optionCount);
     case 'distributive_property': {
       const coefficient = randomIntInclusive(2, 9);
       const constant = randomIntInclusive(2, 9);
@@ -72,26 +98,36 @@ export function generateEquivalentExpressionQuestion(
         `${coefficient + 1}x + ${coefficient * constant}`,
         `${coefficient * constant}x`,
         `${coefficient}x − ${coefficient * constant}`,
-      ]);
+      ], optionCount);
     }
     case 'difference_of_squares':
       return makeQuestion(subtype, 'a² − b² =', '(a + b)(a − b)', [
         '(a − b)²', '(a + b)²', '(a − b)(a − b)', 'a(a − b)',
-      ]);
+      ], optionCount);
     case 'factorization': {
-      const factor = randomIntInclusive(2, 9);
-      const xCoefficient = randomIntInclusive(2, 9);
-      const constant = randomIntInclusive(2, 9);
+      const k = randomIntInclusive(2, 9);
+      const m = randomIntInclusive(1, 9);
+      const n = randomIntInclusive(2, 9);
+      const expandedCoeff = k * m;
+      const expandedConst = k * n;
+      const g = gcd(expandedCoeff, expandedConst);
+      const cx = expandedCoeff / g;
+      const c0 = expandedConst / g;
+      const correctAnswer = formatFactored(g, cx, c0);
+      const distractors = [
+        formatFactored(g, cx, c0 + 1),
+        c0 > 1 ? formatFactored(g, cx, c0 - 1) : formatFactored(g, cx, c0 + 2),
+        g > k ? formatFactored(k, m, n) : formatFactored(k, m, n + 1),
+        `${k}(${m}x − ${n})`,
+        `${m}(${k}x + ${n})`,
+        `${expandedCoeff}(x + ${n})`,
+      ].filter((d) => d !== correctAnswer);
       return makeQuestion(
         subtype,
-        `${factor * xCoefficient}x + ${factor * constant} =`,
-        `${factor}(${xCoefficient}x + ${constant})`,
-        [
-          `${factor}(${xCoefficient}x + ${factor * constant})`,
-          `${xCoefficient}(${factor}x + ${constant})`,
-          `${factor}(${xCoefficient}x − ${constant})`,
-          `${factor * xCoefficient}(x + ${constant})`,
-        ],
+        `${expandedCoeff}x + ${expandedConst} =`,
+        correctAnswer,
+        distractors,
+        optionCount,
       );
     }
   }
@@ -104,5 +140,5 @@ export function tryGenerateEquivalentExpressionQuestion(
   const enabled = getEnabledEquivalentExpressionSubtypes(config);
   const subtype = forcedSubtype ?? (enabled.length > 0 ? pickRandom(enabled) : undefined);
   if (!subtype || !enabled.includes(subtype)) return null;
-  return generateEquivalentExpressionQuestion(subtype);
+  return generateEquivalentExpressionQuestion(subtype, config.answerOptionsCount);
 }

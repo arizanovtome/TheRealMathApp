@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Pressable, StyleSheet, Switch, TextInput, View } from "react-native";
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { Pressable, StyleSheet, Switch, TextInput, View, type ScrollView } from "react-native";
 
 import { AgeNumberInput } from "@/components/common/AgeNumberInput";
 import { AppButton } from "@/components/common/AppButton";
@@ -12,6 +12,7 @@ import { FocusedOperationContext } from "@/components/learning-plan/FocusedOpera
 import { EquivalentExpressionsSettingsCard } from "@/components/learning-plan/EquivalentExpressionsSettingsCard";
 import { DifferentiationSettingsCard } from "@/components/learning-plan/DifferentiationSettingsCard";
 import { TrigonometrySettingsCard } from "@/components/learning-plan/TrigonometrySettingsCard";
+import { LogarithmSettingsCard } from "@/components/learning-plan/LogarithmSettingsCard";
 import { IntegrationSettingsCard } from "@/components/learning-plan/IntegrationSettingsCard";
 import { ClockSettingsCard } from "@/components/learning-plan/ClockSettingsCard";
 import { ComparisonSettingsCard } from "@/components/learning-plan/ComparisonSettingsCard";
@@ -60,6 +61,7 @@ import type {
 import { generatePreviewQuestion } from "@/features/questions/questionGenerator";
 import { colors } from "@/theme/colors";
 import { radii, spacing } from "@/theme/spacing";
+import { useScrollToFocusedInput } from "@/utils/keyboardScroll";
 
 type LearningPlanEditorProps = {
   initialConfig: MathLearningConfig;
@@ -72,6 +74,7 @@ type LearningPlanEditorProps = {
   ) => void;
   focusedOperation?: MathOperation;
   hideSaveButton?: boolean;
+  scrollRef?: RefObject<ScrollView | null>;
 };
 
 function hasEnabledFractionPractice(config: MathLearningConfig): boolean {
@@ -119,8 +122,11 @@ export function LearningPlanEditor({
   onDraftChange,
   focusedOperation,
   hideSaveButton = false,
+  scrollRef,
 }: LearningPlanEditorProps) {
   const { t } = useAppTranslation(["settings", "common", "questions"]);
+  const fallbackScrollRef = useRef<ScrollView>(null);
+  const scrollToInput = useScrollToFocusedInput(scrollRef ?? fallbackScrollRef);
   const [config, setConfig] = useState<MathLearningConfig>(() =>
     ensureLearningConfigShape(initialConfig),
   );
@@ -269,6 +275,7 @@ export function LearningPlanEditor({
             placeholderTextColor={colors.textMuted}
             value={profileName}
             onChangeText={setProfileName}
+            onFocus={scrollRef ? scrollToInput : undefined}
             autoCapitalize="words"
             style={styles.nameInput}
           />
@@ -279,6 +286,7 @@ export function LearningPlanEditor({
             placeholderTextColor={colors.textMuted}
             value={name}
             onChangeText={setName}
+            onFocus={scrollRef ? scrollToInput : undefined}
             autoCapitalize="words"
             style={styles.nameInput}
           />
@@ -1391,6 +1399,11 @@ export function LearningPlanEditor({
           onChange={(trigonometry) => setConfig((c) => ({ ...c, trigonometry }))}
         />
 
+        <LogarithmSettingsCard
+          logarithm={config.logarithm}
+          onChange={(logarithm) => setConfig((c) => ({ ...c, logarithm }))}
+        />
+
         <DifferentiationSettingsCard
           differentiation={config.differentiation}
           onChange={(differentiation) => setConfig((c) => ({ ...c, differentiation }))}
@@ -1536,44 +1549,40 @@ export function LearningPlanEditor({
         ) : null}
 
         <AnswerOptionsSelector
-          entryMode={config.answerEntryMode}
           optionCount={config.answerOptionsCount}
-          geometryEnabled={config.geometry.enabled}
-          onPickMultipleChoice={(answerOptionsCount) =>
+          keyboardEnabled={config.answerEntryMode === "keyboard"}
+          onPickCount={(answerOptionsCount) =>
+            setConfig((c) => ({ ...c, answerOptionsCount }))
+          }
+          onKeyboardChange={(enabled) =>
             setConfig((c) => ({
               ...c,
-              answerEntryMode: "multiple_choice",
-              answerOptionsCount,
+              answerEntryMode: enabled ? "keyboard" : "multiple_choice",
             }))
-          }
-          onPickKeyboard={() =>
-            setConfig((c) => ({ ...c, answerEntryMode: "keyboard" }))
           }
         />
 
-        {config.answerEntryMode === "multiple_choice" ? (
-          <Card>
-            <View style={styles.settingsSwitchRow}>
-              <View style={styles.confirmAnswerCopy}>
-                <AppText variant="subtitle">{t("settings:confirmAnswer")}</AppText>
-                <AppText variant="body" muted>
-                  {t("settings:confirmAnswerHint")}
-                </AppText>
-              </View>
-              <View style={styles.settingsSwitchWrap}>
-                <Switch
-                  accessibilityLabel={t("settings:confirmAnswer")}
-                  value={config.confirmAnswerBeforeSubmit}
-                  onValueChange={(confirmAnswerBeforeSubmit) =>
-                    setConfig((c) => ({ ...c, confirmAnswerBeforeSubmit }))
-                  }
-                  thumbColor="#ffffff"
-                  trackColor={{ false: colors.border, true: colors.primary }}
-                />
-              </View>
+        <Card>
+          <View style={styles.settingsSwitchRow}>
+            <View style={styles.confirmAnswerCopy}>
+              <AppText variant="subtitle">{t("settings:confirmAnswer")}</AppText>
+              <AppText variant="body" muted>
+                {t("settings:confirmAnswerHint")}
+              </AppText>
             </View>
-          </Card>
-        ) : null}
+            <View style={styles.settingsSwitchWrap}>
+              <Switch
+                accessibilityLabel={t("settings:confirmAnswer")}
+                value={config.confirmAnswerBeforeSubmit}
+                onValueChange={(confirmAnswerBeforeSubmit) =>
+                  setConfig((c) => ({ ...c, confirmAnswerBeforeSubmit }))
+                }
+                thumbColor="#ffffff"
+                trackColor={{ false: colors.border, true: colors.primary }}
+              />
+            </View>
+          </View>
+        </Card>
 
         {config.mode !== "timed" ? (
           <TimerSettings

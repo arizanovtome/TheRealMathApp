@@ -36,6 +36,30 @@ function tryAddWrong(
 }
 
 /**
+ * Returns at most `maxCount` options. Fixed categorical sets (e.g. Even/Odd, < > =)
+ * are always returned in full and never truncated.
+ */
+export function limitAnswerOptions<T>(
+  options: T[],
+  maxCount: AnswerOptionsCount,
+  opts?: { fixedSet?: boolean },
+): T[] {
+  if (opts?.fixedSet || options.length <= maxCount) {
+    return options;
+  }
+  return options.slice(0, maxCount);
+}
+
+/** Shuffles a fixed set of categorical labels; never drops options below the natural count. */
+export function buildFixedAnswerOptions(
+  allOptions: string[],
+  maxCount: AnswerOptionsCount,
+): string[] {
+  const capped = limitAnswerOptions(allOptions, maxCount, { fixedSet: true });
+  return capped.sort(() => (Math.random() > 0.5 ? 1 : -1));
+}
+
+/**
  * Builds shuffled multiple-choice options including the correct answer.
  * Wrong options prefer correct ± 1, ±2, ±3, ±10 (order randomized), then ±4…±9 if needed.
  * Optional `bounds` keeps distractors inside the session’s final-result range so choices stay sensible.

@@ -1,12 +1,11 @@
 import { useHeaderHeight } from "@react-navigation/elements";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
-  TextInput,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -23,6 +22,10 @@ import { AppText } from "@/components/common/AppText";
 import { AnswerOptionButton } from "@/components/practice/AnswerOptionButton";
 import { FeedbackMessage } from "@/components/practice/FeedbackMessage";
 import { QuestionCard } from "@/components/practice/QuestionCard";
+import {
+  SessionAnswerTextInput,
+  SessionEquationAnswerInput,
+} from "@/components/practice/SessionAnswerTextInput";
 import {
   applyLearnPracticeFocus,
   type LearnPracticeTarget,
@@ -46,6 +49,7 @@ import {
   isPatternQuestion,
   isCalculusQuestion,
   isTrigonometryQuestion,
+  isLogarithmQuestion,
   isEquationTwoUnknownQuestion,
   requiresMultipleChoiceQuestion,
   usesCompactQuestionCard,
@@ -67,7 +71,7 @@ import { fonts } from "@/theme/fonts";
 import { radii, spacing } from "@/theme/spacing";
 import { useAppTranslation } from "@/i18n/useAppTranslation";
 import { parseNumberAnswer } from "@/utils/parseIntegerAnswer";
-import { parseFractionAnswer } from "@/utils/parseFractionAnswer";
+import { isCompleteFractionAnswer, parseFractionAnswer } from "@/utils/parseFractionAnswer";
 
 type LearnPracticeSessionViewProps = {
   target: LearnPracticeTarget;
@@ -102,6 +106,7 @@ export function LearnPracticeSessionView({
   const useKeyboard = effectiveConfig?.answerEntryMode === "keyboard";
 
   const [keyboardOpen, setKeyboardOpen] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
   const [questionNumber, setQuestionNumber] = useState(1);
   const [correctCount, setCorrectCount] = useState(0);
   const [current, setCurrent] = useState<MathQuestion | null>(null);
@@ -230,6 +235,14 @@ export function LearnPracticeSessionView({
     revealFeedback(parsed);
   };
 
+  const handlePrimaryAction = () => {
+    if (!showFeedback && showKeyboardInput) {
+      handleCheckKeyboard();
+      return;
+    }
+    handleNext();
+  };
+
   const handleNext = () => {
     if (!current || !effectiveConfig) return;
 
@@ -250,6 +263,7 @@ export function LearnPracticeSessionView({
   const scrollContentStyle = [
     styles.scrollInner,
     showKeyboardInput && keyboardOpen ? { paddingTop: insets.top } : null,
+    keyboardOpen ? { paddingBottom: spacing.xl * 3 } : null,
   ];
 
   if (!effectiveConfig || !validation.valid || !current) {
@@ -287,24 +301,51 @@ export function LearnPracticeSessionView({
           : t("common:yourAnswer")
       : "";
 
+  const equationBodyNorm = normalizeEquationAnswerInput(
+    answerInputText.replace(/^\s*x\s*=\s*/i, ""),
+  );
+  const equationInputReady =
+    isEquationUnknownQuestion(current) && equationBodyNorm !== "";
+  const fractionInputReady =
+    isArithmeticQuestion(current) &&
+    isFractionQuestion(current) &&
+    isCompleteFractionAnswer(answerInputText);
+  const numericInputReady =
+    (isArithmeticQuestion(current) &&
+      !isFractionQuestion(current) &&
+      parseNumberAnswer(answerInputText) !== null) ||
+    (isGeometryQuestion(current) &&
+      current.answerKind === "number" &&
+      parseNumberAnswer(answerInputText) !== null) ||
+    (isEquationTwoUnknownQuestion(current) &&
+      parseNumberAnswer(answerInputText) !== null);
+  const keyboardInputReady =
+    equationInputReady || fractionInputReady || numericInputReady;
+
   const nextDisabled = showKeyboardInput
     ? !showFeedback
+      ? !keyboardInputReady
+      : false
     : requireConfirmMc && !showFeedback
       ? selected === null
       : !showFeedback;
 
-  const primaryActionLabel =
-    requireConfirmMc && !showFeedback && !showKeyboardInput
-      ? t("common:confirm")
-      : t("common:nextQuestion");
+  const awaitingCheck = !showFeedback && (showKeyboardInput || requireConfirmMc);
+
+  const primaryActionLabel = awaitingCheck
+    ? showKeyboardInput
+      ? t("common:checkAnswer")
+      : t("common:confirm")
+    : t("common:nextQuestion");
 
   return (
     <KeyboardAvoidingView
       style={styles.keyboardRoot}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={headerHeight}
     >
       <ScrollView
+        ref={scrollRef}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={scrollContentStyle}
         showsVerticalScrollIndicator={false}
@@ -377,71 +418,48 @@ export function LearnPracticeSessionView({
                 >
                   x=
                 </AppText>
-                <TextInput
+                <SessionEquationAnswerInput
+                  scrollRef={scrollRef}
                   accessibilityLabel={t("common:valueForX")}
                   editable={!inputLocked}
-                  keyboardType="numbers-and-punctuation"
-                  inputMode="text"
-                  returnKeyType="done"
-                  textContentType="none"
-                  autoCorrect={false}
-                  autoComplete="off"
-                  importantForAutofill="no"
                   onSubmitEditing={() => {
-                    if (!showFeedback) handleCheckKeyboard();
+                    if (!showFeedback) handlePrimaryAction();
                   }}
                   placeholder={answerPlaceholder}
                   placeholderTextColor={colors.textMuted}
                   value={answerInputText}
-                  onChangeText={(t) => {
-                    setAnswerInputText(t);
+                  onChangeText={(text) => {
+                    setAnswerInputText(text);
                     if (inputError) setInputError("");
                   }}
-                  style={[
-                    styles.answerInputEquation,
-                    inputLocked && styles.answerInputLocked,
-                  ]}
+                  style={styles.answerInputEquation}
+                  lockedStyle={styles.answerInputLocked}
                 />
               </View>
             ) : (
-              <TextInput
+              <SessionAnswerTextInput
+                question={current}
+                scrollRef={scrollRef}
                 accessibilityLabel={t("common:yourAnswer")}
                 editable={!inputLocked}
-                keyboardType="numbers-and-punctuation"
-                inputMode="numeric"
-                returnKeyType="done"
-                textContentType="none"
-                autoCorrect={false}
-                autoComplete="off"
-                importantForAutofill="no"
                 onSubmitEditing={() => {
-                  if (!showFeedback) handleCheckKeyboard();
+                  if (!showFeedback) handlePrimaryAction();
                 }}
                 placeholder={answerPlaceholder}
                 placeholderTextColor={colors.textMuted}
                 value={answerInputText}
-                onChangeText={(t) => {
-                  setAnswerInputText(t);
+                onChangeText={(text) => {
+                  setAnswerInputText(text);
                   if (inputError) setInputError("");
                 }}
-                style={[
-                  styles.answerInput,
-                  inputLocked && styles.answerInputLocked,
-                ]}
+                style={styles.answerInput}
+                lockedStyle={styles.answerInputLocked}
               />
             )}
             {inputError ? (
               <AppText variant="body" style={styles.inputError}>
                 {inputError}
               </AppText>
-            ) : null}
-            {!showFeedback ? (
-              <AppButton
-                label={t("common:checkAnswer")}
-                variant="secondary"
-                onPress={handleCheckKeyboard}
-                accessibilityHint={t("questions:hintCheckTyped")}
-              />
             ) : null}
           </View>
         ) : isArithmeticQuestion(current) ? (
@@ -466,6 +484,7 @@ export function LearnPracticeSessionView({
           isPatternQuestion(current) ||
           isCalculusQuestion(current) ||
           isTrigonometryQuestion(current) ||
+          isLogarithmQuestion(current) ||
           current.kind === "number_sense" ||
           isEquationTwoUnknownQuestion(current) ? (
           <View style={styles.optionsStacked}>
@@ -515,11 +534,13 @@ export function LearnPracticeSessionView({
 
         <AppButton
           label={primaryActionLabel}
-          onPress={handleNext}
+          onPress={handlePrimaryAction}
           disabled={nextDisabled}
           accessibilityHint={
-            requireConfirmMc && !showFeedback && !showKeyboardInput
-              ? t("questions:hintCheckSelected")
+            awaitingCheck
+              ? showKeyboardInput
+                ? t("questions:hintCheckTyped")
+                : t("questions:hintCheckSelected")
               : t("questions:hintNextQuestion")
           }
         />

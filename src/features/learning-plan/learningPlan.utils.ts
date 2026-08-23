@@ -27,8 +27,13 @@ import {
   normalizeTrigonometryConfig,
 } from '@/features/trigonometry/trigonometryConfig.utils';
 import {
+  hasLogarithmSource,
+  normalizeLogarithmConfig,
+} from '@/features/logarithm/logarithmConfig.utils';
+import {
     type AdditionConfig,
     type AnswerEntryMode,
+    ANSWER_OPTIONS_COUNT_OPTIONS,
     type AnswerOptionsCount,
     DEFAULT_COMPARISON_CONFIG,
     DEFAULT_EQUIVALENT_EXPRESSIONS_CONFIG,
@@ -74,7 +79,7 @@ import {
     TIMER_SECONDS_STEP,
 } from "@/features/learning-plan/learningPlan.types";
 
-const VALID_ANSWER_OPTION_COUNTS: AnswerOptionsCount[] = [2, 3, 4, 5, 6];
+const VALID_ANSWER_OPTION_COUNTS: AnswerOptionsCount[] = [...ANSWER_OPTIONS_COUNT_OPTIONS];
 
 function normalizeSpecialQuestionMode(
   raw: unknown,
@@ -146,6 +151,7 @@ export function normalizeAnswerEntryMode(raw: unknown): AnswerEntryMode {
 
 export function normalizeAnswerOptionsCount(raw: unknown): AnswerOptionsCount {
   const n = typeof raw === "number" ? raw : Number(raw);
+  if (n === 5) return 4;
   return VALID_ANSWER_OPTION_COUNTS.includes(n as AnswerOptionsCount)
     ? (n as AnswerOptionsCount)
     : 4;
@@ -239,13 +245,7 @@ export function getEquationTwoUnknownOperatorPool(
   return out;
 }
 
-export function hasAnyQuestionSource(config: MathLearningConfig): boolean {
-  if (
-    getEnabledOperations(config).some(
-      (op) => getQuestionStylesForOperation(config, op).length > 0,
-    )
-  )
-    return true;
+function hasSupplementalQuestionSources(config: MathLearningConfig): boolean {
   if (getEquationUnknownOperatorPool(config).length > 0) return true;
   if (getEquationTwoUnknownOperatorPool(config).length > 0) return true;
   if (hasGeometryQuestionSource(config)) return true;
@@ -259,7 +259,19 @@ export function hasAnyQuestionSource(config: MathLearningConfig): boolean {
   if (hasDifferentiationSource(config)) return true;
   if (hasIntegrationSource(config)) return true;
   if (hasTrigonometrySource(config)) return true;
+  if (hasLogarithmSource(config)) return true;
   return false;
+}
+
+export function hasAnyQuestionSource(config: MathLearningConfig): boolean {
+  if (
+    getEnabledOperations(config).some(
+      (op) => getQuestionStylesForOperation(config, op).length > 0,
+    )
+  ) {
+    return true;
+  }
+  return hasSupplementalQuestionSources(config);
 }
 
 /**
@@ -285,7 +297,8 @@ export function applyPracticeFocusOverride(
       (focus === "pattern" && hasPatternsQuestionSource(config)) ||
       (focus === "differentiation" && hasDifferentiationSource(config)) ||
       (focus === "integration" && hasIntegrationSource(config)) ||
-      (focus === "trigonometry" && hasTrigonometrySource(config));
+      (focus === "trigonometry" && hasTrigonometrySource(config)) ||
+      (focus === "logarithm" && hasLogarithmSource(config));
     if (!basicEnabled && !specialEnabled) return config;
   }
   return {
@@ -348,6 +361,10 @@ export function applyPracticeFocusOverride(
     trigonometry: {
       ...config.trigonometry,
       enabled: focus === "trigonometry",
+    },
+    logarithm: {
+      ...config.logarithm,
+      enabled: focus === "logarithm",
     },
     geometry: {
       ...config.geometry,
@@ -694,35 +711,11 @@ function normalizeEquationUnknownConfig(raw: unknown): EquationUnknownConfig {
 }
 
 export function validateLearningConfig(
-  config: MathLearningConfig,
+  raw: MathLearningConfig,
 ): LearningConfigValidationResult {
+  const config = ensureLearningConfigShape(raw);
   const t = i18n.t.bind(i18n);
   const errors: string[] = [];
-
-  if (!hasAnyQuestionSource(config)) {
-    errors.push(t('settings:validation.chooseOperation'));
-  }
-
-  const hasArithmeticStyleSource = getEnabledOperations(config).some(
-    (op) => getQuestionStylesForOperation(config, op).length > 0,
-  );
-  const hasNonArithmeticQuestionSource =
-    getEquationUnknownOperatorPool(config).length > 0 ||
-    getEquationTwoUnknownOperatorPool(config).length > 0 ||
-    hasGeometryQuestionSource(config) ||
-    hasComparisonQuestionSource(config) ||
-    hasEquivalentExpressionsSource(config) ||
-    config.fractionVisual.enabled ||
-    hasShapeRecognitionSource(config) ||
-    hasNumberSenseSource(config) ||
-    hasClockQuestionSource(config) ||
-    hasPatternsQuestionSource(config) ||
-    hasDifferentiationSource(config) ||
-    hasIntegrationSource(config) ||
-    hasTrigonometrySource(config);
-  if (!hasNonArithmeticQuestionSource && !hasArithmeticStyleSource) {
-    errors.push(t('settings:validation.chooseStyle'));
-  }
 
   if (
     config.answerEntryMode === "keyboard" &&
@@ -890,6 +883,10 @@ export function validateLearningConfig(
     }
   }
 
+  if (config.logarithm.enabled && !hasLogarithmSource(config)) {
+    errors.push(t('settings:validation.logSubtypes'));
+  }
+
   if (config.mode !== "timed") {
     const counts = new Set<number>(QUESTION_COUNT_OPTIONS);
     if (!counts.has(config.questionsCount)) {
@@ -897,10 +894,7 @@ export function validateLearningConfig(
     }
   }
 
-  if (
-    config.answerEntryMode !== "keyboard" &&
-    !VALID_ANSWER_OPTION_COUNTS.includes(config.answerOptionsCount)
-  ) {
+  if (!VALID_ANSWER_OPTION_COUNTS.includes(config.answerOptionsCount)) {
     errors.push(t('settings:validation.answerChoices'));
   }
 
@@ -945,6 +939,10 @@ export function validateLearningConfig(
 
   if (!isFinalResultCapValue(config.maxFinalResult)) {
     errors.push(t('settings:validation.unsupportedCap'));
+  }
+
+  if (errors.length === 0 && !hasAnyQuestionSource(config)) {
+    errors.push(t('settings:validation.chooseOperation'));
   }
 
   return { valid: errors.length === 0, errors };
@@ -1035,6 +1033,23 @@ export function normalizeMultiplicationConfig(
   const wordProblems =
     m.wordProblems === true ||
     legacyWordProblemsEnabled(legacyQuestionStyles);
+  if (Array.isArray(m.factors)) {
+    return {
+      enabled,
+      standardCalculation,
+      allowNegativeNumbers,
+      factors: sanitizeOneToTenList(m.factors),
+      secondFactorSource,
+      randomizeFactorOrder,
+      missingNumber,
+      fractions: m.fractions === true,
+      fractionDenominatorMode: normalizeFractionDenominatorMode(
+        m.fractionDenominatorMode,
+      ),
+      allowDecimals: m.allowDecimals === true,
+      wordProblems,
+    };
+  }
   const fromFactors = sanitizeOneToTenList(m.factors);
   if (fromFactors.length > 0) {
     return {
@@ -1123,6 +1138,24 @@ export function normalizeDivisionConfig(
   const wordProblems =
     m.wordProblems === true ||
     legacyWordProblemsEnabled(legacyQuestionStyles);
+  if (Array.isArray(m.divisors)) {
+    return {
+      enabled,
+      standardCalculation,
+      allowNegativeNumbers,
+      answerMin,
+      answerMax,
+      divisors: sanitizeOneToTenList(m.divisors),
+      allowRemainders,
+      missingNumber,
+      fractions: m.fractions === true,
+      fractionDenominatorMode: normalizeFractionDenominatorMode(
+        m.fractionDenominatorMode,
+      ),
+      allowDecimals: m.allowDecimals === true,
+      wordProblems,
+    };
+  }
   const fromDivisors = sanitizeOneToTenList(m.divisors);
   if (fromDivisors.length > 0) {
     return {
@@ -1471,6 +1504,9 @@ export function ensureLearningConfigShape(
     ),
     trigonometry: normalizeTrigonometryConfig(
       (config as MathLearningConfig & { trigonometry?: unknown }).trigonometry,
+    ),
+    logarithm: normalizeLogarithmConfig(
+      (config as MathLearningConfig & { logarithm?: unknown }).logarithm,
     ),
     answerEntryMode: normalizeAnswerEntryMode(config.answerEntryMode),
     answerOptionsCount: normalizeAnswerOptionsCount(config.answerOptionsCount),

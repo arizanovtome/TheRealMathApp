@@ -21,6 +21,7 @@ export const LEARN_TOPIC_IDS_EASIEST_TO_HARDEST = [
   'equations_x',
   'equations_xy',
   'trigonometry',
+  'logarithm',
   'differentiation',
   'integration',
 ] as const;
@@ -48,4 +49,5 @@ export const LEARN_TOPIC_ID_BY_OPERATION = {
   differentiation: 'differentiation',
   integration: 'integration',
   trigonometry: 'trigonometry',
+  logarithm: 'logarithm',
 } as const satisfies Partial<Record<MathOperation, LearnTopicIdFromOrder>>;

@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { useMemo, useRef, useState } from 'react';
+import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
 import { AppButton } from '@/components/common/AppButton';
 import { AppScreen } from '@/components/common/AppScreen';
@@ -11,12 +11,15 @@ import { useAppTranslation } from '@/i18n/useAppTranslation';
 import { useAppStore } from '@/store/useAppStore';
 import { colors } from '@/theme/colors';
 import { radii, spacing } from '@/theme/spacing';
+import { useScrollToFocusedInput } from '@/utils/keyboardScroll';
 
 export default function OnboardingNameScreen() {
   const { t } = useAppTranslation(['onboarding', 'common']);
   const router = useRouter();
   const params = useLocalSearchParams<{ mode?: string }>();
   const profiles = useAppStore((s) => s.profiles);
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollToInput = useScrollToFocusedInput(scrollRef);
   const defaultProfileName = useMemo(
     () => nextDefaultProfileName(profiles),
     [profiles],
@@ -41,7 +44,7 @@ export default function OnboardingNameScreen() {
   };
 
   return (
-    <AppScreen scroll>
+    <AppScreen scroll scrollProps={{ ref: scrollRef }}>
       <AppText variant="title">
         {isAddMode ? t('onboarding:newProfileTitle') : t('onboarding:welcome')}
       </AppText>
@@ -58,6 +61,7 @@ export default function OnboardingNameScreen() {
             placeholderTextColor={colors.textMuted}
             value={profileName}
             onChangeText={setProfileName}
+            onFocus={scrollToInput}
             autoCapitalize="words"
             returnKeyType="next"
             style={styles.input}
@@ -72,6 +76,7 @@ export default function OnboardingNameScreen() {
             placeholderTextColor={colors.textMuted}
             value={name}
             onChangeText={setName}
+            onFocus={scrollToInput}
             autoCapitalize="words"
             returnKeyType="done"
             onSubmitEditing={handleContinue}

@@ -15,6 +15,7 @@ describe('learnTopics', () => {
     expect(getAllLearnTopicIds()).toContain('addition');
     expect(getAllLearnTopicIds()).toContain('geometry');
     expect(getAllLearnTopicIds()).toContain('trigonometry');
+    expect(getAllLearnTopicIds()).toContain('logarithm');
     expect(getAllLearnTopicIds()).toContain('comparison');
     expect(getAllLearnTopicIds()).toContain('equivalent_expressions');
     expect(getAllLearnTopicIds()).toContain('shapes');
@@ -63,5 +64,19 @@ describe('learnTopics', () => {
 
   it('returns undefined for unknown id', () => {
     expect(getLearnTopic('not-a-topic')).toBeUndefined();
+  });
+
+  it('applies Macedonian overrides for numbers topic', () => {
+    const numbers = getLearnTopic('numbers', 'mk');
+    expect(numbers?.title).toBe('Броеви');
+    expect(numbers?.summary).toContain('парни');
+  });
+
+  it('applies Macedonian overrides for multiplication topic with tables', () => {
+    const multiplication = getLearnTopic('multiplication', 'mk');
+    expect(multiplication?.title).toBe('Множење');
+    expect(multiplication?.sections.some((s) => s.body.includes('повторено собирање'))).toBe(true);
+    expect(multiplication?.formulaTables).toHaveLength(10);
+    expect(multiplication?.formulaTables?.[2]?.heading).toBe('Таблица за 3');
   });
 });

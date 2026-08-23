@@ -16,6 +16,9 @@ function normalizeCalculusOpConfig(
     powerRule: r.powerRule !== false,
     constantRule: r.constantRule !== false,
     simpleSum: r.simpleSum === true,
+    naturalLogRule: r.naturalLogRule === true,
+    trigRule: r.trigRule === true,
+    quotientRule: r.quotientRule === true,
   };
 }
 
@@ -33,6 +36,9 @@ export function getEnabledCalculusSubtypes(config: CalculusOpConfig): CalculusSu
   if (config.powerRule) out.push('power_rule');
   if (config.constantRule) out.push('constant_rule');
   if (config.simpleSum) out.push('simple_sum');
+  if (config.naturalLogRule) out.push('natural_log_rule');
+  if (config.trigRule) out.push('trig_rule');
+  if (config.quotientRule) out.push('quotient_rule');
   return out;
 }
 
