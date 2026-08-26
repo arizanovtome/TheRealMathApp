@@ -28,10 +28,10 @@ export const DEFAULT_INTEGRATION_CONFIG: CalculusOpConfig = {
   enabled: false,
   powerRule: true,
   constantRule: true,
-  simpleSum: false,
-  naturalLogRule: false,
-  trigRule: false,
-  quotientRule: false,
+  simpleSum: true,
+  naturalLogRule: true,
+  trigRule: true,
+  quotientRule: true,
 };
 
 /** Exponent range for power-rule questions (inclusive). */

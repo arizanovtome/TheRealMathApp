@@ -11,7 +11,6 @@ import { getRecommendedLearningPlan } from '@/features/learning-plan/recommended
 
 export type LearnPracticeTarget =
   | { kind: 'operation'; operation: MathOperation }
-  | { kind: 'equation_unknown' }
   | { kind: 'equation_two_unknowns' }
   | { kind: 'fractions' };
 
@@ -51,6 +50,8 @@ function disableAllQuestionSources(config: MathLearningConfig): MathLearningConf
     integration: { ...config.integration, enabled: false },
     trigonometry: { ...config.trigonometry, enabled: false },
     logarithm: { ...config.logarithm, enabled: false },
+    advancedEquations: { ...config.advancedEquations, enabled: false },
+    limits: { ...config.limits, enabled: false },
     geometry: { ...config.geometry, enabled: false },
   };
 }
@@ -96,31 +97,6 @@ export function applyLearnPracticeFocus(
           },
         };
       }
-      break;
-    case 'equation_unknown':
-      focused = {
-        ...disableAllQuestionSources(base),
-        addition: {
-          ...defaults.addition,
-          enabled: true,
-          standardCalculation: true,
-        },
-        subtraction: {
-          ...defaults.subtraction,
-          enabled: true,
-          standardCalculation: true,
-        },
-        equationUnknown: {
-          enabled: true,
-          mode: 'mixed',
-          operators: {
-            addition: true,
-            subtraction: true,
-            multiplication: false,
-            division: false,
-          },
-        },
-      };
       break;
     case 'equation_two_unknowns':
       focused = {
@@ -173,7 +149,6 @@ export function parseLearnPracticeTargetParam(
   const kindRaw = Array.isArray(kind) ? kind[0] : kind;
   if (!kindRaw) return null;
 
-  if (kindRaw === 'equation_unknown') return { kind: 'equation_unknown' };
   if (kindRaw === 'equation_two_unknowns') return { kind: 'equation_two_unknowns' };
   if (kindRaw === 'fractions') return { kind: 'fractions' };
 
@@ -229,5 +204,7 @@ export function mergeFocusedOperationIntoProfile(
     case 'integration': return { ...profileConfig, integration: focusedConfig.integration };
     case 'trigonometry': return { ...profileConfig, trigonometry: focusedConfig.trigonometry };
     case 'logarithm': return { ...profileConfig, logarithm: focusedConfig.logarithm };
+    case 'advanced_equations': return { ...profileConfig, advancedEquations: focusedConfig.advancedEquations };
+    case 'limits': return { ...profileConfig, limits: focusedConfig.limits };
   }
 }

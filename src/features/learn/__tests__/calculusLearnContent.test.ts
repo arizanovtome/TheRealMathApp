@@ -11,7 +11,8 @@ describe('calculusLearnContent', () => {
 
   it('wires formula tables into the differentiation learn topic', () => {
     const topic = getLearnTopic('differentiation');
-    expect(topic?.formula).toContain("(f/g)'");
+    expect(topic?.formula).toBeUndefined();
     expect(topic?.formulaTables?.length).toBeGreaterThan(0);
+    expect(topic?.formulaTables?.[0]?.rows[0]?.formula).toContain("(f/g)'");
   });
 });

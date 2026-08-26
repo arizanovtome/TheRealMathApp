@@ -1,7 +1,19 @@
 import { getRecommendedLearningPlan } from '@/features/learning-plan/recommendedLearningPlan';
+import { DEFAULT_INTEGRATION_CONFIG } from '@/features/calculus/calculus.types';
 import { tryGenerateIntegrationQuestion } from '@/features/calculus/integrationGenerator';
 
 describe('integrationGenerator', () => {
+  it('enables the full integration rule set by default', () => {
+    expect(DEFAULT_INTEGRATION_CONFIG).toMatchObject({
+      powerRule: true,
+      constantRule: true,
+      simpleSum: true,
+      naturalLogRule: true,
+      trigRule: true,
+      quotientRule: true,
+    });
+  });
+
   it('returns null when integration is disabled', () => {
     const config = getRecommendedLearningPlan(10);
     expect(tryGenerateIntegrationQuestion(config)).toBeNull();
@@ -60,5 +72,25 @@ describe('integrationGenerator', () => {
     const q = tryGenerateIntegrationQuestion(config);
     expect(q!.questionText).toMatch(/\//);
     expect(q!.correctAnswer).toMatch(/\+ C$/);
+  });
+
+  it('generates varied questions when all integration rules are enabled', () => {
+    const config = getRecommendedLearningPlan(12);
+    config.integration = { ...DEFAULT_INTEGRATION_CONFIG, enabled: true };
+    const families = new Set<string>();
+
+    for (let i = 0; i < 180; i++) {
+      const text = tryGenerateIntegrationQuestion(config)!.questionText;
+      if (text.includes('sin') || text.includes('cos')) families.add('trig');
+      else if (text.includes('1/x')) families.add('natural_log');
+      else if (text.includes('/x')) families.add('quotient');
+      else if (text.includes(' + ')) families.add('sum');
+      else if (/∫\d+ dx/.test(text)) families.add('constant');
+      else families.add('power');
+    }
+
+    expect(families).toEqual(
+      new Set(['power', 'constant', 'sum', 'natural_log', 'trig', 'quotient']),
+    );
   });
 });

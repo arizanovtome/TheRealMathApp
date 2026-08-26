@@ -6,6 +6,8 @@ import type { TrigonometryDiagram } from '@/features/trigonometry/trigonometry.t
 import type { LearnPracticeTarget } from '@/features/learn/learnPractice.utils';
 import { LEARN_TOPIC_IDS_EASIEST_TO_HARDEST } from '@/constants/topicOrder';
 import { applyLearnLocale } from '@/i18n/content/learn/overrides.mk';
+import { getLearnContext } from '@/features/learn/learnContextContent';
+import { placeLearnExamples } from '@/features/learn/learnExamplePlacement';
 import type { SupportedLocale } from '@/i18n/types';
 
 export type LearnTopicId =
@@ -14,6 +16,29 @@ export type LearnTopicId =
 export type LearnExample = {
   prompt: string;
   solution: string;
+  limitExpression?: {
+    approach: string;
+    expression: string;
+    fraction?: { numerator: string; denominator: string };
+  };
+  solutionFraction?: { numerator: number; denominator: number };
+  solutionSteps?: LearnSolutionStep[];
+};
+
+export type LearnSolutionStep = {
+  text?: string;
+  before?: string;
+  fraction?: { numerator: string; denominator: string };
+  after?: string;
+};
+
+export type LearnSection = {
+  heading: string;
+  body: string;
+  /** Optional worked example rendered directly below this section. */
+  example?: LearnExample;
+  /** Additional examples, ordered from simpler to more complex. */
+  examples?: LearnExample[];
 };
 
 export type LearnGeometryDiagram = {
@@ -40,7 +65,10 @@ export type LearnTutorial = {
   id: LearnTopicId;
   title: string;
   summary: string;
-  sections: { heading: string; body: string }[];
+  introduction?: LearnSection;
+  mathUses?: LearnSection;
+  realLifeUses?: LearnSection;
+  sections: LearnSection[];
   formula?: string;
   formulaTables?: LearnFormulaTable[];
   examples?: LearnExample[];
@@ -51,6 +79,86 @@ export type LearnTutorial = {
 export const LEARN_TOPIC_ORDER: LearnTopicId[] = [...LEARN_TOPIC_IDS_EASIEST_TO_HARDEST];
 
 const LEARN_TOPICS_UNSORTED: LearnTutorial[] = [
+  {
+    id: 'advanced_equations',
+    title: 'Linear & quadratic equations',
+    summary: 'Solve multi-step linear equations and quadratics with two roots.',
+    sections: [
+      { heading: 'Linear equations', body: 'Undo operations in reverse order and perform the same operation on both sides. Collect variable terms on one side when x appears on both sides.' },
+      { heading: 'Quadratic equations', body: 'A quadratic contains x². When it factors into two brackets, set each bracket equal to zero to find both solutions.' },
+    ],
+    examples: [
+      { prompt: '3x + 5 = 20', solution: 'x = 5' },
+      { prompt: '(x − 2)(x + 3) = 0', solution: 'x = −3 or 2' },
+    ],
+    tryInPractice: { kind: 'operation', operation: 'advanced_equations' },
+  },
+  {
+    id: 'limits',
+    title: 'Limits',
+    summary: 'Find the value an expression approaches as x approaches a point.',
+    sections: [
+      {
+        heading: 'Direct substitution',
+        body: 'Substitute the approaching value directly and calculate. This works for polynomials and for rational expressions whose denominator does not become zero.',
+        example: {
+          prompt: 'lim (x → 2) 12/(x + 2)',
+          solution: '12/(2 + 2) = 3',
+          limitExpression: { approach: '2', expression: '12/(x + 2)', fraction: { numerator: '12', denominator: 'x + 2' } },
+          solutionSteps: [
+            { text: 'Substitute x = 2.' },
+            { fraction: { numerator: '12', denominator: '2 + 2' } },
+            { fraction: { numerator: '12', denominator: '4' }, after: '= 3' },
+          ],
+        },
+      },
+      {
+        heading: 'Factor and cancel',
+        body: 'If substitution gives 0/0, factor the numerator, cancel the shared factor, and then substitute. The original expression is undefined at the point, but its nearby values can still approach one number.',
+        example: {
+          prompt: 'lim (x → 2) (x² − 4)/(x − 2)',
+          solution: '(x − 2)(x + 2)/(x − 2) = x + 2 → 4',
+          limitExpression: { approach: '2', expression: '(x² − 4)/(x − 2)', fraction: { numerator: 'x² − 4', denominator: 'x − 2' } },
+          solutionSteps: [
+            { before: 'Factor:', fraction: { numerator: '(x − 2)(x + 2)', denominator: 'x − 2' } },
+            { text: 'Cancel the shared factor (x − 2): x + 2.' },
+            { text: 'Substitute x = 2: 2 + 2 = 4.' },
+          ],
+        },
+      },
+      {
+        heading: 'Limits at infinity',
+        body: 'For rational functions, compare the highest powers. Equal degrees approach the ratio of leading coefficients. If the numerator has lower degree, the limit is 0.',
+        example: {
+          prompt: 'lim (x → ∞) (6x² + 1)/(2x² + 3)',
+          solution: '6/2 = 3',
+          limitExpression: { approach: '∞', expression: '(6x² + 1)/(2x² + 3)', fraction: { numerator: '6x² + 1', denominator: '2x² + 3' } },
+          solutionSteps: [
+            { text: 'Keep the highest-degree terms.' },
+            { fraction: { numerator: '6x²', denominator: '2x²' } },
+            { before: 'Cancel x²:', fraction: { numerator: '6', denominator: '2' }, after: '= 3' },
+          ],
+        },
+      },
+      {
+        heading: 'Rationalization (limits with roots)',
+        body: 'If a square root causes 0/0, multiply the numerator and denominator by the conjugate. The conjugate changes the sign between the two terms, removing the root through a difference of squares.',
+        example: {
+          prompt: 'lim (x → 0) (√(x + 1) − 1)/x',
+          solution: 'Multiply by the conjugate, cancel x, and substitute.',
+          limitExpression: { approach: '0', expression: '(√(x + 1) − 1)/x', fraction: { numerator: '√(x + 1) − 1', denominator: 'x' } },
+          solutionFraction: { numerator: 1, denominator: 2 },
+          solutionSteps: [
+            { text: 'Multiply by the conjugate √(x + 1) + 1.' },
+            { before: 'After multiplying:', fraction: { numerator: 'x', denominator: 'x(√(x + 1) + 1)' } },
+            { before: 'Cancel x:', fraction: { numerator: '1', denominator: '√(x + 1) + 1' } },
+            { before: 'Substitute x = 0:', fraction: { numerator: '1', denominator: '2' } },
+          ],
+        },
+      },
+    ],
+    tryInPractice: { kind: 'operation', operation: 'limits' },
+  },
   {
     id: 'addition',
     title: 'Addition',
@@ -224,19 +332,6 @@ const LEARN_TOPICS_UNSORTED: LearnTutorial[] = [
       { prompt: 'a² − b² = ?', solution: '(a + b)(a − b)' },
     ],
     tryInPractice: { kind: 'operation', operation: 'equivalent_expressions' },
-  },
-  {
-    id: 'equations_x',
-    title: 'Equations with x',
-    summary: 'Find the hidden number that makes the equation true.',
-    sections: [
-      {
-        heading: 'One unknown',
-        body: 'x stands for a number you do not know yet. x + 3 = 8 means x = 5.',
-      },
-    ],
-    examples: [{ prompt: 'x + 3 = 8', solution: 'x = 5' }],
-    tryInPractice: { kind: 'equation_unknown' },
   },
   {
     id: 'equations_xy',
@@ -532,7 +627,6 @@ const LEARN_TOPICS_UNSORTED: LearnTutorial[] = [
         body: "Practice questions use prime notation: (expression)' = ?. Textbooks often write d/dx(expression) instead — for example, d/dx(x³) = 3x² means the same as (x³)' = 3x².",
       },
     ],
-    formula: "(f/g)' = (f'g − fg') / g²",
     formulaTables: buildDifferentiationFormulaTables(),
     examples: [
       { prompt: "(x²)' = ?", solution: '2x' },
@@ -595,17 +689,23 @@ const LEARN_TOPICS_UNSORTED: LearnTutorial[] = [
   },
 ];
 
-export const LEARN_TOPICS: LearnTutorial[] = LEARN_TOPIC_ORDER.map(
-  (id) => LEARN_TOPICS_UNSORTED.find((t) => t.id === id)!,
+const LEARN_TOPICS_BY_ID = new Map(
+  LEARN_TOPICS_UNSORTED.map((topic) => [topic.id, topic] as const),
 );
 
+export const LEARN_TOPICS: LearnTutorial[] = LEARN_TOPIC_ORDER.map((id) => {
+  const topic = LEARN_TOPICS_BY_ID.get(id);
+  if (!topic) throw new Error(`Missing Learn content for curriculum section: ${id}`);
+  return { ...topic, ...getLearnContext(id, 'en') };
+});
+
 export function getLearnTopics(locale: SupportedLocale): LearnTutorial[] {
-  return LEARN_TOPICS.map((topic) => applyLearnLocale(topic, locale));
+  return LEARN_TOPICS.map((topic) => placeLearnExamples(applyLearnLocale(topic, locale), locale));
 }
 
 export function getLearnTopic(id: string, locale: SupportedLocale = 'en'): LearnTutorial | undefined {
   const topic = LEARN_TOPICS.find((t) => t.id === id);
-  return topic ? applyLearnLocale(topic, locale) : undefined;
+  return topic ? placeLearnExamples(applyLearnLocale(topic, locale), locale) : undefined;
 }
 
 export function getAllLearnTopicIds(): LearnTopicId[] {

@@ -57,6 +57,7 @@
   "answer": "Answer",
   "formula": "Formula",
   "examples": "Examples",
+  "example": "Example",
   "tryInPractice": "Try in practice",
   "correctA11y": "Correct",
   "incorrectA11y": "Incorrect",
@@ -122,7 +123,9 @@
     "differentiation": "Differentiation",
     "integration": "Integration",
     "trigonometry": "Trigonometry",
-    "logarithm": "Logarithms"
+    "logarithm": "Logarithms",
+    "advanced_equations": "Linear & quadratic equations",
+    "limits": "Limits"
   },
   "findAndCount": "Find and count", "left": "Left", "right": "Right", "groupA": "Group A", "groupB": "Group B", "same": "Same", "odd": "Odd", "even": "Even",
   "questionStyles": {

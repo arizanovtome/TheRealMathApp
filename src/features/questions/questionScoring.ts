@@ -50,6 +50,7 @@ function numericAnswersMatch(a: number, b: number): boolean {
 }
 
 export function correctAnswerDisplayLabel(q: MathQuestion): string {
+  if (q.kind === 'advanced_equation' || q.kind === 'limit') return q.correctAnswer;
   if (isArithmeticQuestion(q)) {
     if (isFractionQuestion(q) && q.correctFraction) {
       return formatFraction(q.correctFraction);
@@ -91,8 +92,20 @@ export function answerOptionDisplayLabel(q: MathQuestion, option: number | strin
   return String(option);
 }
 
+/** Two-column choices are reserved for scalar numbers/fractions; symbolic labels stay full-width. */
+export function answerOptionsArePlainNumbers(q: MathQuestion): boolean {
+  if (isEquationUnknownQuestion(q)) return false;
+  return q.answerOptions.every((option) => {
+    if (typeof option === 'number') return Number.isFinite(option);
+    const label = option.trim();
+    return /^[-+]?(?:\d+(?:\.\d+)?|\.\d+)$/.test(label) ||
+      /^[-+]?\d+\s*\/\s*\d+$/.test(label);
+  });
+}
+
 export function chosenAnswerDisplayLabel(q: MathQuestion, chosen: number | string | null): string {
   if (chosen === null) return '—';
+  if (q.kind === 'advanced_equation' || q.kind === 'limit') return String(chosen);
   if (isArithmeticQuestion(q)) return answerOptionDisplayLabel(q, chosen);
   if (isGeometryQuestion(q)) return String(chosen);
   if (isComparisonQuestion(q) || isEquivalentExpressionQuestion(q) || isFractionVisualQuestion(q) || isShapeRecognitionQuestion(q) || isClockQuestion(q) || isPatternQuestion(q) || isCalculusQuestion(q) || isTrigonometryQuestion(q) || isLogarithmQuestion(q) || isNumberSenseQuestion(q)) return String(chosen);
@@ -104,6 +117,7 @@ export function chosenAnswerDisplayLabel(q: MathQuestion, chosen: number | strin
 
 export function submittedAnswerIsCorrect(q: MathQuestion, answer: number | string | null): boolean {
   if (answer === null) return false;
+  if (q.kind === 'advanced_equation' || q.kind === 'limit') return String(answer) === q.correctAnswer;
   if (isArithmeticQuestion(q)) {
     if (isFractionQuestion(q) && q.correctFraction) {
       if (typeof answer !== 'string') return false;

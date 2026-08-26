@@ -2,25 +2,48 @@ import type { MathOperation } from '@/features/learning-plan/learningPlan.types'
 
 type Template = (a: number, b: number, result: number) => string;
 
+const signedChangeMk = (value: number): string =>
+  value < 0 ? `се намали за ${Math.abs(value)}` : `се зголеми за ${value}`;
+
 export const WORD_PROBLEM_TEMPLATES_MK: Partial<Record<MathOperation, Template[]>> = {
   addition: [
     (a, b) => `Мија има ${a} налепници и добива уште ${b}. Колку налепници има сега?`,
-    (a, b) => `На дрво има ${a} птици. Уште ${b} слетаa. Колку птици има сегa?`,
+    (a, b) => `На дрво има ${a} птици. Уште ${b} слетаа. Колку птици има сега?`,
     (a, b) => `Сам собра ${a} школки и најде уште ${b} на плажата. Колку школки вкупно?`,
   ],
   subtraction: [
-    (a, b) => `Имаше ${a} колачиња. Децата изедо ${b}. Колку колачиња останаa?`,
-    (a, b) => `Лео имаше ${a} marbles и подари ${b}. Колку marbles му останаa?`,
-    (a, b) => `Автобусот имаше ${a} patnici. ${b} слегоa. Колку patnici останаa?`,
+    (a, b) => `Имаше ${a} колачиња. Децата изедоа ${b}. Колку колачиња останаа?`,
+    (a, b) => `Лео имаше ${a} џамлии и подари ${b}. Колку џамлии му останаа?`,
+    (a, b) => `Во автобусот имаше ${a} патници. ${b} слегоа. Колку патници останаа?`,
   ],
   multiplication: [
-    (a, b) => `Секоја торба има ${b} јаболка. Имате ${a} torbi. Колку јаболка вкупно?`,
-    (a, b) => `Има ${a} redovi со ${b} svezdi vo sekoj. Kolku svezdi?`,
-    (a, b) => `Пакет има ${b} molivi. Купувате ${a} paketi. Kolku molivi?`,
+    (a, b) => `Во секоја торба има ${b} јаболка. Имате ${a} торби. Колку јаболка има вкупно?`,
+    (a, b) => `Има ${a} редови со по ${b} ѕвезди во секој ред. Колку ѕвезди има вкупно?`,
+    (a, b) => `Во еден пакет има ${b} моливи. Купувате ${a} пакети. Колку моливи има вкупно?`,
   ],
   division: [
-    (a, b) => `Споделувате ${a} slatkisi megu ${b} prijateli. Kolku dobiva sekoj?`,
-    (a, b) => `${a} nalепnici se delat na ${b} ednakvi grupi. Kolku vo sekoja?`,
-    (a, b) => `Нastavnikot ima ${a} molivi i gi stava vo ${b} ednakvi kupi. Kolku vo sekoja?`,
+    (a, b) => `Распределувате ${a} слатки подеднакво меѓу ${b} пријатели. Колку слатки добива секој?`,
+    (a, b) => `${a} налепници се делат во ${b} еднакви групи. Колку налепници има во секоја група?`,
+    (a, b) => `Наставникот има ${a} моливи и ги распоредува во ${b} еднакви купчиња. Колку моливи има во секое купче?`,
+  ],
+};
+
+/** Contexts where signed values describe direction/change rather than negative object counts. */
+export const SIGNED_WORD_PROBLEM_TEMPLATES_MK: Partial<Record<MathOperation, Template[]>> = {
+  addition: [
+    (a, b) => `Температурата беше ${a} Целзиусови степени, а потоа ${signedChangeMk(b)} степени. Колкава е температурата сега?`,
+  ],
+  subtraction: [
+    (a, b) => `Лифтот беше на кат ${a}. Потоа ${b < 0 ? `се искачи ${Math.abs(b)}` : `се спушти ${b}`} ката. На кој кат е сега?`,
+  ],
+  multiplication: [
+    (a, b) => a < 0 && b < 0
+      ? `Казна од ${Math.abs(b)} поени се отстранува во секоја од ${Math.abs(a)} рунди. Колкава е вкупната исправка на резултатот?`
+      : `Играч губи ${Math.abs(a < 0 ? a : b)} поени во секоја од ${Math.abs(a < 0 ? b : a)} рунди. Колкава е вкупната промена на резултатот?`,
+  ],
+  division: [
+    (a, b, result) => result < 0
+      ? `Играч изгубил вкупно ${Math.abs(a)} поени во ${Math.abs(b)} рунди. Колкава е просечната промена на резултатот по рунда?`
+      : `Играч освоил вкупно ${Math.abs(a)} поени во ${Math.abs(b)} рунди. Колку поени освоил во просек по рунда?`,
   ],
 };

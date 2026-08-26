@@ -44,6 +44,8 @@ export const QUESTION_KEYBOARD_INPUT = {
   calculus: 'multiple_choice_only',
   trigonometry: 'multiple_choice_only',
   logarithm: 'multiple_choice_only',
+  advanced_equation: 'multiple_choice_only',
+  limit: 'multiple_choice_only',
   number_sense: 'per_subtype',
 } as const;
 
@@ -68,6 +70,8 @@ export function supportsKeyboardInput(q: MathQuestion): boolean {
     case 'calculus':
     case 'trigonometry':
     case 'logarithm':
+    case 'advanced_equation':
+    case 'limit':
       return false;
     default:
       return false;

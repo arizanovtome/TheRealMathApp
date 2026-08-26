@@ -1,5 +1,10 @@
 import type { AnswerOptionsCount } from '@/features/learning-plan/learningPlan.types';
-import { buildFixedAnswerOptions, limitAnswerOptions } from '@/features/questions/answerOptionsGenerator';
+import {
+  buildAnswerOptions,
+  buildDecimalAnswerOptions,
+  buildFixedAnswerOptions,
+  limitAnswerOptions,
+} from '@/features/questions/answerOptionsGenerator';
 
 describe('answerOptionsGenerator helpers', () => {
   describe('limitAnswerOptions', () => {
@@ -19,6 +24,23 @@ describe('answerOptionsGenerator helpers', () => {
       expect(options).toHaveLength(2);
       expect(options).toContain('Even');
       expect(options).toContain('Odd');
+    });
+  });
+
+  describe('buildAnswerOptions', () => {
+    it('always includes a preferred sign-confusion distractor', () => {
+      const options = buildAnswerOptions(-5, 4, true, undefined, [5]);
+
+      expect(options).toHaveLength(4);
+      expect(options).toContain(-5);
+      expect(options).toContain(5);
+    });
+
+    it('includes a preferred sign-confusion distractor for decimals', () => {
+      const options = buildDecimalAnswerOptions(-2.5, 4, true, undefined, [2.5]);
+
+      expect(options).toContain(-2.5);
+      expect(options).toContain(2.5);
     });
   });
 });

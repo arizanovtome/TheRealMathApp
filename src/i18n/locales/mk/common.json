@@ -57,6 +57,7 @@
   "answer": "Одговор",
   "formula": "Формула",
   "examples": "Примери",
+  "example": "Пример",
   "tryInPractice": "Пробај во вежбање",
   "correctA11y": "Точно",
   "incorrectA11y": "Неточно",
@@ -122,7 +123,9 @@
     "differentiation": "Диференцирање",
     "integration": "Интегрирање",
     "trigonometry": "Тригонометрија",
-    "logarithm": "Логаритми"
+    "logarithm": "Логаритми",
+    "advanced_equations": "Линеарни и квадратни равенки",
+    "limits": "Граници"
   },
   "findAndCount": "Најди и изброј", "left": "Лево", "right": "Десно", "groupA": "Група А", "groupB": "Група Б", "same": "Исто", "odd": "Непарен", "even": "Парен",
   "questionStyles": {

@@ -69,6 +69,7 @@ export function tryGenerateFractionVisualQuestion(
   return {
     kind: 'fraction_visual',
     operation: 'fraction_visual',
+    model: pickRandom(['bar', 'circle'] as const),
     shaded,
     questionText: i18n.t('questions:whatFractionShaded'),
     correctAnswer,

@@ -13,6 +13,11 @@ describe('equationUnknown answer parsing', () => {
     expect(normalizeEquationAnswerInput('20/5')).toBe('20:5');
   });
 
+  it('parses and displays a negative divisor in parentheses', () => {
+    expect(tryParseEquationExpressionValue('45:(-5)')).toBe(-9);
+    expect(equationAnswerMatches(-9, '45:(-5)', '45:-5')).toBe(true);
+  });
+
   it('accepts the canonical expression or an equivalent value', () => {
     expect(equationAnswerMatches(4, '20:5', '20:5')).toBe(true);
     expect(equationAnswerMatches(4, '20:5', ' 20 : 5 ')).toBe(true);
@@ -49,6 +54,34 @@ describe('equationUnknown answer parsing', () => {
     const wrongs = opts.filter((o) => !equationMcOptionMatches('20+86', o));
     expect(wrongs.length).toBe(3);
     expect(new Set(wrongs).size).toBe(3);
+  });
+
+  it('uses only the prompt numbers and ×/÷ transformations for division distractors', () => {
+    const opts = buildEquationMcOptions(
+      'division',
+      '35:7',
+      5,
+      4,
+      { op: 'division', dividend: 35, rhsQuotient: 7 },
+    );
+
+    expect(new Set(opts)).toEqual(
+      new Set(['35:7', '7:35', '35 × 7', '7 × 35']),
+    );
+  });
+
+  it('uses the same prompt-number transformations for multiplication equations', () => {
+    const opts = buildEquationMcOptions(
+      'multiplication',
+      '35:7',
+      5,
+      4,
+      { op: 'multiplication', product: 35, leftFactor: 7 },
+    );
+
+    expect(new Set(opts)).toEqual(
+      new Set(['35:7', '7:35', '35 × 7', '7 × 35']),
+    );
   });
 
   it('parses addition-style expressions', () => {

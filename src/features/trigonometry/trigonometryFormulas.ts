@@ -140,7 +140,8 @@ export function buildPickFormulaNumericDistractors(
 }
 
 export function sideLabel(role: TrigSideRole): string {
-  return TRIG_SIDE_LABELS[role];
+  const label = i18n.t(`questions:trigSides.${role}`);
+  return label.charAt(0).toLocaleUpperCase(i18n.language) + label.slice(1);
 }
 
 export function sideLabelLower(role: TrigSideRole): string {
@@ -160,8 +161,18 @@ export function normalizeTrigAnswer(value: string): string {
     .replace(/×/g, '*');
 }
 
+function canonicalizeReciprocalLegRatio(value: string): string {
+  const match = /^(tan|cot)(theta|\d+deg)=([^/]+)\/([^/]+)$/.exec(value);
+  if (!match) return value;
+  const [, ratio, angle, numerator, denominator] = match;
+  return ratio === 'cot'
+    ? `tan${angle}=${denominator}/${numerator}`
+    : value;
+}
+
 export function trigAnswersMatch(a: string, b: string): boolean {
-  return normalizeTrigAnswer(a) === normalizeTrigAnswer(b);
+  return canonicalizeReciprocalLegRatio(normalizeTrigAnswer(a)) ===
+    canonicalizeReciprocalLegRatio(normalizeTrigAnswer(b));
 }
 
 type LegRatioOptions = {
@@ -223,6 +234,17 @@ export function buildTrigMcOptions(
   }
   const options = [correct];
   const available = [...pool];
+  const legRatioCounterpart = /^(tan|cot)(\s+.+)$/.exec(correct);
+  if (legRatioCounterpart && options.length < count) {
+    const [, ratio, remainder] = legRatioCounterpart;
+    const counterpart = `${ratio === 'tan' ? 'cot' : 'tan'}${remainder}`;
+    const counterpartIndex = available.findIndex(
+      (option) => normalizeTrigAnswer(option) === normalizeTrigAnswer(counterpart),
+    );
+    if (counterpartIndex >= 0) {
+      options.push(available.splice(counterpartIndex, 1)[0]!);
+    }
+  }
   while (options.length < count && available.length > 0) {
     const idx = randomIntInclusive(0, available.length - 1);
     options.push(available.splice(idx, 1)[0]!);
@@ -240,8 +262,8 @@ export function buildNameSideDistractors(correct: TrigSideRole): string[] {
   return [
     ...((Object.keys(TRIG_SIDE_LABELS) as TrigSideRole[])
       .filter((role) => role !== correct)
-      .map((role) => TRIG_SIDE_LABELS[role])),
-    'Right angle',
+      .map(sideLabel)),
+    i18n.t('questions:trigSides.rightAngle'),
   ];
 }
 
@@ -303,5 +325,5 @@ export function buildPickFormulaQuestionText(unknown: TrigDiagramTarget): string
   if (unknown === 'angle') {
     return i18n.t('questions:trigFindAngle');
   }
-  return i18n.t('questions:trigFindSide', { side: i18n.t(`questions:trigSides.${unknown}`) });
+  return i18n.t(`questions:trigFindSide.${unknown}`);
 }

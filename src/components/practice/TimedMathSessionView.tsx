@@ -23,6 +23,7 @@ import { AppText } from "@/components/common/AppText";
 import { AnswerOptionButton } from "@/components/practice/AnswerOptionButton";
 import { FeedbackMessage } from "@/components/practice/FeedbackMessage";
 import { QuestionCard } from "@/components/practice/QuestionCard";
+import { LimitQuestionDisplay } from "@/components/limits/LimitQuestionDisplay";
 import {
   SessionAnswerTextInput,
   SessionEquationAnswerInput,
@@ -57,10 +58,11 @@ import {
   requiresMultipleChoiceQuestion,
   usesCompactQuestionCard,
 } from "@/features/questions/question.types";
-import { FractionBarModel } from "@/components/fractions/FractionModels";
+import { FractionVisualModel } from "@/components/fractions/FractionModels";
 import { createSessionQuestions } from "@/features/questions/questionGenerator";
 import {
     answerOptionDisplayLabel,
+    answerOptionsArePlainNumbers,
     buildTimedSessionResult,
     submittedAnswerIsCorrect,
 } from "@/features/questions/questionScoring";
@@ -243,6 +245,7 @@ export function TimedMathSessionView() {
   useEffect(() => {
     setAnswerInputText("");
     setInputError("");
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
   }, [current?.id]);
 
   const clearAdvanceTimer = useCallback(() => {
@@ -358,6 +361,7 @@ export function TimedMathSessionView() {
 
   const scrollContentStyle = [
     styles.scrollInner,
+    { paddingBottom: Math.max(spacing.xl, insets.bottom + spacing.md) },
     showKeyboardInput && keyboardOpen ? { paddingTop: insets.top } : null,
     keyboardOpen ? { paddingBottom: spacing.xl * 3 } : null,
   ];
@@ -451,6 +455,7 @@ export function TimedMathSessionView() {
     >
       <ScrollView
         ref={scrollRef}
+        style={styles.scroll}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={scrollContentStyle}
         showsVerticalScrollIndicator={false}
@@ -465,6 +470,9 @@ export function TimedMathSessionView() {
           progressLabel={progressLabel}
           questionText={current.questionText}
           compact={usesCompactQuestionCard(current)}
+          questionContent={current.kind === "limit" ? (
+            <LimitQuestionDisplay approach={current.approach} expression={current.expression} fraction={current.expressionFraction} />
+          ) : undefined}
         >
           {current.kind === "number_sense" && current.countTarget ? <BasicShapeDiagram shape={current.countTarget.shape} fill={SHAPE_COLOR_HEX[current.countTarget.color]} size={58} /> : null}
         </QuestionCard>
@@ -473,7 +481,8 @@ export function TimedMathSessionView() {
 
         {isFractionVisualQuestion(current) ? (
           <View style={styles.fractionVisual}>
-            <FractionBarModel
+            <FractionVisualModel
+              model={current.model}
               numerator={current.shaded.numerator}
               denominator={current.shaded.denominator}
             />
@@ -573,7 +582,7 @@ export function TimedMathSessionView() {
               </AppText>
             ) : null}
           </View>
-        ) : isArithmeticQuestion(current) ? (
+        ) : answerOptionsArePlainNumbers(current) ? (
           <View style={styles.options}>
             {current.answerOptions.map((opt) => (
               <AnswerOptionButton
@@ -586,7 +595,9 @@ export function TimedMathSessionView() {
               />
             ))}
           </View>
-        ) : isGeometryQuestion(current) ||
+        ) : isArithmeticQuestion(current) ||
+          isEquationUnknownQuestion(current) ||
+          isGeometryQuestion(current) ||
           isFractionVisualQuestion(current) ||
           isShapeRecognitionQuestion(current) ||
           isComparisonQuestion(current) ||
@@ -596,13 +607,15 @@ export function TimedMathSessionView() {
           isCalculusQuestion(current) ||
           isTrigonometryQuestion(current) ||
           isLogarithmQuestion(current) ||
+          current.kind === "advanced_equation" ||
+          current.kind === "limit" ||
           current.kind === "number_sense" ||
           isEquationTwoUnknownQuestion(current) ? (
           <View style={styles.optionsStacked}>
             {current.answerOptions.map((opt, index) => (
               <AnswerOptionButton
                 key={`${String(opt)}-${index}`}
-                label={answerOptionDisplayLabel(current, opt)}
+                label={isEquationUnknownQuestion(current) ? `x=${opt}` : answerOptionDisplayLabel(current, opt)}
                 value={opt}
                 disabled={showFeedback}
                 selected={selected === opt}
@@ -669,6 +682,9 @@ export function TimedMathSessionView() {
 
 const styles = StyleSheet.create({
   keyboardRoot: {
+    flex: 1,
+  },
+  scroll: {
     flex: 1,
   },
   scrollInner: {
@@ -750,6 +766,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
+    alignItems: "stretch",
   },
   optionsStacked: {
     flexDirection: "column",

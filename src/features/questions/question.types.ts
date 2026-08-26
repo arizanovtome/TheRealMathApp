@@ -16,6 +16,8 @@ import type {
   TrigonometryQuestionSubtype,
 } from '@/features/trigonometry/trigonometry.types';
 import type { LogarithmSubtype } from '@/features/logarithm/logarithm.types';
+import type { AdvancedEquationSubtype } from '@/features/advanced-equations/advancedEquations.types';
+import type { LimitSubtype } from '@/features/limits/limits.types';
 import type { QuotientRemainder } from '@/features/questions/divisionRemainder';
 import type { EquivalentExpressionSubtype } from '@/features/equivalent-expressions/equivalentExpressions.types';
 
@@ -113,6 +115,7 @@ export type FractionVisualMathQuestion = {
   kind: 'fraction_visual';
   id: string;
   operation: 'fraction_visual';
+  model: 'bar' | 'circle';
   shaded: { numerator: number; denominator: number };
   questionText: string;
   correctAnswer: string;
@@ -197,6 +200,20 @@ export type LogarithmMathQuestion = {
   requiresMultipleChoice: true;
 };
 
+export type AdvancedEquationMathQuestion = {
+  kind: 'advanced_equation'; id: string; operation: 'advanced_equations';
+  subtype: AdvancedEquationSubtype; questionText: string; correctAnswer: string;
+  answerOptions: string[]; requiresMultipleChoice: true;
+};
+
+export type LimitMathQuestion = {
+  kind: 'limit'; id: string; operation: 'limits'; subtype: LimitSubtype;
+  questionText: string; correctAnswer: string; answerOptions: string[]; requiresMultipleChoice: true;
+  approach: string;
+  expression: string;
+  expressionFraction?: { numerator: string; denominator: string };
+};
+
 export type MathQuestion =
   | ArithmeticMathQuestion
   | EquationUnknownMathQuestion
@@ -211,7 +228,9 @@ export type MathQuestion =
   | NumberSenseMathQuestion
   | CalculusMathQuestion
   | TrigonometryMathQuestion
-  | LogarithmMathQuestion;
+  | LogarithmMathQuestion
+  | AdvancedEquationMathQuestion
+  | LimitMathQuestion;
 
 export function isArithmeticQuestion(q: MathQuestion): q is ArithmeticMathQuestion {
   return q.kind === 'arithmetic';
@@ -269,9 +288,12 @@ export function isTrigonometryQuestion(q: MathQuestion): q is TrigonometryMathQu
 export function isLogarithmQuestion(q: MathQuestion): q is LogarithmMathQuestion {
   return q.kind === 'logarithm';
 }
+export function isAdvancedEquationQuestion(q: MathQuestion): q is AdvancedEquationMathQuestion { return q.kind === 'advanced_equation'; }
+export function isLimitQuestion(q: MathQuestion): q is LimitMathQuestion { return q.kind === 'limit'; }
 
-/** Prompt-only card; main content (clock, shape, bar, sequence) renders below. */
+/** Use a tighter prompt card when supporting content or many answers must fit below it. */
 export function usesCompactQuestionCard(q: MathQuestion): boolean {
+  if (q.answerOptions.length >= 4) return true;
   if (isFractionVisualQuestion(q)) return true;
   if (isShapeRecognitionQuestion(q)) return true;
   if (isTrigonometryQuestion(q)) return true;

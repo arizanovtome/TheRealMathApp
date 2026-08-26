@@ -16,6 +16,10 @@ import { hasTrigonometrySource } from '@/features/trigonometry/trigonometryConfi
 import { tryGenerateTrigonometryQuestion } from '@/features/trigonometry/trigonometryGenerator';
 import { hasLogarithmSource } from '@/features/logarithm/logarithmConfig.utils';
 import { tryGenerateLogarithmQuestion } from '@/features/logarithm/logarithmGenerator';
+import { hasAdvancedEquationsSource } from '@/features/advanced-equations/advancedEquationsConfig.utils';
+import { tryGenerateAdvancedEquationQuestion } from '@/features/advanced-equations/advancedEquationsGenerator';
+import { hasLimitsSource } from '@/features/limits/limitsConfig.utils';
+import { tryGenerateLimitQuestion } from '@/features/limits/limitsGenerator';
 import { hasPatternsQuestionSource } from '@/features/patterns/patternsConfig.utils';
 import { tryGeneratePatternQuestion } from '@/features/patterns/patternsGenerator';
 import {
@@ -180,6 +184,8 @@ type DifferentiationSourcePick = { source: 'differentiation' };
 type IntegrationSourcePick = { source: 'integration' };
 type TrigonometrySourcePick = { source: 'trigonometry' };
 type LogarithmSourcePick = { source: 'logarithm' };
+type AdvancedEquationsSourcePick = { source: 'advanced_equations' };
+type LimitsSourcePick = { source: 'limits' };
 
 type QuestionSource =
   | ArithmeticSource
@@ -196,7 +202,9 @@ type QuestionSource =
   | DifferentiationSourcePick
   | IntegrationSourcePick
   | TrigonometrySourcePick
-  | LogarithmSourcePick;
+  | LogarithmSourcePick
+  | AdvancedEquationsSourcePick
+  | LimitsSourcePick;
 
 function buildQuestionSourcePool(config: MathLearningConfig): QuestionSource[] {
   const pool: QuestionSource[] = [];
@@ -246,6 +254,8 @@ function buildQuestionSourcePool(config: MathLearningConfig): QuestionSource[] {
   if (hasLogarithmSource(config)) {
     pool.push({ source: 'logarithm' });
   }
+  if (hasAdvancedEquationsSource(config)) pool.push({ source: 'advanced_equations' });
+  if (hasLimitsSource(config)) pool.push({ source: 'limits' });
   return pool;
 }
 
@@ -415,7 +425,7 @@ function generateDivisionRemainderDraft(config: MathLearningConfig): RemainderDr
   return {
     kind: 'arithmetic',
     operation: 'division',
-    questionText: `${formatDivideExpression(dividend, divisor)} = ? remainder ?`,
+    questionText: `${formatDivideExpression(dividend, divisor)} = ?`,
     correctAnswer: quotient,
     quotientRemainder: qr,
     answerKind: 'quotient_remainder',
@@ -607,6 +617,9 @@ export function generateArithmeticDraft(
     case 'differentiation':
     case 'integration':
     case 'trigonometry':
+    case 'logarithm':
+    case 'advanced_equations':
+    case 'limits':
       throw new Error(`Not an arithmetic operation: ${operation}`);
     default: {
       const _exhaustive: never = operation;
@@ -638,6 +651,20 @@ function draftNumericAnswerForCapCheck(
     return styled.quotientRemainder.quotient;
   }
   return styled.correctAnswer;
+}
+
+function signedOperationDistractors(base: StyledArithmeticDraft): number[] {
+  const snap = base.operandSnapshot;
+  if (!snap || base.correctAnswer === 0) return [];
+
+  const hasNegativeOperand =
+    snap.operation === 'multiplication'
+      ? snap.left < 0 || snap.right < 0
+      : snap.operation === 'division'
+        ? snap.dividend < 0 || snap.divisor < 0
+        : false;
+
+  return hasNegativeOperand ? [-base.correctAnswer] : [];
 }
 
 function generateFractionStyledDraft(
@@ -768,6 +795,16 @@ export function generatePreviewQuestion(config: MathLearningConfig): { questionT
       if (log) return { questionText: log.questionText };
       continue;
     }
+    if (pick.source === 'advanced_equations') {
+      const q = tryGenerateAdvancedEquationQuestion(config);
+      if (q) return { questionText: q.questionText };
+      continue;
+    }
+    if (pick.source === 'limits') {
+      const q = tryGenerateLimitQuestion(config);
+      if (q) return { questionText: q.questionText };
+      continue;
+    }
     if (pick.source === 'equation_two_unknown') {
       const draft = generateEquationTwoUnknownQuestion(config, pick.operation);
       if (
@@ -812,10 +849,12 @@ function finalizeArithmeticQuestion(
 
   if (base.answerKind === 'quotient_remainder' && base.quotientRemainder) {
     const { quotient } = base.quotientRemainder;
-    const answerOptions =
-      config.answerEntryMode === 'keyboard'
-        ? []
-        : buildRemainderMcOptions(base.quotientRemainder, config.answerOptionsCount);
+    // Remainders cannot be entered with the numeric keyboard. Keep their
+    // choices even in keyboard mode so the session can fall back per question.
+    const answerOptions = buildRemainderMcOptions(
+      base.quotientRemainder,
+      config.answerOptionsCount,
+    );
     return {
       kind: 'arithmetic',
       id: nextQuestionId(),
@@ -857,12 +896,14 @@ function finalizeArithmeticQuestion(
               config.answerOptionsCount,
               allowNeg,
               bounds,
+              signedOperationDistractors(base),
             )
         : buildAnswerOptions(
             base.correctAnswer,
             config.answerOptionsCount,
             allowNeg,
             bounds,
+            signedOperationDistractors(base),
           );
   return {
     kind: 'arithmetic',
@@ -958,6 +999,14 @@ function tryGenerateFromSource(config: MathLearningConfig, src: QuestionSource):
     const log = tryGenerateLogarithmQuestion(config);
     if (!log) return null;
     return { ...log, id: nextQuestionId() };
+  }
+  if (src.source === 'advanced_equations') {
+    const q = tryGenerateAdvancedEquationQuestion(config);
+    return q ? { ...q, id: nextQuestionId() } : null;
+  }
+  if (src.source === 'limits') {
+    const q = tryGenerateLimitQuestion(config);
+    return q ? { ...q, id: nextQuestionId() } : null;
   }
   if (src.source === 'equation_two_unknown') {
     const draft = generateEquationTwoUnknownQuestion(config, src.operation);

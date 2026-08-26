@@ -1,5 +1,8 @@
 import type { MathOperation } from '@/features/learning-plan/learningPlan.types';
-import { WORD_PROBLEM_TEMPLATES_MK } from '@/i18n/content/wordProblems/mk';
+import {
+  SIGNED_WORD_PROBLEM_TEMPLATES_MK,
+  WORD_PROBLEM_TEMPLATES_MK,
+} from '@/i18n/content/wordProblems/mk';
 import { i18n } from '@/i18n';
 import type { SupportedLocale } from '@/i18n/types';
 import { pickRandom } from '@/utils/random';
@@ -30,6 +33,28 @@ const DIVISION_TEMPLATES: Template[] = [
   (a, b, _r) => `A teacher has ${a} pencils and puts them in ${b} equal piles. How many in each pile?`,
 ];
 
+const signedChange = (value: number): string =>
+  value < 0 ? `fell by ${Math.abs(value)}` : `rose by ${value}`;
+
+const SIGNED_TEMPLATES_BY_OP: Partial<Record<MathOperation, Template[]>> = {
+  addition: [
+    (a, b) => `The temperature was ${a} °C, then it ${signedChange(b)} degrees. What is the temperature now?`,
+  ],
+  subtraction: [
+    (a, b) => `An elevator was on floor ${a}. It then moved ${b < 0 ? `up ${Math.abs(b)}` : `down ${b}`} floors. What floor is it on now?`,
+  ],
+  multiplication: [
+    (a, b) => a < 0 && b < 0
+      ? `A ${Math.abs(b)}-point penalty is removed in each of ${Math.abs(a)} rounds. What is the total score correction?`
+      : `A player loses ${Math.abs(a < 0 ? a : b)} points in each of ${Math.abs(a < 0 ? b : a)} rounds. What is the total score change?`,
+  ],
+  division: [
+    (a, b, result) => result < 0
+      ? `A player lost ${Math.abs(a)} points over ${Math.abs(b)} rounds. What was the average score change per round?`
+      : `A player earned ${Math.abs(a)} points over ${Math.abs(b)} rounds. How many points did they earn per round on average?`,
+  ],
+};
+
 const TEMPLATES_BY_OP: Partial<Record<MathOperation, Template[]>> = {
   addition: ADDITION_TEMPLATES,
   subtraction: SUBTRACTION_TEMPLATES,
@@ -44,10 +69,15 @@ export function buildWordProblemText(
   result: number,
   locale: SupportedLocale = i18n.language as SupportedLocale,
 ): string {
+  const hasSignedValue = a < 0 || b < 0 || result < 0;
   const pool =
     locale === 'mk'
-      ? WORD_PROBLEM_TEMPLATES_MK[operation]
-      : TEMPLATES_BY_OP[operation];
+      ? hasSignedValue
+        ? SIGNED_WORD_PROBLEM_TEMPLATES_MK[operation]
+        : WORD_PROBLEM_TEMPLATES_MK[operation]
+      : hasSignedValue
+        ? SIGNED_TEMPLATES_BY_OP[operation]
+        : TEMPLATES_BY_OP[operation];
   if (!pool || pool.length === 0) {
     return `Solve: ${a} ? ${b} = ${result}`.replace('?', operation === 'addition' ? '+' : '…');
   }

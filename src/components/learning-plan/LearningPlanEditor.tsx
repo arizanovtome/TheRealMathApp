@@ -14,6 +14,7 @@ import { DifferentiationSettingsCard } from "@/components/learning-plan/Differen
 import { TrigonometrySettingsCard } from "@/components/learning-plan/TrigonometrySettingsCard";
 import { LogarithmSettingsCard } from "@/components/learning-plan/LogarithmSettingsCard";
 import { IntegrationSettingsCard } from "@/components/learning-plan/IntegrationSettingsCard";
+import { AdvancedEquationsSettingsCard, LimitsSettingsCard } from "@/components/learning-plan/AdvancedTopicsSettingsCards";
 import { ClockSettingsCard } from "@/components/learning-plan/ClockSettingsCard";
 import { ComparisonSettingsCard } from "@/components/learning-plan/ComparisonSettingsCard";
 import { EquationTwoUnknownsSettingsCard } from "@/components/learning-plan/EquationTwoUnknownsSettingsCard";
@@ -1394,6 +1395,11 @@ export function LearningPlanEditor({
           }
         />
 
+        <AdvancedEquationsSettingsCard
+          config={config.advancedEquations}
+          onChange={(advancedEquations) => setConfig((c) => ({ ...c, advancedEquations }))}
+        />
+
         <TrigonometrySettingsCard
           trigonometry={config.trigonometry}
           onChange={(trigonometry) => setConfig((c) => ({ ...c, trigonometry }))}
@@ -1402,6 +1408,11 @@ export function LearningPlanEditor({
         <LogarithmSettingsCard
           logarithm={config.logarithm}
           onChange={(logarithm) => setConfig((c) => ({ ...c, logarithm }))}
+        />
+
+        <LimitsSettingsCard
+          config={config.limits}
+          onChange={(limits) => setConfig((c) => ({ ...c, limits }))}
         />
 
         <DifferentiationSettingsCard

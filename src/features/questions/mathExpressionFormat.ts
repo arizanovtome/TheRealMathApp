@@ -40,17 +40,24 @@ export function formatMultiplyExpression(left: number | string, right: number | 
 export function formatDivideExpression(left: number | string, right: number | string): string {
   const leftText = typeof left === "number" ? formatNumber(left) : left;
   const rightText = typeof right === "number" ? formatNumber(right) : right;
-  return `${leftText} ÷ ${rightText}`;
+  const formattedRight = typeof right === "number" && right < 0 ? `(${rightText})` : rightText;
+  return `${leftText} ÷ ${formattedRight}`;
 }
 
 export function formatColonExpression(left: number, right: number): string {
-  return `${formatInteger(left)}:${formatInteger(right)}`;
+  const rightText = formatInteger(right);
+  return `${formatInteger(left)}:${right < 0 ? `(${rightText})` : rightText}`;
 }
 
 export function formatEquationAnswerExpression(expression: string): string {
   const normalized = expression.replace(/\s+/g, "").replace(/\u2212/g, "-");
-  const ratio = /^(-?\d+):(-?\d+)$/.exec(normalized);
+  const ratio = /^(-?\d+):\(?(-?\d+)\)?$/.exec(normalized);
   if (ratio) return formatColonExpression(Number(ratio[1]), Number(ratio[2]));
+
+  const product = /^(-?\d+)[×*]\(?(-?\d+)\)?$/.exec(normalized);
+  if (product) {
+    return formatMultiplyExpression(Number(product[1]), Number(product[2]));
+  }
 
   const subtraction = /^(-?\d+)-(-?\d+)$/.exec(normalized);
   if (subtraction) {

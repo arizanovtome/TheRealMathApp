@@ -1,5 +1,6 @@
 import { DEFAULT_TRIGONOMETRY_CONFIG } from '@/features/trigonometry/trigonometry.types';
 import {
+  buildTrigMcOptions,
   buildPickFormulaNumericDistractors,
   buildPickFormulaQuestionText,
   formatNumericRatioLabel,
@@ -15,6 +16,7 @@ import type { MathLearningConfig } from '@/features/learning-plan/learningPlan.t
 import { getRecommendedLearningPlan } from '@/features/learning-plan/recommendedLearningPlan';
 import { tryGenerateTrigonometryQuestion } from '@/features/trigonometry/trigonometryGenerator';
 import { submittedAnswerIsCorrect } from '@/features/questions/questionScoring';
+import { i18n } from '@/i18n';
 
 function trigConfig(overrides?: Partial<MathLearningConfig['trigonometry']>): MathLearningConfig {
   const base = getRecommendedLearningPlan(12);
@@ -52,8 +54,19 @@ describe('trigonometryFormulas', () => {
 
   it('builds short question text from the unknown target', () => {
     expect(buildPickFormulaQuestionText('adjacent')).toBe('Find the adjacent side.');
-    expect(buildPickFormulaQuestionText('hypotenuse')).toBe('Find the hypotenuse side.');
+    expect(buildPickFormulaQuestionText('hypotenuse')).toBe('Find the hypotenuse.');
     expect(buildPickFormulaQuestionText('angle')).toBe('Find angle θ.');
+  });
+
+  it('uses grammatical Macedonian side prompts', async () => {
+    await i18n.changeLanguage('mk');
+    try {
+      expect(buildPickFormulaQuestionText('opposite')).toBe('Најди ја спротивната катета.');
+      expect(buildPickFormulaQuestionText('adjacent')).toBe('Најди ја надлежната катета.');
+      expect(buildPickFormulaQuestionText('hypotenuse')).toBe('Најди ја хипотенузата.');
+    } finally {
+      await i18n.changeLanguage('en');
+    }
   });
 
   it('matches answers with spacing differences', () => {
@@ -63,6 +76,45 @@ describe('trigonometryFormulas', () => {
         'sinθ=opposite/hypotenuse',
       ),
     ).toBe(true);
+  });
+
+  it('treats reciprocal tan and cot formulas as equivalent', () => {
+    expect(trigAnswersMatch('cot 62° = ? / 10', 'tan 62° = 10 / ?')).toBe(true);
+    expect(trigAnswersMatch('tan θ = opposite / adjacent', 'cot θ = adjacent / opposite')).toBe(
+      true,
+    );
+    expect(trigAnswersMatch('cot 62° = 10 / ?', 'tan 62° = 10 / ?')).toBe(false);
+  });
+
+  it('excludes the reciprocal tan or cot formula from distractors', () => {
+    const correct = 'cot 62° = ? / 10';
+    const distractors = buildPickFormulaNumericDistractors(
+      'cot',
+      { opposite: 10 },
+      'adjacent',
+      62,
+    );
+    const options = buildTrigMcOptions(correct, distractors, 4);
+
+    expect(options).toContain(correct);
+    expect(options).toContain('tan 62° = ? / 10');
+    expect(options).not.toContain('tan 62° = 10 / ?');
+    expect(options.filter((option) => trigAnswersMatch(option, correct))).toHaveLength(1);
+  });
+
+  it('includes cot with the same fraction as a distractor for tan', () => {
+    const correct = 'tan 62° = 10 / ?';
+    const distractors = buildPickFormulaNumericDistractors(
+      'tan',
+      { opposite: 10 },
+      'adjacent',
+      62,
+    );
+    const options = buildTrigMcOptions(correct, distractors, 4);
+
+    expect(options).toContain('cot 62° = 10 / ?');
+    expect(options).not.toContain('cot 62° = ? / 10');
+    expect(options.filter((option) => trigAnswersMatch(option, correct))).toHaveLength(1);
   });
 
   it('formats numeric formula labels from diagram values', () => {
@@ -179,6 +231,29 @@ describe('trigonometryGenerator', () => {
       }
     }
     throw new Error('expected name_side question');
+  });
+
+  it('localizes all name-side answer options in Macedonian', async () => {
+    await i18n.changeLanguage('mk');
+    try {
+      const config = trigConfig({
+        questionKinds: { pickFormula: false, nameSide: true, findAngle: false },
+      });
+      const q = tryGenerateTrigonometryQuestion(config);
+
+      expect(q?.subtype).toBe('name_side');
+      expect(q?.answerOptions).toEqual(
+        expect.arrayContaining([
+          'Спротивна катета',
+          'Надлежна катета',
+          'Хипотенуза',
+          'Прав агол',
+        ]),
+      );
+      expect(q?.correctAnswer).toMatch(/^(Спротивна катета|Надлежна катета|Хипотенуза)$/);
+    } finally {
+      await i18n.changeLanguage('en');
+    }
   });
 
   it('scores correct formula choice', () => {

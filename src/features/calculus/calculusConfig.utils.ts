@@ -11,14 +11,16 @@ function normalizeCalculusOpConfig(
 ): CalculusOpConfig {
   if (!raw || typeof raw !== 'object') return { ...defaults };
   const r = raw as Record<string, unknown>;
+  const boolOrDefault = (key: keyof CalculusOpConfig): boolean =>
+    typeof r[key] === 'boolean' ? (r[key] as boolean) : defaults[key];
   return {
-    enabled: r.enabled === true,
-    powerRule: r.powerRule !== false,
-    constantRule: r.constantRule !== false,
-    simpleSum: r.simpleSum === true,
-    naturalLogRule: r.naturalLogRule === true,
-    trigRule: r.trigRule === true,
-    quotientRule: r.quotientRule === true,
+    enabled: boolOrDefault('enabled'),
+    powerRule: boolOrDefault('powerRule'),
+    constantRule: boolOrDefault('constantRule'),
+    simpleSum: boolOrDefault('simpleSum'),
+    naturalLogRule: boolOrDefault('naturalLogRule'),
+    trigRule: boolOrDefault('trigRule'),
+    quotientRule: boolOrDefault('quotientRule'),
   };
 }
 

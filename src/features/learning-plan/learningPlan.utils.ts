@@ -30,6 +30,8 @@ import {
   hasLogarithmSource,
   normalizeLogarithmConfig,
 } from '@/features/logarithm/logarithmConfig.utils';
+import { hasAdvancedEquationsSource, normalizeAdvancedEquationsConfig } from '@/features/advanced-equations/advancedEquationsConfig.utils';
+import { hasLimitsSource, normalizeLimitsConfig } from '@/features/limits/limitsConfig.utils';
 import {
     type AdditionConfig,
     type AnswerEntryMode,
@@ -260,6 +262,8 @@ function hasSupplementalQuestionSources(config: MathLearningConfig): boolean {
   if (hasIntegrationSource(config)) return true;
   if (hasTrigonometrySource(config)) return true;
   if (hasLogarithmSource(config)) return true;
+  if (hasAdvancedEquationsSource(config)) return true;
+  if (hasLimitsSource(config)) return true;
   return false;
 }
 
@@ -298,7 +302,9 @@ export function applyPracticeFocusOverride(
       (focus === "differentiation" && hasDifferentiationSource(config)) ||
       (focus === "integration" && hasIntegrationSource(config)) ||
       (focus === "trigonometry" && hasTrigonometrySource(config)) ||
-      (focus === "logarithm" && hasLogarithmSource(config));
+      (focus === "logarithm" && hasLogarithmSource(config)) ||
+      (focus === "advanced_equations" && hasAdvancedEquationsSource(config)) ||
+      (focus === "limits" && hasLimitsSource(config));
     if (!basicEnabled && !specialEnabled) return config;
   }
   return {
@@ -365,6 +371,14 @@ export function applyPracticeFocusOverride(
     logarithm: {
       ...config.logarithm,
       enabled: focus === "logarithm",
+    },
+    advancedEquations: {
+      ...config.advancedEquations,
+      enabled: focus === "advanced_equations",
+    },
+    limits: {
+      ...config.limits,
+      enabled: focus === "limits",
     },
     geometry: {
       ...config.geometry,
@@ -717,14 +731,6 @@ export function validateLearningConfig(
   const t = i18n.t.bind(i18n);
   const errors: string[] = [];
 
-  if (
-    config.answerEntryMode === "keyboard" &&
-    config.division.enabled &&
-    config.division.allowRemainders
-  ) {
-    errors.push(t('settings:validation.keyboardRemainders'));
-  }
-
   const equationUnknownOps = getEquationUnknownOperatorPool(config);
   if (equationUnknownOps.length > 0) {
     if (equationUnknownOps.includes("multiplication")) {
@@ -885,6 +891,12 @@ export function validateLearningConfig(
 
   if (config.logarithm.enabled && !hasLogarithmSource(config)) {
     errors.push(t('settings:validation.logSubtypes'));
+  }
+  if (config.advancedEquations.enabled && !hasAdvancedEquationsSource(config)) {
+    errors.push(t('settings:validation.advancedEquationSubtypes'));
+  }
+  if (config.limits.enabled && !hasLimitsSource(config)) {
+    errors.push(t('settings:validation.limitSubtypes'));
   }
 
   if (config.mode !== "timed") {
@@ -1507,6 +1519,12 @@ export function ensureLearningConfigShape(
     ),
     logarithm: normalizeLogarithmConfig(
       (config as MathLearningConfig & { logarithm?: unknown }).logarithm,
+    ),
+    advancedEquations: normalizeAdvancedEquationsConfig(
+      (config as MathLearningConfig & { advancedEquations?: unknown }).advancedEquations,
+    ),
+    limits: normalizeLimitsConfig(
+      (config as MathLearningConfig & { limits?: unknown }).limits,
     ),
     answerEntryMode: normalizeAnswerEntryMode(config.answerEntryMode),
     answerOptionsCount: normalizeAnswerOptionsCount(config.answerOptionsCount),

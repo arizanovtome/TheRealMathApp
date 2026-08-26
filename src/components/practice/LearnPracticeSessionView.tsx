@@ -22,6 +22,7 @@ import { AppText } from "@/components/common/AppText";
 import { AnswerOptionButton } from "@/components/practice/AnswerOptionButton";
 import { FeedbackMessage } from "@/components/practice/FeedbackMessage";
 import { QuestionCard } from "@/components/practice/QuestionCard";
+import { LimitQuestionDisplay } from "@/components/limits/LimitQuestionDisplay";
 import {
   SessionAnswerTextInput,
   SessionEquationAnswerInput,
@@ -54,10 +55,11 @@ import {
   requiresMultipleChoiceQuestion,
   usesCompactQuestionCard,
 } from "@/features/questions/question.types";
-import { FractionBarModel } from "@/components/fractions/FractionModels";
+import { FractionVisualModel } from "@/components/fractions/FractionModels";
 import { createSessionQuestions } from "@/features/questions/questionGenerator";
 import {
   answerOptionDisplayLabel,
+  answerOptionsArePlainNumbers,
   correctAnswerDisplayLabel,
   submittedAnswerIsCorrect,
 } from "@/features/questions/questionScoring";
@@ -132,6 +134,10 @@ export function LearnPracticeSessionView({
   useEffect(() => {
     loadQuestion();
   }, [loadQuestion]);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, [current?.id]);
 
   useEffect(() => {
     if (!useKeyboard) {
@@ -262,6 +268,7 @@ export function LearnPracticeSessionView({
 
   const scrollContentStyle = [
     styles.scrollInner,
+    { paddingBottom: Math.max(spacing.xl, insets.bottom + spacing.md) },
     showKeyboardInput && keyboardOpen ? { paddingTop: insets.top } : null,
     keyboardOpen ? { paddingBottom: spacing.xl * 3 } : null,
   ];
@@ -346,6 +353,7 @@ export function LearnPracticeSessionView({
     >
       <ScrollView
         ref={scrollRef}
+        style={styles.scroll}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={scrollContentStyle}
         showsVerticalScrollIndicator={false}
@@ -354,6 +362,9 @@ export function LearnPracticeSessionView({
           progressLabel={progressLabel}
           questionText={current.questionText}
           compact={usesCompactQuestionCard(current)}
+          questionContent={current.kind === "limit" ? (
+            <LimitQuestionDisplay approach={current.approach} expression={current.expression} fraction={current.expressionFraction} />
+          ) : undefined}
         >
           {current.kind === "number_sense" && current.countTarget ? <BasicShapeDiagram shape={current.countTarget.shape} fill={SHAPE_COLOR_HEX[current.countTarget.color]} size={58} /> : null}
         </QuestionCard>
@@ -362,7 +373,8 @@ export function LearnPracticeSessionView({
 
         {isFractionVisualQuestion(current) ? (
           <View style={styles.fractionVisual}>
-            <FractionBarModel
+            <FractionVisualModel
+              model={current.model}
               numerator={current.shaded.numerator}
               denominator={current.shaded.denominator}
             />
@@ -462,7 +474,7 @@ export function LearnPracticeSessionView({
               </AppText>
             ) : null}
           </View>
-        ) : isArithmeticQuestion(current) ? (
+        ) : answerOptionsArePlainNumbers(current) ? (
           <View style={styles.options}>
             {current.answerOptions.map((opt) => (
               <AnswerOptionButton
@@ -475,7 +487,9 @@ export function LearnPracticeSessionView({
               />
             ))}
           </View>
-        ) : isGeometryQuestion(current) ||
+        ) : isArithmeticQuestion(current) ||
+          isEquationUnknownQuestion(current) ||
+          isGeometryQuestion(current) ||
           isFractionVisualQuestion(current) ||
           isShapeRecognitionQuestion(current) ||
           isComparisonQuestion(current) ||
@@ -485,13 +499,15 @@ export function LearnPracticeSessionView({
           isCalculusQuestion(current) ||
           isTrigonometryQuestion(current) ||
           isLogarithmQuestion(current) ||
+          current.kind === "advanced_equation" ||
+          current.kind === "limit" ||
           current.kind === "number_sense" ||
           isEquationTwoUnknownQuestion(current) ? (
           <View style={styles.optionsStacked}>
             {current.answerOptions.map((opt, index) => (
               <AnswerOptionButton
                 key={`${String(opt)}-${index}`}
-                label={answerOptionDisplayLabel(current, opt)}
+                label={isEquationUnknownQuestion(current) ? `x=${opt}` : answerOptionDisplayLabel(current, opt)}
                 value={opt}
                 disabled={optionDisabled}
                 selected={selected === opt}
@@ -558,6 +574,9 @@ export function LearnPracticeSessionView({
 
 const styles = StyleSheet.create({
   keyboardRoot: {
+    flex: 1,
+  },
+  scroll: {
     flex: 1,
   },
   scrollInner: {
@@ -639,6 +658,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
+    alignItems: "stretch",
   },
   optionsStacked: {
     flexDirection: "column",

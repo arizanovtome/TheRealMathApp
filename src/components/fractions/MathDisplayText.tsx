@@ -35,6 +35,44 @@ type StackedFractionProps = {
   selected?: boolean;
 };
 
+type StackedExpressionFractionProps = {
+  numerator: string;
+  denominator: string;
+  size?: 'answer' | 'body';
+  muted?: boolean;
+};
+
+/** Stacked fraction for algebraic expressions that cannot use the numeric SVG fraction. */
+export function StackedExpressionFraction({
+  numerator,
+  denominator,
+  size = 'answer',
+  muted = false,
+}: StackedExpressionFractionProps) {
+  const widestChars = Math.max(numerator.length, denominator.length);
+  const isBody = size === 'body';
+  const width = isBody
+    ? Math.min(240, Math.max(70, widestChars * 10 + 18))
+    : Math.min(280, Math.max(120, widestChars * 13 + 22));
+  return (
+    <View style={[styles.expressionFraction, isBody && styles.expressionFractionBody, { width }]}>
+      <MathDisplayText
+        text={numerator}
+        size={size}
+        muted={muted}
+        style={[styles.expressionFractionText, isBody && styles.expressionFractionTextBody]}
+      />
+      <View style={[styles.expressionFractionBar, muted && styles.expressionFractionBarMuted]} />
+      <MathDisplayText
+        text={denominator}
+        size={size}
+        muted={muted}
+        style={[styles.expressionFractionText, isBody && styles.expressionFractionTextBody]}
+      />
+    </View>
+  );
+}
+
 /** SVG layout — avoids RN Text ascender/descender quirks on iOS. */
 function getFractionMetrics(spec: FractionSizeSpec, digits: number): FractionMetrics {
   const fontSize = spec.fontSize;
@@ -233,5 +271,36 @@ const styles = StyleSheet.create({
   fraction: {
     alignSelf: 'center',
     marginHorizontal: spacing.xs,
+  },
+  expressionFraction: {
+    flexShrink: 1,
+    alignSelf: 'center',
+    alignItems: 'stretch',
+    justifyContent: 'center',
+    minWidth: 120,
+    maxWidth: '100%',
+  },
+  expressionFractionBar: {
+    height: 2,
+    marginVertical: 3,
+    backgroundColor: colors.text,
+    width: '100%',
+  },
+  expressionFractionText: {
+    fontSize: 23,
+    lineHeight: 28,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  expressionFractionBody: {
+    minWidth: 70,
+  },
+  expressionFractionTextBody: {
+    fontSize: 18,
+    lineHeight: 22,
+    fontWeight: '400',
+  },
+  expressionFractionBarMuted: {
+    backgroundColor: colors.textMuted,
   },
 });

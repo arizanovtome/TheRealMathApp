@@ -55,8 +55,7 @@ export function normalizeEquationAnswerInput(raw: string): string {
 
 export function parseRatioColon(a: number, b: number): number | null {
   if (b === 0) return null;
-  if (a % b !== 0) return null;
-  return Math.trunc(a / b);
+  return a / b;
 }
 
 /** Parses a single expression token (no leading `x=`). */
@@ -66,9 +65,14 @@ export function tryParseEquationExpressionValue(normalized: string): number | nu
     const n = Number(normalized);
     return Number.isSafeInteger(n) ? n : null;
   }
-  const ratio = /^(-?\d+):(-?\d+)$/.exec(normalized);
+  const ratio = /^(-?\d+):\(?(-?\d+)\)?$/.exec(normalized);
   if (ratio) {
     return parseRatioColon(Number(ratio[1]), Number(ratio[2]));
+  }
+  const product = /^(-?\d+)[×*]\(?(-?\d+)\)?$/.exec(normalized);
+  if (product) {
+    const value = Number(product[1]) * Number(product[2]);
+    return Number.isSafeInteger(value) ? value : null;
   }
   const minus = /^(-?\d+)-(-?\d+)$/.exec(normalized);
   if (minus) {
@@ -138,8 +142,8 @@ function addWrongTwoNumberAddSub(
 }
 
 /**
- * Wrong choices for ×/÷ equations: only the two numbers from the prompt and ":" — never +/−.
- * Uses `high:low` swap of the same pair as in the correct `high:low` form when it yields a different integer.
+ * Choices for ×/÷ equations use only the two prompt numbers, testing both
+ * operand order and whether the learner should multiply or divide.
  */
 function addWrongTwoNumberRatio(
   numerator: number,
@@ -150,6 +154,8 @@ function addWrongTwoNumberRatio(
 ): void {
   add(`${numerator}:${denominator}`);
   add(`${denominator}:${numerator}`);
+  add(`${numerator}×${denominator}`);
+  add(`${denominator}×${numerator}`);
 }
 
 function addNearMissIntegerWrongs(correctAnswer: number, add: (expr: string) => void): void {
@@ -159,6 +165,7 @@ function addNearMissIntegerWrongs(correctAnswer: number, add: (expr: string) => 
 }
 
 function fillWrongExpressionPool(
+  op: MathOperation,
   wrong: Set<string>,
   needed: number,
   correctExpression: string,
@@ -167,6 +174,17 @@ function fillWrongExpressionPool(
   primaryNumbers: [number, number],
 ): void {
   const [a, b] = primaryNumbers;
+
+  if (op === 'division' || op === 'multiplication') {
+    // Solving either `a : x = b` or `a × x = b` requires division. Build
+    // near-miss division expressions instead of unrelated +/− expressions.
+    for (const d of [1, -1, 2, -2, 5, -5]) {
+      if (wrong.size >= needed) return;
+      add(`${(correctAnswer + d) * b}:${b}`);
+    }
+    add(`${b}:${a}`);
+    return;
+  }
 
   for (const d of [1, -1]) {
     if (wrong.size >= needed) return;
@@ -253,12 +271,22 @@ function buildWrongExpressions(
   })();
 
   if (primaryNumbers) {
-    fillWrongExpressionPool(wrong, needed, correctExpression, correctAnswer, add, primaryNumbers);
+    fillWrongExpressionPool(
+      op,
+      wrong,
+      needed,
+      correctExpression,
+      correctAnswer,
+      add,
+      primaryNumbers,
+    );
   } else {
     addNearMissIntegerWrongs(correctAnswer, add);
   }
 
-  return shuffle([...wrong]).slice(0, needed);
+  // Candidate builders add the most relevant, same-operator mistakes first.
+  // Preserve that priority here; the completed option list is shuffled later.
+  return [...wrong].slice(0, needed);
 }
 
 export function buildEquationMcOptions(
@@ -448,6 +476,9 @@ export function generateEquationUnknownQuestion(
     case 'differentiation':
     case 'integration':
     case 'trigonometry':
+    case 'logarithm':
+    case 'advanced_equations':
+    case 'limits':
       return null;
     default: {
       const _exhaustive: never = op;

@@ -34,6 +34,9 @@ export function operationAllowsNegativeResults(
     case 'differentiation':
     case 'integration':
     case 'trigonometry':
+    case 'logarithm':
+    case 'advanced_equations':
+    case 'limits':
       return false;
   }
 }

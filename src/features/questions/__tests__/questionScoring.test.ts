@@ -3,6 +3,7 @@ import {
   buildQuizSessionResult,
   buildSessionResult,
   buildTimedSessionResult,
+  answerOptionsArePlainNumbers,
   computeScorePercentage,
   chosenAnswerDisplayLabel,
   correctAnswerDisplayLabel,
@@ -11,6 +12,24 @@ import {
 import type { MathQuestion } from '@/features/questions/question.types';
 
 describe('questionScoring', () => {
+  it('uses the compact answer grid for numbers and simple fractions only', () => {
+    const limit = (answerOptions: string[]): MathQuestion => ({
+      kind: 'limit',
+      id: 'limit-layout',
+      operation: 'limits',
+      subtype: 'rationalization',
+      questionText: 'limit',
+      correctAnswer: answerOptions[0]!,
+      answerOptions,
+      requiresMultipleChoice: true,
+      approach: '0',
+      expression: 'x',
+    });
+
+    expect(answerOptionsArePlainNumbers(limit(['8', '1/4', '0', '1/8']))).toBe(true);
+    expect(answerOptionsArePlainNumbers(limit(['sin θ', 'cos θ']))).toBe(false);
+  });
+
   it('computes rounded percentages', () => {
     expect(computeScorePercentage(8, 10)).toBe(80);
     expect(computeScorePercentage(0, 10)).toBe(0);

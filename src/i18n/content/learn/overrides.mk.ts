@@ -2,6 +2,7 @@ import type { SupportedLocale } from '@/i18n/types';
 import type { LearnTutorial } from '@/features/learn/learnTopics';
 import { buildGeometryFormulaTables } from '@/features/learn/geometryLearnContent';
 import { buildMultiplicationFormulaTables } from '@/features/learn/multiplicationLearnContent';
+import { getLearnContext } from '@/features/learn/learnContextContent';
 
 type LearnOverride = Partial<
   Pick<LearnTutorial, 'title' | 'summary' | 'formula' | 'sections' | 'examples'>
@@ -149,16 +150,6 @@ export const LEARN_TOPIC_OVERRIDES_MK: Partial<Record<LearnTutorial['id'], Learn
       { prompt: 'a² − b² = ?', solution: '(a + b)(a − b)' },
     ],
   },
-  equations_x: {
-    title: 'Равенки со x',
-    summary: 'Најдете го скриениот број што ја прави равенката точна.',
-    sections: [
-      {
-        heading: 'Една непозната',
-        body: 'x е број што го не знаете. x + 3 = 8 значи x = 5.',
-      },
-    ],
-  },
   equations_xy: {
     title: 'Системи на равенки',
     summary: 'Две равенки, една непозната по пат.',
@@ -257,8 +248,16 @@ export const LEARN_TOPIC_OVERRIDES_MK: Partial<Record<LearnTutorial['id'], Learn
     summary: 'Споредување броеви и изрази со <, > и =.',
     sections: [
       {
-        heading: 'Симbolи',
+        heading: 'Симболи',
         body: '< значи помало, > поголемо, = еднакво.',
+      },
+      {
+        heading: 'Изрази',
+        body: 'Пресметај ја секоја страна, па спореди ги резултатите: 3 + 4 и 2 + 5 даваат 7 и 7, затоа користиме =.',
+      },
+      {
+        heading: 'Дропки, проценти и мерење',
+        body: 'Можеме да споредуваме дропки, децимали, проценти и различни мерни единици, откако ќе ги запишеме во споредлив облик.',
       },
     ],
   },
@@ -268,7 +267,11 @@ export const LEARN_TOPIC_OVERRIDES_MK: Partial<Record<LearnTutorial['id'], Learn
     sections: [
       {
         heading: 'Читање на часовник',
-        body: 'Кratkata стрелка покажува час. Долгата — минути. Секој број е 5 минути.',
+        body: 'Кратката стрелка го покажува часот. Долгата ги покажува минутите. Секој број претставува 5 минути.',
+      },
+      {
+        heading: 'Изминато време',
+        body: 'За да пресметаш колку време поминало, брои нанапред од почетното до крајното време.',
       },
     ],
   },
@@ -321,6 +324,40 @@ export const LEARN_TOPIC_OVERRIDES_MK: Partial<Record<LearnTutorial['id'], Learn
     ],
     examples: [{ prompt: 'Црвен круг, син квадрат, црвен круг, син квадрат, ?', solution: 'Црвен круг' }],
   },
+  advanced_equations: {
+    title: 'Линеарни и квадратни равенки',
+    summary: 'Решавај линеарни равенки во повеќе чекори и квадратни равенки со два корена.',
+    sections: [
+      { heading: 'Линеарни равенки', body: 'Поништувај ги операциите по обратен редослед и изврши ја истата операција од двете страни. Кога x е од двете страни, собери ги членовите со променлива на една страна.' },
+      { heading: 'Квадратни равенки', body: 'Квадратната равенка содржи x². Кога може да се разложи на два множители, изедначи го секој множител со нула за да ги најдеш двете решенија.' },
+    ],
+  },
+  limits: {
+    title: 'Граници',
+    summary: 'Најди ја вредноста кон која се приближува изразот кога x се приближува кон дадена точка.',
+    sections: [
+      {
+        heading: 'Директна замена',
+        body: 'Директно замени ја вредноста кон која се приближува x и пресметај. Ова важи за полиноми и за рационални изрази чиј именител не станува нула.',
+        example: { prompt: 'lim (x → 2) 12/(x + 2)', solution: '12/(2 + 2) = 3', limitExpression: { approach: '2', expression: '12/(x + 2)', fraction: { numerator: '12', denominator: 'x + 2' } }, solutionSteps: [{ text: 'Замени x = 2.' }, { fraction: { numerator: '12', denominator: '2 + 2' } }, { fraction: { numerator: '12', denominator: '4' }, after: '= 3' }] },
+      },
+      {
+        heading: 'Факторизирај и скрати',
+        body: 'Ако замената дава 0/0, факторизирај го броителот, скрати го заедничкиот множител и потоа повторно замени. Изразот може да не е дефиниран во самата точка, но блиските вредности сепак се приближуваат кон еден број.',
+        example: { prompt: 'lim (x → 2) (x² − 4)/(x − 2)', solution: '(x − 2)(x + 2)/(x − 2) = x + 2 → 4', limitExpression: { approach: '2', expression: '(x² − 4)/(x − 2)', fraction: { numerator: 'x² − 4', denominator: 'x − 2' } }, solutionSteps: [{ before: 'Факторизирај:', fraction: { numerator: '(x − 2)(x + 2)', denominator: 'x − 2' } }, { text: 'Скрати го заедничкиот множител (x − 2): x + 2.' }, { text: 'Замени x = 2: 2 + 2 = 4.' }] },
+      },
+      {
+        heading: 'Граници во бесконечност',
+        body: 'Кај рационални функции спореди ги највисоките степени. Еднакви степени се приближуваат кон односот на водечките коефициенти. Ако броителот има понизок степен, границата е 0.',
+        example: { prompt: 'lim (x → ∞) (6x² + 1)/(2x² + 3)', solution: '6/2 = 3', limitExpression: { approach: '∞', expression: '(6x² + 1)/(2x² + 3)', fraction: { numerator: '6x² + 1', denominator: '2x² + 3' } }, solutionSteps: [{ text: 'Задржи ги членовите со највисок степен.' }, { fraction: { numerator: '6x²', denominator: '2x²' } }, { before: 'Скрати x²:', fraction: { numerator: '6', denominator: '2' }, after: '= 3' }] },
+      },
+      {
+        heading: 'Рационализација (лимеси со корени)',
+        body: 'Ако квадратен корен создава 0/0, помножи ги броителот и именителот со комплементот. Комплементот го менува знакот меѓу двата члена и го отстранува коренот преку разлика на квадрати.',
+        example: { prompt: 'lim (x → 0) (√(x + 1) − 1)/x', solution: 'Помножи со комплементот, скрати x и замени.', limitExpression: { approach: '0', expression: '(√(x + 1) − 1)/x', fraction: { numerator: '√(x + 1) − 1', denominator: 'x' } }, solutionFraction: { numerator: 1, denominator: 2 }, solutionSteps: [{ text: 'Помножи со комплементот √(x + 1) + 1.' }, { before: 'По множењето:', fraction: { numerator: 'x', denominator: 'x(√(x + 1) + 1)' } }, { before: 'Скрати x:', fraction: { numerator: '1', denominator: '√(x + 1) + 1' } }, { before: 'Замени x = 0:', fraction: { numerator: '1', denominator: '2' } }] },
+      },
+    ],
+  },
   differentiation: {
     title: 'Диференцирање',
     summary: 'Наоѓање на стапка на промена — извод, вклучувајќи ln x, sin/cos и част.',
@@ -342,7 +379,6 @@ export const LEARN_TOPIC_OVERRIDES_MK: Partial<Record<LearnTutorial['id'], Learn
         body: "Za f(x)/g(x) važi (f/g)' = (f'g − fg') / g². Low d-High minus High d-Low, over Low squared.",
       },
     ],
-    formula: "(f/g)' = (f'g − fg') / g²",
     examples: [
       { prompt: "(x²)' = ?", solution: '2x' },
       { prompt: "(ln x)' = ?", solution: '1/x' },
@@ -392,20 +428,21 @@ export function applyLearnLocale(topic: LearnTutorial, locale: SupportedLocale):
         formulaTables: override.formulaTables ?? topic.formulaTables,
       }
     : topic;
+  const localized = { ...merged, ...getLearnContext(topic.id, locale) };
 
   if (topic.id === 'geometry') {
     return {
-      ...merged,
+      ...localized,
       formulaTables: buildGeometryFormulaTables(locale),
     };
   }
 
   if (topic.id === 'multiplication') {
     return {
-      ...merged,
+      ...localized,
       formulaTables: buildMultiplicationFormulaTables(locale),
     };
   }
 
-  return merged;
+  return localized;
 }

@@ -1,4 +1,4 @@
-import type { PropsWithChildren } from 'react';
+import type { PropsWithChildren, Ref } from 'react';
 import type { ScrollViewProps } from 'react-native';
 import {
   KeyboardAvoidingView,
@@ -18,7 +18,7 @@ const SAFE_AREA_EDGES_FULL: Edge[] = ['top', 'bottom', 'left', 'right'];
 
 type AppScreenProps = PropsWithChildren<{
   scroll?: boolean;
-  scrollProps?: ScrollViewProps;
+  scrollProps?: ScrollViewProps & { ref?: Ref<ScrollView> };
   /** Use when the stack header is hidden (e.g. home) so content clears the status bar/notch. */
   includeTopSafeArea?: boolean;
   /** Extra offset when avoiding the keyboard (e.g. stack header height). */

@@ -23,15 +23,6 @@ describe('applyLearnPracticeFocus', () => {
     expect(getEnabledOperations(focused)).toEqual(['addition']);
   });
 
-  it('focuses equation unknown practice', () => {
-    const saved = getRecommendedLearningPlan(10);
-    const focused = applyLearnPracticeFocus(saved, { kind: 'equation_unknown' }, 10);
-    expect(focused.equationUnknown.enabled).toBe(true);
-    expect(focused.addition.enabled).toBe(true);
-    expect(focused.subtraction.enabled).toBe(true);
-    expect(focused.multiplication.enabled).toBe(false);
-  });
-
   it('includes squares and roots in focused order-of-operations practice', () => {
     const focused = applyLearnPracticeFocus(
       getRecommendedLearningPlan(14),
@@ -52,6 +43,16 @@ describe('applyLearnPracticeFocus', () => {
     expect(focused.equivalentExpressions.enabled).toBe(true);
     expect(focused.equivalentExpressions.squareOfSum).toBe(true);
     expect(focused.equivalentExpressions.factorization).toBe(true);
+  });
+
+  it('preserves the profile answer-choice count for focused advanced practice', () => {
+    const saved = { ...getRecommendedLearningPlan(14), answerOptionsCount: 4 as const };
+    const focused = applyLearnPracticeFocus(
+      saved,
+      { kind: 'operation', operation: 'advanced_equations' },
+      14,
+    );
+    expect(focused.answerOptionsCount).toBe(4);
   });
 
   it('enables shape, color, and combined questions in shape Learn practice', () => {

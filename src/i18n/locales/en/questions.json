@@ -8,7 +8,11 @@
   "whatColorAndShapeComeNext": "Which color and shape come next?",
   "roundTo": "Round {{n}} to {{unit}}.",
   "trigFindAngle": "Find angle θ.",
-  "trigFindSide": "Find the {{side}} side.",
+  "trigFindSide": {
+    "opposite": "Find the opposite side.",
+    "adjacent": "Find the adjacent side.",
+    "hypotenuse": "Find the hypotenuse."
+  },
   "trigRelativeSide": "Relative to angle θ, what is the highlighted side?",
   "geometryFormula": "What is the {{measure}} formula for a {{shape}}?",
   "geometryCalculate": "{{article}} {{shape}} has {{dimensions}}. What is its {{measure}}?",
@@ -141,8 +145,12 @@
   "trigSides": {
     "opposite": "opposite",
     "adjacent": "adjacent",
-    "hypotenuse": "hypotenuse"
+    "hypotenuse": "hypotenuse",
+    "rightAngle": "Right angle"
   },
+  "solveEquation": "Find x:\n{{equation}}",
+  "evaluateLimit": "Evaluate\nlimₓ→{{approach}} {{expression}}",
+  "evaluate": "Evaluate",
   "roundingUnits": {
     "whole": "the nearest whole number",
     "oneDecimal": "1 decimal place",

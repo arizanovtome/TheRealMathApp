@@ -12,6 +12,10 @@ import type { TrigonometryConfig } from '@/features/trigonometry/trigonometry.ty
 import { DEFAULT_TRIGONOMETRY_CONFIG } from '@/features/trigonometry/trigonometry.types';
 import type { LogarithmConfig } from '@/features/logarithm/logarithm.types';
 import { DEFAULT_LOGARITHM_CONFIG } from '@/features/logarithm/logarithm.types';
+import type { AdvancedEquationsConfig } from '@/features/advanced-equations/advancedEquations.types';
+import { DEFAULT_ADVANCED_EQUATIONS_CONFIG } from '@/features/advanced-equations/advancedEquations.types';
+import type { LimitsConfig } from '@/features/limits/limits.types';
+import { DEFAULT_LIMITS_CONFIG } from '@/features/limits/limits.types';
 
 export type { GeometryConfig };
 export { DEFAULT_GEOMETRY_CONFIG };
@@ -23,6 +27,8 @@ export type { TrigonometryConfig };
 export { DEFAULT_TRIGONOMETRY_CONFIG };
 export type { LogarithmConfig };
 export { DEFAULT_LOGARITHM_CONFIG };
+export type { AdvancedEquationsConfig, LimitsConfig };
+export { DEFAULT_ADVANCED_EQUATIONS_CONFIG, DEFAULT_LIMITS_CONFIG };
 
 export type MathOperation =
   | 'addition'
@@ -44,7 +50,9 @@ export type MathOperation =
   | 'differentiation'
   | 'integration'
   | 'trigonometry'
-  | 'logarithm';
+  | 'logarithm'
+  | 'advanced_equations'
+  | 'limits';
 
 /** Every {@link MathOperation} — use for stats rollups and progress UI ordering. */
 export const ALL_MATH_OPERATIONS: readonly MathOperation[] = [
@@ -68,6 +76,8 @@ export const ALL_MATH_OPERATIONS: readonly MathOperation[] = [
   'integration',
   'trigonometry',
   'logarithm',
+  'advanced_equations',
+  'limits',
 ] as const;
 
 export type SpecialQuestionMode = 'off' | 'mixed' | 'only';
@@ -496,6 +506,8 @@ export type MathLearningConfig = {
   integration: CalculusOpConfig;
   trigonometry: TrigonometryConfig;
   logarithm: LogarithmConfig;
+  advancedEquations: AdvancedEquationsConfig;
+  limits: LimitsConfig;
   mode: LearningMode;
   questionsCount: number;
   answerEntryMode: AnswerEntryMode;

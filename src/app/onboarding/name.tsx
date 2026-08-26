@@ -44,7 +44,12 @@ export default function OnboardingNameScreen() {
   };
 
   return (
-    <AppScreen scroll scrollProps={{ ref: scrollRef }}>
+    <AppScreen
+      scroll
+      scrollProps={{
+        ref: scrollRef,
+        keyboardDismissMode: 'on-drag',
+      }}>
       <AppText variant="title">
         {isAddMode ? t('onboarding:newProfileTitle') : t('onboarding:welcome')}
       </AppText>

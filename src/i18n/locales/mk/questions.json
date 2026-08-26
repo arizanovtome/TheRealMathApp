@@ -8,7 +8,11 @@
   "whatColorAndShapeComeNext": "Која боја и форма следат?",
   "roundTo": "Заокружи го {{n}} до {{unit}}.",
   "trigFindAngle": "Најди го аголот θ.",
-  "trigFindSide": "Најди ја страната {{side}}.",
+  "trigFindSide": {
+    "opposite": "Најди ја спротивната катета.",
+    "adjacent": "Најди ја надлежната катета.",
+    "hypotenuse": "Најди ја хипотенузата."
+  },
   "trigRelativeSide": "Релативно на агол θ, која е означената страна?",
   "geometryFormula": "Која е формулата за {{measure}} на {{shape}}?",
   "geometryCalculate": "{{shape}} има {{dimensions}}. Која е неговата {{measure}}?",
@@ -139,10 +143,14 @@
     "triangular_pyramid": "триаголна пирамида"
   },
   "trigSides": {
-    "opposite": "спротивна",
-    "adjacent": "прилежна",
-    "hypotenuse": "хипотенуза"
+    "opposite": "спротивна катета",
+    "adjacent": "надлежна катета",
+    "hypotenuse": "хипотенуза",
+    "rightAngle": "Прав агол"
   },
+  "solveEquation": "Најди го x:\n{{equation}}",
+  "evaluateLimit": "Пресметај\nlimₓ→{{approach}} {{expression}}",
+  "evaluate": "Пресметај",
   "roundingUnits": {
     "whole": "најблискиот цел број",
     "oneDecimal": "1 децимално место",

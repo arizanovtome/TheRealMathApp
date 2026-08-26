@@ -294,6 +294,21 @@ describe("validateLearningConfig", () => {
     expect(result.errors.some((e) => e.includes("remainder"))).toBe(true);
   });
 
+  it("allows keyboard mode with questions that fall back to answer choices", () => {
+    const config: MathLearningConfig = {
+      ...basePlan,
+      answerEntryMode: "keyboard",
+      division: {
+        ...basePlan.division,
+        enabled: true,
+        allowRemainders: true,
+        divisors: [3],
+      },
+    };
+
+    expect(validateLearningConfig(config).valid).toBe(true);
+  });
+
   it("rejects configs with every operation disabled", () => {
     const invalid: MathLearningConfig = {
       ...basePlan,

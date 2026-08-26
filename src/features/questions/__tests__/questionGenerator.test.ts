@@ -6,10 +6,8 @@ import {
     isAnswerWithinFinalResultCap,
 } from "@/features/questions/questionGenerator";
 import { submittedAnswerIsCorrect } from "@/features/questions/questionScoring";
-import {
-  additionRequiresRegrouping,
-  subtractionRequiresRegrouping,
-} from "@/features/questions/regrouping";
+import { additionRequiresRegrouping } from "@/features/questions/regrouping";
+import { isArithmeticQuestion } from "@/features/questions/question.types";
 
 const NO_EQUATIONS: MathLearningConfig["equationUnknown"] = {
   mode: "off",
@@ -81,6 +79,7 @@ describe("createSessionQuestions", () => {
     };
     const questions = createSessionQuestions(cfg, 12);
     for (const q of questions) {
+      if (!isArithmeticQuestion(q)) throw new Error(`Expected arithmetic question, got ${q.kind}`);
       expect(q.operation).toBe("addition");
       expect(isAnswerWithinFinalResultCap(q.correctAnswer, cfg)).toBe(true);
     }
@@ -116,6 +115,7 @@ describe("createSessionQuestions", () => {
     for (let run = 0; run < 30; run++) {
       const questions = createSessionQuestions(cfg, 20);
       for (const q of questions) {
+        if (!isArithmeticQuestion(q)) throw new Error(`Expected arithmetic question, got ${q.kind}`);
         expect(q.kind).toBe("arithmetic");
         expect(q.operation).toBe("addition");
         expect(q.questionStyle).toBe("standard");
@@ -156,6 +156,7 @@ describe("createSessionQuestions", () => {
     for (let run = 0; run < 30; run++) {
       const questions = createSessionQuestions(cfg, 20);
       for (const q of questions) {
+        if (!isArithmeticQuestion(q)) throw new Error(`Expected arithmetic question, got ${q.kind}`);
         expect(q.kind).toBe("arithmetic");
         expect(q.operation).toBe("addition");
         expect(q.questionStyle).toBe("missing_number");
@@ -214,6 +215,7 @@ describe("createSessionQuestions", () => {
     const cfg: MathLearningConfig = {
       ...template,
       addition: {
+        ...template.addition,
         enabled: true,
         leftMin: 1,
         leftMax: 2,
@@ -244,6 +246,7 @@ describe("createSessionQuestions", () => {
       subtraction: { ...template.subtraction, enabled: false },
       division: { ...template.division, enabled: false },
       multiplication: {
+        ...template.multiplication,
         enabled: true,
         factors: [5],
         secondFactorSource: "one_to_ten",
@@ -269,6 +272,7 @@ describe("createSessionQuestions", () => {
       subtraction: { ...template.subtraction, enabled: false },
       division: { ...template.division, enabled: false },
       multiplication: {
+        ...template.multiplication,
         enabled: true,
         factors: [5],
         secondFactorSource: "one_to_ten",
@@ -295,6 +299,7 @@ describe("createSessionQuestions", () => {
     const cfg: MathLearningConfig = {
       ...template,
       addition: {
+        ...template.addition,
         enabled: true,
         leftMin: 1,
         leftMax: 1,
@@ -535,6 +540,7 @@ describe("createSessionQuestions", () => {
       subtraction: { ...template.subtraction, enabled: false },
       multiplication: { ...template.multiplication, enabled: false },
       division: {
+        ...template.division,
         enabled: true,
         answerMin: 2,
         answerMax: 5,
@@ -618,6 +624,7 @@ describe("createSessionQuestions", () => {
     const cfg: MathLearningConfig = {
       ...template,
       addition: {
+        ...template.addition,
         enabled: true,
         leftMin: 1,
         leftMax: 1,
@@ -643,6 +650,7 @@ describe("createSessionQuestions", () => {
     };
     const questions = createSessionQuestions(cfg, 20);
     for (const q of questions) {
+      if (!isArithmeticQuestion(q)) throw new Error(`Expected arithmetic question, got ${q.kind}`);
       expect(q.kind).toBe("arithmetic");
       expect(q.operation).toBe("addition");
       expect(q.answerOptions).toContain(q.correctAnswer);
@@ -658,6 +666,7 @@ describe("createSessionQuestions", () => {
     const cfg: MathLearningConfig = {
       ...template,
       addition: {
+        ...template.addition,
         enabled: true,
         leftMin: 1,
         leftMax: 1,
@@ -704,10 +713,12 @@ describe("createSessionQuestions", () => {
     const template = withoutGeometry(getRecommendedLearningPlan(10));
     const cfg: MathLearningConfig = {
       ...template,
+      answerEntryMode: "keyboard",
       addition: { ...template.addition, enabled: false },
       subtraction: { ...template.subtraction, enabled: false },
       multiplication: { ...template.multiplication, enabled: false },
       division: {
+        ...template.division,
         enabled: true,
         answerMin: 2,
         answerMax: 5,
@@ -734,9 +745,10 @@ describe("createSessionQuestions", () => {
           q.kind === "arithmetic" &&
           q.operation === "division" &&
           q.answerKind === "quotient_remainder" &&
-          q.questionText.includes("remainder"),
+          q.questionText.endsWith("= ?"),
       ),
     ).toBe(true);
+    expect(questions.every((q) => q.answerOptions.length >= 2)).toBe(true);
   });
 
   it("generates valid negative quotient remainder questions when allowNegativeNumbers is on", () => {
@@ -747,6 +759,7 @@ describe("createSessionQuestions", () => {
       subtraction: { ...template.subtraction, enabled: false },
       multiplication: { ...template.multiplication, enabled: false },
       division: {
+        ...template.division,
         enabled: true,
         answerMin: -10,
         answerMax: 10,
@@ -766,9 +779,8 @@ describe("createSessionQuestions", () => {
       maxFinalResult: 100,
     };
     const questions = createSessionQuestions(cfg, 30);
-    const remainderQs = questions.filter(
+    const remainderQs = questions.filter(isArithmeticQuestion).filter(
       (q) =>
-        q.kind === "arithmetic" &&
         q.operation === "division" &&
         q.answerKind === "quotient_remainder" &&
         q.quotientRemainder,
@@ -780,7 +792,7 @@ describe("createSessionQuestions", () => {
       expect(remainder).toBeGreaterThan(0);
       expect(submittedAnswerIsCorrect(q, `${quotient} R ${remainder}`)).toBe(true);
 
-      const divMatch = /^(-?\d+|\u2212\d+) ÷ (-?\d+|\u2212\d+) = \? remainder \?$/.exec(
+      const divMatch = /^(-?\d+|\u2212\d+) ÷ (-?\d+|\u2212\d+) = \?$/.exec(
         q.questionText,
       );
       expect(divMatch).not.toBeNull();

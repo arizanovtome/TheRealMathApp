@@ -297,7 +297,6 @@ const en = {
     validation: {
       chooseOperation: 'Choose at least one operation, geometry, or turn on equations with x.',
       chooseStyle: 'Turn on at least one question style (e.g. standard calculation).',
-      keyboardRemainders: 'Keyboard entry works with numeric answers only. Turn off division remainders or use multiple choice.',
       operationStyle: '{{operation}}: turn on at least one of standard calculation, missing number, fractions, or word problems.',
       eqMulFactors: 'Equations with x (multiplication): set multiplication factors first.',
       eqDivRange: 'Equations with x (division): fix the answer range under Division.',

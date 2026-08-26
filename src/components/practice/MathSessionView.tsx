@@ -23,6 +23,7 @@ import { AppText } from "@/components/common/AppText";
 import { AnswerOptionButton } from "@/components/practice/AnswerOptionButton";
 import { FeedbackMessage } from "@/components/practice/FeedbackMessage";
 import { QuestionCard } from "@/components/practice/QuestionCard";
+import { LimitQuestionDisplay } from "@/components/limits/LimitQuestionDisplay";
 import {
   SessionAnswerTextInput,
   SessionEquationAnswerInput,
@@ -59,7 +60,7 @@ import {
   requiresMultipleChoiceQuestion,
   usesCompactQuestionCard,
 } from "@/features/questions/question.types";
-import { FractionBarModel } from "@/components/fractions/FractionModels";
+import { FractionVisualModel } from "@/components/fractions/FractionModels";
 import {
   createSessionQuestions,
   getAnswerDistractorBounds,
@@ -67,6 +68,7 @@ import {
 } from "@/features/questions/questionGenerator";
 import {
   answerOptionDisplayLabel,
+  answerOptionsArePlainNumbers,
   buildPracticeSessionResult,
   buildQuizSessionResult,
   correctAnswerDisplayLabel,
@@ -229,7 +231,7 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
         if (question.kind === "geometry") return question.correctAnswer;
         if (question.kind === "equation_unknown") return question.fallbackWrongExpression;
         if (question.kind === "equation_two_unknown") return question.correctAnswer + 1;
-        if (question.kind === "comparison" || question.kind === "equivalent_expression" || question.kind === "fraction_visual" || question.kind === "shape_recognition" || question.kind === "clock" || question.kind === "pattern" || question.kind === "calculus" || question.kind === "trigonometry" || question.kind === "logarithm" || question.kind === "number_sense") {
+        if (question.kind === "comparison" || question.kind === "equivalent_expression" || question.kind === "fraction_visual" || question.kind === "shape_recognition" || question.kind === "clock" || question.kind === "pattern" || question.kind === "calculus" || question.kind === "trigonometry" || question.kind === "logarithm" || question.kind === "advanced_equation" || question.kind === "limit" || question.kind === "number_sense") {
           return question.answerOptions[0] ?? question.correctAnswer;
         }
         return "";
@@ -258,6 +260,8 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
         question.kind === "calculus" ||
         question.kind === "trigonometry" ||
         question.kind === "logarithm" ||
+        question.kind === "advanced_equation" ||
+        question.kind === "limit" ||
         question.kind === "number_sense"
       ) {
         const wrongFromMc = question.answerOptions.find(
@@ -367,6 +371,7 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
   useEffect(() => {
     setAnswerInputText("");
     setInputError("");
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
   }, [index, current?.id]);
 
   const resetForQuestion = (nextIndex: number) => {
@@ -553,6 +558,7 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
 
   const scrollContentStyle = [
     styles.scrollInner,
+    { paddingBottom: Math.max(spacing.xl, insets.bottom + spacing.md) },
     showKeyboardInput && keyboardOpen ? { paddingTop: insets.top } : null,
     keyboardOpen ? { paddingBottom: spacing.xl * 3 } : null,
   ];
@@ -652,6 +658,7 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
     >
       <ScrollView
         ref={scrollRef}
+        style={styles.scroll}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={scrollContentStyle}
         showsVerticalScrollIndicator={false}
@@ -670,6 +677,9 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
           progressLabel={progressLabel}
           questionText={current.questionText}
           compact={usesCompactQuestionCard(current)}
+          questionContent={current.kind === "limit" ? (
+            <LimitQuestionDisplay approach={current.approach} expression={current.expression} fraction={current.expressionFraction} />
+          ) : undefined}
         >
           {current.kind === "number_sense" && current.countTarget ? <BasicShapeDiagram shape={current.countTarget.shape} fill={SHAPE_COLOR_HEX[current.countTarget.color]} size={58} /> : null}
         </QuestionCard>
@@ -678,7 +688,8 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
 
         {isFractionVisualQuestion(current) ? (
           <View style={styles.fractionVisual}>
-            <FractionBarModel
+            <FractionVisualModel
+              model={current.model}
               numerator={current.shaded.numerator}
               denominator={current.shaded.denominator}
             />
@@ -780,7 +791,7 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
               </AppText>
             ) : null}
           </View>
-        ) : isArithmeticQuestion(current) ? (
+        ) : answerOptionsArePlainNumbers(current) ? (
           <View style={styles.options}>
             {current.answerOptions.map((opt) => (
               <AnswerOptionButton
@@ -793,7 +804,9 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
               />
             ))}
           </View>
-        ) : isGeometryQuestion(current) ||
+        ) : isArithmeticQuestion(current) ||
+          isEquationUnknownQuestion(current) ||
+          isGeometryQuestion(current) ||
           isFractionVisualQuestion(current) ||
           isShapeRecognitionQuestion(current) ||
           isComparisonQuestion(current) ||
@@ -803,13 +816,15 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
           isCalculusQuestion(current) ||
           isTrigonometryQuestion(current) ||
           isLogarithmQuestion(current) ||
+          current.kind === "advanced_equation" ||
+          current.kind === "limit" ||
           current.kind === "number_sense" ||
           isEquationTwoUnknownQuestion(current) ? (
           <View style={styles.optionsStacked}>
             {current.answerOptions.map((opt, index) => (
               <AnswerOptionButton
                 key={`${String(opt)}-${index}`}
-                label={answerOptionDisplayLabel(current, opt)}
+                label={isEquationUnknownQuestion(current) ? `x=${opt}` : answerOptionDisplayLabel(current, opt)}
                 value={opt}
                 disabled={optionDisabled}
                 selected={selected === opt}
@@ -878,6 +893,9 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
 
 const styles = StyleSheet.create({
   keyboardRoot: {
+    flex: 1,
+  },
+  scroll: {
     flex: 1,
   },
   scrollInner: {
@@ -959,6 +977,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
+    alignItems: "stretch",
   },
   optionsStacked: {
     flexDirection: "column",

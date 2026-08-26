@@ -63,18 +63,25 @@ export function buildFixedAnswerOptions(
  * Builds shuffled multiple-choice options including the correct answer.
  * Wrong options prefer correct ± 1, ±2, ±3, ±10 (order randomized), then ±4…±9 if needed.
  * Optional `bounds` keeps distractors inside the session’s final-result range so choices stay sensible.
+ * `preferredWrongAnswers` are attempted first for operation-specific misconceptions.
  */
 export function buildAnswerOptions(
   correctAnswer: number,
   optionCount: AnswerOptionsCount,
   allowNegativeDistractors: boolean,
   bounds?: AnswerDistractorBounds,
+  preferredWrongAnswers: readonly number[] = [],
 ): number[] {
   const wrongNeeded = optionCount - 1;
   const wrong = new Set<number>();
 
   const tryLocal = (value: number) =>
     tryAddWrong(wrong, correctAnswer, value, allowNegativeDistractors, bounds);
+
+  for (const value of preferredWrongAnswers) {
+    if (wrong.size >= wrongNeeded) break;
+    tryLocal(value);
+  }
 
   for (const d of shuffleInPlace([...WRONG_DELTAS_PRIMARY])) {
     if (wrong.size >= wrongNeeded) break;
@@ -147,12 +154,21 @@ export function buildSteppedAnswerOptions(
   correctAnswer: number,
   optionCount: AnswerOptionsCount,
   step: number,
+  preferredWrongAnswers: readonly number[] = [],
 ): number[] {
   const wrongNeeded = optionCount - 1;
   const decimals = Math.max(0, Math.ceil(-Math.log10(step)));
   const normalize = (n: number) => Number(n.toFixed(decimals));
   const wrong = new Set<number>();
   const offsets = shuffleInPlace([-3, -2, -1, 1, 2, 3, -4, 4, -5, 5]);
+
+  for (const value of preferredWrongAnswers) {
+    if (wrong.size >= wrongNeeded) break;
+    const normalized = normalize(value);
+    if (Number.isFinite(normalized) && normalized !== correctAnswer) {
+      wrong.add(normalized);
+    }
+  }
 
   for (const offset of offsets) {
     if (wrong.size >= wrongNeeded) break;
@@ -178,8 +194,14 @@ export function buildDecimalAnswerOptions(
   optionCount: AnswerOptionsCount,
   allowNegativeDistractors: boolean,
   bounds?: AnswerDistractorBounds,
+  preferredWrongAnswers: readonly number[] = [],
 ): number[] {
-  return buildSteppedAnswerOptions(correctAnswer, optionCount, 0.1);
+  return buildSteppedAnswerOptions(
+    correctAnswer,
+    optionCount,
+    0.1,
+    preferredWrongAnswers,
+  );
 }
 
 /** Wrong answer near `correctAnswer` for timers when there are no MC options (keyboard mode). */

@@ -12,10 +12,24 @@ describe('fractionVisualGenerator', () => {
     const q = tryGenerateFractionVisualQuestion(config);
     expect(q).not.toBeNull();
     expect(q!.questionText).toBe('What fraction is shaded?');
+    expect(['bar', 'circle']).toContain(q!.model);
     expect(q!.shaded.numerator).toBeGreaterThan(0);
     expect(q!.shaded.numerator).toBeLessThan(q!.shaded.denominator);
     expect(q!.answerOptions).toContain(q!.correctAnswer);
     expect(q!.answerOptions.length).toBe(4);
+  });
+
+  it('randomizes between bar and circle models', () => {
+    const config = {
+      ...getRecommendedLearningPlan(8),
+      fractionVisual: { enabled: true },
+      answerOptionsCount: 4 as const,
+    };
+    const models = new Set(
+      Array.from({ length: 100 }, () => tryGenerateFractionVisualQuestion(config)?.model),
+    );
+
+    expect(models).toEqual(new Set(['bar', 'circle']));
   });
 
   it('matches visual slice count to the reduced correct fraction', () => {

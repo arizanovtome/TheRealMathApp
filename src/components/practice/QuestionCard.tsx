@@ -11,10 +11,12 @@ type QuestionCardProps = {
   questionText: string;
   /** Short prompts with a diagram or sequence below — tighter vertical padding. */
   compact?: boolean;
+  /** Replaces the default text renderer for structured math layouts. */
+  questionContent?: ReactNode;
   children?: ReactNode;
 };
 
-export function QuestionCard({ progressLabel, questionText, compact = false, children }: QuestionCardProps) {
+export function QuestionCard({ progressLabel, questionText, compact = false, questionContent, children }: QuestionCardProps) {
   return (
     <View style={styles.board}>
       <View style={styles.rule} />
@@ -24,12 +26,14 @@ export function QuestionCard({ progressLabel, questionText, compact = false, chi
       <View
         style={[styles.questionBlock, compact && styles.questionBlockCompact]}
         accessibilityLabel={questionText}>
-        <MathDisplayText
-          text={questionText}
-          size="question"
-          textAlign="center"
-          style={styles.question}
-        />
+        {questionContent ?? (
+          <MathDisplayText
+            text={questionText}
+            size="question"
+            textAlign="center"
+            style={styles.question}
+          />
+        )}
         {children ? <View style={styles.questionVisual}>{children}</View> : null}
       </View>
       <View style={[styles.rule, styles.ruleBottom, compact && styles.ruleBottomCompact]} />
