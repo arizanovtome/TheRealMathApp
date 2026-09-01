@@ -12,6 +12,8 @@ import { FocusedOperationContext } from '@/components/learning-plan/FocusedOpera
 
 type OperationConfigCardProps = PropsWithChildren<{
   operation?: MathOperation;
+  /** Stable key used only when filtering settings into topic-category screens. */
+  visibilityKey?: string;
   /** Used when `operation` is not set (e.g. systems of equations). */
   title?: string;
   enabled: boolean;
@@ -22,6 +24,7 @@ type OperationConfigCardProps = PropsWithChildren<{
 
 export function OperationConfigCard({
   operation,
+  visibilityKey,
   title,
   enabled,
   onToggle,
@@ -33,8 +36,16 @@ export function OperationConfigCard({
   const focusedOperation = useContext(FocusedOperationContext);
   const displayTitle =
     operation != null ? getOperationLabel(operation, t) : (title ?? '');
+  const effectiveVisibilityKey = operation ?? visibilityKey;
 
-  if (focusedOperation && operation !== focusedOperation) return null;
+  if (
+    focusedOperation &&
+    (typeof focusedOperation === 'string'
+      ? operation !== focusedOperation
+      : effectiveVisibilityKey == null || !focusedOperation.has(effectiveVisibilityKey))
+  ) {
+    return null;
+  }
 
   return (
     <Card>
@@ -68,11 +79,9 @@ export function OperationConfigCard({
       </View>
       {enabled ? (
         collapsed ? null : children
-      ) : (
-        <AppText muted>
-          {offHint ?? t('common:enableTopic', { title: displayTitle.toLowerCase() })}
-        </AppText>
-      )}
+      ) : offHint ? (
+        <AppText muted>{offHint}</AppText>
+      ) : null}
     </Card>
   );
 }

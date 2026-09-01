@@ -2,7 +2,9 @@
   "title": "Неодамнешни резултати",
   "subtitle": "Врз основа на зачуваните сесии на овој уред (до {{limit}} неодамнешни обиди).",
   "overallAvg": "Вкупно последни {{n}} сесии: {{avg}}% просечен резултат",
-  "noSessions": "Завршете сесија на вежбање или квиз за да се прикаже тука.",
+  "filteredAvg": "Последни {{n}} {{mode}} сесии: {{avg}}% просечен резултат",
+  "filterAll": "Сите",
+  "noSessions": "Завршете вежба, квиз или вежбање на време за да се прикаже тука.",
   "keepStreak": "Вежбајте на последователни денови за да ја одржите низата.",
   "startStreak": "Вежбајте денес или утре за да започнете низа.",
   "growStreak": "Вежбајте на последователни денови за да ја зголемите низата",
@@ -12,6 +14,10 @@
   "lastSessionsAvg": "Просек на последни {{n}} сесии: {{pct}}%",
   "recentScores": "Неодамнешни резултати (најнови прво)",
   "sessionA11y": "{{mode}}, {{pct}} проценти",
+  "timedRunSummary": "Одговараше {{duration}} · {{correct}} точни",
+  "timedRunStartedOnly": "Почна {{duration}}",
+  "timedRunSettings": "Почна {{duration}} · {{adjustments}}",
+  "timedRunLegacySummary": "{{correct}}/{{total}} точни · {{pct}}%",
   "opNoProblems": "{{label}}, сè уште нема задачи",
   "opStats": "{{label}}, {{pct}}% точни од {{attempted}} задачи"
 }

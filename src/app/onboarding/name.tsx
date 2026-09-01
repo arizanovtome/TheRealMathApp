@@ -1,3 +1,4 @@
+import { useHeaderHeight } from '@react-navigation/elements';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
@@ -6,20 +7,26 @@ import { AppButton } from '@/components/common/AppButton';
 import { AppScreen } from '@/components/common/AppScreen';
 import { AppText } from '@/components/common/AppText';
 import { ROUTES } from '@/constants/routes';
+import {
+  LEARNER_NAME_MAX_LENGTH,
+  PROFILE_NAME_MAX_LENGTH,
+} from '@/constants/inputLimits';
 import { nextDefaultProfileName } from '@/features/onboarding/profile.utils';
 import { useAppTranslation } from '@/i18n/useAppTranslation';
 import { useAppStore } from '@/store/useAppStore';
 import { colors } from '@/theme/colors';
 import { radii, spacing } from '@/theme/spacing';
-import { useScrollToFocusedInput } from '@/utils/keyboardScroll';
+import { useKeyboardInset, useScrollToFocusedInput } from '@/utils/keyboardScroll';
 
 export default function OnboardingNameScreen() {
   const { t } = useAppTranslation(['onboarding', 'common']);
   const router = useRouter();
+  const headerHeight = useHeaderHeight();
+  const keyboardInset = useKeyboardInset();
   const params = useLocalSearchParams<{ mode?: string }>();
   const profiles = useAppStore((s) => s.profiles);
   const scrollRef = useRef<ScrollView>(null);
-  const scrollToInput = useScrollToFocusedInput(scrollRef);
+  const scrollToInput = useScrollToFocusedInput(scrollRef, keyboardInset);
   const defaultProfileName = useMemo(
     () => nextDefaultProfileName(profiles),
     [profiles],
@@ -46,9 +53,13 @@ export default function OnboardingNameScreen() {
   return (
     <AppScreen
       scroll
+      keyboardVerticalOffset={headerHeight}
       scrollProps={{
         ref: scrollRef,
-        keyboardDismissMode: 'on-drag',
+        keyboardDismissMode: 'none',
+        contentContainerStyle: {
+          paddingBottom: spacing.xl + keyboardInset,
+        },
       }}>
       <AppText variant="title">
         {isAddMode ? t('onboarding:newProfileTitle') : t('onboarding:welcome')}
@@ -69,6 +80,7 @@ export default function OnboardingNameScreen() {
             onFocus={scrollToInput}
             autoCapitalize="words"
             returnKeyType="next"
+            maxLength={PROFILE_NAME_MAX_LENGTH}
             style={styles.input}
           />
         </View>
@@ -84,6 +96,7 @@ export default function OnboardingNameScreen() {
             onFocus={scrollToInput}
             autoCapitalize="words"
             returnKeyType="done"
+            maxLength={LEARNER_NAME_MAX_LENGTH}
             onSubmitEditing={handleContinue}
             style={styles.input}
           />

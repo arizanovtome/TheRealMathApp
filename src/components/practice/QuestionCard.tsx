@@ -13,10 +13,25 @@ type QuestionCardProps = {
   compact?: boolean;
   /** Replaces the default text renderer for structured math layouts. */
   questionContent?: ReactNode;
+  /** Remaining share from 0 to 1; replaces the bottom rule with a countdown bar. */
+  timerProgress?: number;
+  timerAccessibilityLabel?: string;
   children?: ReactNode;
 };
 
-export function QuestionCard({ progressLabel, questionText, compact = false, questionContent, children }: QuestionCardProps) {
+export function QuestionCard({
+  progressLabel,
+  questionText,
+  compact = false,
+  questionContent,
+  timerProgress,
+  timerAccessibilityLabel,
+  children,
+}: QuestionCardProps) {
+  const normalizedTimerProgress =
+    timerProgress === undefined ? undefined : Math.max(0, Math.min(1, timerProgress));
+  const timerWidth = `${Math.round((normalizedTimerProgress ?? 0) * 100)}%` as `${number}%`;
+
   return (
     <View style={styles.board}>
       <View style={styles.rule} />
@@ -36,7 +51,27 @@ export function QuestionCard({ progressLabel, questionText, compact = false, que
         )}
         {children ? <View style={styles.questionVisual}>{children}</View> : null}
       </View>
-      <View style={[styles.rule, styles.ruleBottom, compact && styles.ruleBottomCompact]} />
+      {normalizedTimerProgress === undefined ? (
+        <View style={[styles.rule, styles.ruleBottom, compact && styles.ruleBottomCompact]} />
+      ) : (
+        <View
+          style={[styles.timerTrack, compact && styles.ruleBottomCompact]}
+          accessibilityRole="progressbar"
+          accessibilityLabel={timerAccessibilityLabel}
+          accessibilityValue={{
+            min: 0,
+            max: 100,
+            now: Math.round(normalizedTimerProgress * 100),
+          }}>
+          <View
+            style={[
+              styles.timerFill,
+              normalizedTimerProgress <= 0.25 && styles.timerFillLow,
+              { width: timerWidth },
+            ]}
+          />
+        </View>
+      )}
     </View>
   );
 }
@@ -71,6 +106,21 @@ const styles = StyleSheet.create({
   },
   ruleBottomCompact: {
     marginTop: 0,
+  },
+  timerTrack: {
+    height: 6,
+    marginTop: spacing.xs,
+    borderRadius: 3,
+    overflow: 'hidden',
+    backgroundColor: colors.border,
+  },
+  timerFill: {
+    height: '100%',
+    borderRadius: 3,
+    backgroundColor: colors.primary,
+  },
+  timerFillLow: {
+    backgroundColor: colors.error,
   },
   question: {
     color: colors.text,

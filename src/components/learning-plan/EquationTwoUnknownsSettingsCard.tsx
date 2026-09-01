@@ -39,6 +39,7 @@ export function EquationTwoUnknownsSettingsCard({
 
   return (
     <OperationConfigCard
+      visibilityKey="equation_two_unknowns"
       title={t('settings:systemsEquations')}
       offHint={t('settings:systemsEquationsDesc')}
       enabled={config.enabled}

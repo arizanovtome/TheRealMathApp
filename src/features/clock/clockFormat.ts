@@ -7,6 +7,20 @@ export type ClockTime = {
 
 export type ClockQuestionSubtype = 'read_analog' | 'elapsed_time';
 
+export type DurationUnitLabels = {
+  hour: string;
+  hours: string;
+  minute: string;
+  minutes: string;
+};
+
+const ENGLISH_DURATION_UNITS: DurationUnitLabels = {
+  hour: 'hour',
+  hours: 'hours',
+  minute: 'minute',
+  minutes: 'minutes',
+};
+
 export function formatClockTime(time: ClockTime, hourFormat: 12 | 24): string {
   const minuteText = String(time.minute).padStart(2, '0');
   if (hourFormat === 24) {
@@ -27,20 +41,22 @@ export function formatAnalogReadTime(time: ClockTime, hourFormat: 12 | 24): stri
   return `${h12}:${minuteText}`;
 }
 
-export function formatDurationMinutes(totalMinutes: number): string {
-  if (totalMinutes <= 0) return '0 minutes';
+export function formatDurationMinutes(
+  totalMinutes: number,
+  units: DurationUnitLabels = ENGLISH_DURATION_UNITS,
+): string {
+  if (totalMinutes <= 0) return `0 ${units.minutes}`;
   if (totalMinutes < 60) {
-    return totalMinutes === 1 ? '1 minute' : `${totalMinutes} minutes`;
+    return `${totalMinutes} ${totalMinutes === 1 ? units.minute : units.minutes}`;
   }
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
   if (minutes === 0) {
-    return hours === 1 ? '1 hour' : `${hours} hours`;
+    return `${hours} ${hours === 1 ? units.hour : units.hours}`;
   }
-  if (hours === 1) {
-    return `1 hour ${minutes} minutes`;
-  }
-  return `${hours} hours ${minutes} minutes`;
+  const hourUnit = hours === 1 ? units.hour : units.hours;
+  const minuteUnit = minutes === 1 ? units.minute : units.minutes;
+  return `${hours} ${hourUnit} ${minutes} ${minuteUnit}`;
 }
 
 export function elapsedMinutesBetween(start: ClockTime, end: ClockTime): number {

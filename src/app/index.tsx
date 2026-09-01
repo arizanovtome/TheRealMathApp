@@ -1,12 +1,13 @@
 import { useMemo } from 'react';
-import { ActivityIndicator, StyleSheet } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect, useRouter } from 'expo-router';
 
 import { AppButton } from '@/components/common/AppButton';
 import { AppScreen } from '@/components/common/AppScreen';
 import { AppText } from '@/components/common/AppText';
-import { AppTextLink } from '@/components/common/AppTextLink';
+import { HomeAboutLinks } from '@/components/home/HomeAboutLinks';
+import { LanguageQuickSwitch } from '@/components/settings/LanguageQuickSwitch';
 import { GentleAdaptationCard } from '@/components/progress/GentleAdaptationCard';
 import { ROUTES } from '@/constants/routes';
 import { getEnabledOperations } from '@/features/learning-plan/learningPlan.utils';
@@ -58,7 +59,12 @@ export default function HomeScreen() {
 
   return (
     <AppScreen scroll includeTopSafeArea>
-      <AppText variant="title">{t('home:greeting', { name: greetingName })}</AppText>
+      <View style={styles.titleRow}>
+        <AppText variant="title" style={styles.title}>
+          {t('home:greeting', { name: greetingName })}
+        </AppText>
+        <LanguageQuickSwitch />
+      </View>
       {profileLabel ? (
         <AppText variant="body" muted>
           {t('home:activeProfile', { profileLabel })}
@@ -92,23 +98,19 @@ export default function HomeScreen() {
         accessibilityHint={t('home:hintLearn')}
       />
       <AppButton
-        label={t('settings:title')}
-        variant="secondary"
-        onPress={() => router.push(ROUTES.learningPlan)}
-        accessibilityHint={t('home:hintSettings')}
-      />
-      <AppButton
         label={t('progress:title')}
         variant="secondary"
         onPress={() => router.push(ROUTES.progress)}
         accessibilityHint={t('home:hintProgress')}
       />
-
-      <AppTextLink
-        label={t('common:privacyPolicy')}
-        onPress={() => router.push(ROUTES.privacy)}
-        accessibilityHint={t('home:hintPrivacy')}
+      <AppButton
+        label={t('settings:title')}
+        variant="secondary"
+        onPress={() => router.push(ROUTES.learningPlan)}
+        accessibilityHint={t('home:hintSettings')}
       />
+
+      <HomeAboutLinks />
 
       {adaptationSuggestion ? <GentleAdaptationCard suggestion={adaptationSuggestion} /> : null}
 
@@ -122,6 +124,16 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  title: {
+    flex: 1,
+    flexShrink: 1,
+  },
   loading: {
     flex: 1,
     alignItems: 'center',

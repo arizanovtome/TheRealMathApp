@@ -1,7 +1,15 @@
 import type { MathOperation } from '@/features/learning-plan/learningPlan.types';
 import { ALL_MATH_OPERATIONS } from '@/features/learning-plan/learningPlan.types';
-import type { SessionHistoryEntry } from '@/features/progress/sessionHistory.types';
-import type { OperationStatsRollup, SessionModeResult, SessionResult } from '@/features/questions/questionScoring';
+import type {
+  SessionHistoryEntry,
+  SessionHistoryModeFilter,
+} from '@/features/progress/sessionHistory.types';
+import type {
+  OperationStatsRollup,
+  SessionModeResult,
+  SessionResult,
+  TimedRunSummary,
+} from '@/features/questions/questionScoring';
 
 const ALL_OPS = ALL_MATH_OPERATIONS;
 
@@ -23,10 +31,41 @@ function normalizeOperationStats(raw: unknown): OperationStatsRollup | undefined
   return Object.keys(out).length > 0 ? out : undefined;
 }
 
-export const SESSION_HISTORY_LIMIT = 15;
+function normalizeTimedRunSummary(raw: unknown): TimedRunSummary | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const o = raw as Record<string, unknown>;
+  const survivedSeconds = typeof o.survivedSeconds === 'number' ? o.survivedSeconds : Number(o.survivedSeconds);
+  const initialSeconds = typeof o.initialSeconds === 'number' ? o.initialSeconds : Number(o.initialSeconds);
+  const bonusSeconds = typeof o.bonusSeconds === 'number' ? o.bonusSeconds : Number(o.bonusSeconds);
+  const penaltySeconds = typeof o.penaltySeconds === 'number' ? o.penaltySeconds : Number(o.penaltySeconds);
+  if (
+    !Number.isFinite(survivedSeconds) ||
+    !Number.isFinite(initialSeconds) ||
+    !Number.isFinite(bonusSeconds) ||
+    !Number.isFinite(penaltySeconds)
+  ) {
+    return undefined;
+  }
+  return {
+    survivedSeconds: Math.max(0, Math.round(survivedSeconds)),
+    initialSeconds: Math.max(0, Math.round(initialSeconds)),
+    bonusSeconds: Math.max(0, Math.round(bonusSeconds)),
+    penaltySeconds: Math.max(0, Math.round(penaltySeconds)),
+  };
+}
 
-/** How many recent sessions we highlight on the result screen. */
-export const RECENT_SESSIONS_DISPLAY_COUNT = 10;
+export const SESSION_HISTORY_LIMIT = 50;
+
+/** Keep recent-performance averages and lists aligned with the saved history window. */
+export const RECENT_SESSIONS_DISPLAY_COUNT = SESSION_HISTORY_LIMIT;
+
+export function filterSessionHistory(
+  history: SessionHistoryEntry[],
+  mode: SessionHistoryModeFilter,
+): SessionHistoryEntry[] {
+  if (mode === 'all') return history;
+  return history.filter((entry) => entry.sessionMode === mode);
+}
 
 export function recordFromSessionResult(result: SessionResult): SessionHistoryEntry {
   return {
@@ -36,6 +75,7 @@ export function recordFromSessionResult(result: SessionResult): SessionHistoryEn
     totalQuestions: result.totalQuestions,
     correctAnswers: result.correctAnswers,
     operationStats: result.operationStats,
+    timedRun: result.timedRun,
   };
 }
 
@@ -134,6 +174,8 @@ export function normalizeSessionHistory(raw: unknown): SessionHistoryEntry[] {
     };
     const os = normalizeOperationStats(o.operationStats);
     if (os) entry.operationStats = os;
+    const timedRun = normalizeTimedRunSummary(o.timedRun);
+    if (timedRun) entry.timedRun = timedRun;
     out.push(entry);
   }
   return out.slice(0, SESSION_HISTORY_LIMIT);

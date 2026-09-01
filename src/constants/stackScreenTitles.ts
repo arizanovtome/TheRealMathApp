@@ -20,6 +20,10 @@ export function stackScreenTitle(routeName: string, t: TFunction): string {
     quiz: t('navigation:quiz'),
     timed: t('navigation:timedRun'),
     'learning-plan': t('navigation:settings'),
+    'learning-plan/profile': t('settings:profileDetails'),
+    'learning-plan/session': t('settings:sessionSettings'),
+    'learning-plan/topics': t('settings:topics'),
+    'learning-plan/topics/[category]': t('settings:topics'),
     result: t('navigation:results'),
     'onboarding/name': t('navigation:profileSetup'),
     'onboarding/age': t('navigation:yourAge'),
@@ -28,6 +32,7 @@ export function stackScreenTitle(routeName: string, t: TFunction): string {
     'learn/[topicId]': t('navigation:learn'),
     'learn/practice': t('navigation:practice'),
     privacy: t('navigation:privacyPolicy'),
+    about: t('navigation:about'),
   };
 
   if (known[normalized]) return known[normalized]!;

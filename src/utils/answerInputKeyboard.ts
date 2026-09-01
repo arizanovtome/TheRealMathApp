@@ -1,10 +1,26 @@
-import type { TextInputProps } from 'react-native';
+import { Platform, type TextInputProps } from 'react-native';
+
+import {
+  FRACTION_ANSWER_MAX_LENGTH,
+  NUMERIC_ANSWER_MAX_LENGTH,
+} from '@/constants/inputLimits';
 
 export type AnswerInputKind = 'fraction' | 'numeric' | 'equation';
+
+export function maxLengthForAnswerInputKind(kind: AnswerInputKind): number {
+  switch (kind) {
+    case 'fraction':
+      return FRACTION_ANSWER_MAX_LENGTH;
+    case 'equation':
+    case 'numeric':
+      return NUMERIC_ANSWER_MAX_LENGTH;
+  }
+}
 
 /** Keyboard props for typed math answers. Fractions need `/` and `.` — not the plain number pad. */
 export function answerInputKeyboardProps(
   kind: AnswerInputKind,
+  platform: typeof Platform.OS = Platform.OS,
 ): Pick<TextInputProps, 'keyboardType' | 'inputMode'> {
   switch (kind) {
     case 'fraction':
@@ -13,7 +29,11 @@ export function answerInputKeyboardProps(
     case 'equation':
       return { keyboardType: 'numbers-and-punctuation', inputMode: 'text' };
     case 'numeric':
-      return { keyboardType: 'decimal-pad', inputMode: 'decimal' };
+      // Android `numeric` includes signed + decimal flags. Its `decimal-pad` omits `-`.
+      // iOS has no signed number pad, so use its compact punctuation keyboard.
+      return platform === 'ios'
+        ? { keyboardType: 'numbers-and-punctuation', inputMode: 'text' }
+        : { keyboardType: 'numeric' };
   }
 }
 
@@ -43,7 +63,7 @@ export function sanitizeFractionAnswerInput(raw: string): string {
       continue;
     }
   }
-  return result;
+  return result.slice(0, FRACTION_ANSWER_MAX_LENGTH);
 }
 
 /** Keeps only digits, `.`, and an optional leading minus (for numeric answers). */
@@ -66,7 +86,7 @@ export function sanitizeDecimalAnswerInput(raw: string): string {
       continue;
     }
   }
-  return result;
+  return result.slice(0, NUMERIC_ANSWER_MAX_LENGTH);
 }
 
 export function sanitizeAnswerInput(raw: string, kind: AnswerInputKind): string {
@@ -76,6 +96,6 @@ export function sanitizeAnswerInput(raw: string, kind: AnswerInputKind): string 
     case 'numeric':
       return sanitizeDecimalAnswerInput(raw);
     case 'equation':
-      return raw;
+      return raw.slice(0, NUMERIC_ANSWER_MAX_LENGTH);
   }
 }

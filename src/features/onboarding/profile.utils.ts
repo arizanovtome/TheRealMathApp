@@ -1,4 +1,7 @@
 import { DEFAULT_PROFILE_NAME, MAX_PROFILE_AGE, MIN_CHILD_AGE } from '@/constants/ageDefaults';
+import {
+  clampMathKnowledgeLevel,
+} from '@/constants/mathKnowledge';
 import { i18n } from '@/i18n';
 import { ensureLearningConfigShape } from '@/features/learning-plan/learningPlan.utils';
 import type { MathLearningConfig } from '@/features/learning-plan/learningPlan.types';
@@ -21,8 +24,9 @@ export function nextDefaultProfileName(profiles: ChildProfile[]): string {
 
 export function createChildProfile(input: {
   name: string;
-  age: number;
+  age?: number | null;
   profileName?: string;
+  mathKnowledgeLevel?: number | null;
   learningConfig?: MathLearningConfig | null;
   sessionHistory?: SessionHistoryEntry[];
 }): ChildProfile {
@@ -30,7 +34,11 @@ export function createChildProfile(input: {
     id: createProfileId(),
     profileName: input.profileName ?? DEFAULT_PROFILE_NAME,
     name: input.name.trim(),
-    age: clampProfileAge(input.age),
+    age: input.age == null ? null : clampProfileAge(input.age),
+    mathKnowledgeLevel:
+      input.mathKnowledgeLevel == null
+        ? null
+        : clampMathKnowledgeLevel(input.mathKnowledgeLevel),
     learningConfig: input.learningConfig ?? null,
     sessionHistory: input.sessionHistory ?? [],
   };
@@ -48,7 +56,9 @@ export function normalizeChildProfile(raw: unknown): ChildProfile | null {
   const age =
     typeof r.age === 'number' && Number.isFinite(r.age)
       ? clampProfileAge(r.age)
-      : MIN_CHILD_AGE;
+      : r.age === null
+        ? null
+        : MIN_CHILD_AGE;
   if (!name) return null;
 
   const profileName =
@@ -61,6 +71,10 @@ export function normalizeChildProfile(raw: unknown): ChildProfile | null {
     profileName,
     name,
     age,
+    mathKnowledgeLevel:
+      r.mathKnowledgeLevel == null
+        ? null
+        : clampMathKnowledgeLevel(r.mathKnowledgeLevel),
     learningConfig:
       r.learningConfig && typeof r.learningConfig === 'object'
         ? ensureLearningConfigShape(r.learningConfig as MathLearningConfig)

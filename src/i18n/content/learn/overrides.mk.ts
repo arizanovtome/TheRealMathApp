@@ -162,7 +162,7 @@ export const LEARN_TOPIC_OVERRIDES_MK: Partial<Record<LearnTutorial['id'], Learn
   },
   geometry: {
     title: 'Геометрија',
-    summary: 'Обиколка, плоштина и волумен — формули и пресметки за секоја форма.',
+    summary: 'Периметар, плоштина и волумен — формули и пресметки за секоја форма.',
     sections: [
       {
         heading: 'Два типа прашања',
@@ -175,7 +175,7 @@ export const LEARN_TOPIC_OVERRIDES_MK: Partial<Record<LearnTutorial['id'], Learn
     ],
     examples: [
       {
-        prompt: 'Обиколка на квадрат со страна 5',
+        prompt: 'Периметар на квадрат со страна 5',
         solution: '4 × 5 = 20',
       },
       {

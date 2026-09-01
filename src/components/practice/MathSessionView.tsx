@@ -3,13 +3,13 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Keyboard,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   StyleSheet,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { KeyboardScreenShell } from "@/components/common/KeyboardScreenShell";
 
 import { AnalogClockFace } from "@/components/clock/AnalogClockFace";
 import { BasicShapeDiagram } from "@/components/shapes/BasicShapeDiagram";
@@ -37,11 +37,11 @@ import {
 } from "@/features/learning-plan/learningPlan.utils";
 import {
   positiveFeedbackForCorrectCount,
-  pickWrongDistractorNearCorrect,
 } from "@/features/questions/answerOptionsGenerator";
 import { normalizeEquationAnswerInput } from "@/features/questions/equationUnknown";
-import { formatFraction, buildFractionMcOptions } from "@/features/questions/fractions";
+import { formatFraction } from "@/features/questions/fractions";
 import type { MathQuestion } from "@/features/questions/question.types";
+import { keyboardAnswerIsReady, requiresMultipleChoiceQuestion } from "@/features/questions/questionAnswerInput";
 import {
   isArithmeticQuestion,
   isEquationUnknownQuestion,
@@ -57,21 +57,19 @@ import {
   isTrigonometryQuestion,
   isLogarithmQuestion,
   isEquationTwoUnknownQuestion,
-  requiresMultipleChoiceQuestion,
   usesCompactQuestionCard,
 } from "@/features/questions/question.types";
 import { FractionVisualModel } from "@/components/fractions/FractionModels";
 import {
   createSessionQuestions,
-  getAnswerDistractorBounds,
-  operationAllowsNegativeResults,
 } from "@/features/questions/questionGenerator";
 import {
   answerOptionDisplayLabel,
   answerOptionsArePlainNumbers,
+  shouldStackAnswerOptions,
   buildPracticeSessionResult,
   buildQuizSessionResult,
-  correctAnswerDisplayLabel,
+  correctAnswerFeedbackLabel,
   submittedAnswerIsCorrect,
 } from "@/features/questions/questionScoring";
 import { useAppStore } from "@/store/useAppStore";
@@ -81,7 +79,8 @@ import { fonts } from "@/theme/fonts";
 import { radii, spacing } from "@/theme/spacing";
 import { useAppTranslation } from "@/i18n/useAppTranslation";
 import { parseNumberAnswer } from "@/utils/parseIntegerAnswer";
-import { isCompleteFractionAnswer, parseFractionAnswer } from "@/utils/parseFractionAnswer";
+import { parseFractionAnswer } from "@/utils/parseFractionAnswer";
+import { useKeyboardInset, useScrollToFocusedInput } from "@/utils/keyboardScroll";
 
 function parseFocusOperationParam(
   raw: string | string[] | undefined,
@@ -118,6 +117,7 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
   const router = useRouter();
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
+  const keyboardInset = useKeyboardInset();
   const learningConfig = useAppStore(selectActiveLearningConfig);
   const setLastSessionResult = useAppStore((s) => s.setLastSessionResult);
   const params = useLocalSearchParams<{ focus?: string | string[] }>();
@@ -148,33 +148,6 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
 
   const useKeyboard = effectiveConfig?.answerEntryMode === "keyboard";
 
-  const [keyboardOpen, setKeyboardOpen] = useState(false);
-
-  useEffect(() => {
-    if (!useKeyboard) {
-      setKeyboardOpen(false);
-      return;
-    }
-
-    const showEvt =
-      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
-    const hideEvt =
-      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
-
-    const subShow = Keyboard.addListener(showEvt, () => {
-      setKeyboardOpen(true);
-    });
-    const subHide = Keyboard.addListener(hideEvt, () => {
-      setKeyboardOpen(false);
-    });
-
-    return () => {
-      subShow.remove();
-      subHide.remove();
-      setKeyboardOpen(false);
-    };
-  }, [useKeyboard]);
-
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<(number | string | null)[]>([]);
   const [selected, setSelected] = useState<number | string | null>(null);
@@ -185,18 +158,9 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
   const [answerInputText, setAnswerInputText] = useState("");
   const [inputError, setInputError] = useState("");
 
-  const selectedRef = useRef<number | string | null>(null);
-  const showFeedbackRef = useRef(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const scrollRef = useRef<ScrollView>(null);
-
-  useEffect(() => {
-    selectedRef.current = selected;
-  }, [selected]);
-
-  useEffect(() => {
-    showFeedbackRef.current = showFeedback;
-  }, [showFeedback]);
+  const scrollToInput = useScrollToFocusedInput(scrollRef, keyboardInset);
 
   const clearQuestionTimer = useCallback(() => {
     if (intervalRef.current !== null) {
@@ -224,79 +188,6 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
   const requireConfirmMc =
     Boolean(effectiveConfig?.confirmAnswerBeforeSubmit) && !showKeyboardInput;
 
-  const timeoutWrongAnswer = useCallback(
-    (question: MathQuestion): number | string => {
-      if (!effectiveConfig) {
-        if (question.kind === "arithmetic") return question.correctAnswer;
-        if (question.kind === "geometry") return question.correctAnswer;
-        if (question.kind === "equation_unknown") return question.fallbackWrongExpression;
-        if (question.kind === "equation_two_unknown") return question.correctAnswer + 1;
-        if (question.kind === "comparison" || question.kind === "equivalent_expression" || question.kind === "fraction_visual" || question.kind === "shape_recognition" || question.kind === "clock" || question.kind === "pattern" || question.kind === "calculus" || question.kind === "trigonometry" || question.kind === "logarithm" || question.kind === "advanced_equation" || question.kind === "limit" || question.kind === "number_sense") {
-          return question.answerOptions[0] ?? question.correctAnswer;
-        }
-        return "";
-      }
-      if (question.kind === "equation_unknown") {
-        const wrongFromMc = question.answerOptions.find(
-          (o) => !submittedAnswerIsCorrect(question, o),
-        );
-        if (wrongFromMc !== undefined) return wrongFromMc;
-        return question.fallbackWrongExpression;
-      }
-      if (question.kind === "geometry") {
-        const wrongFromMc = question.answerOptions.find(
-          (o) => !submittedAnswerIsCorrect(question, o),
-        );
-        if (wrongFromMc !== undefined) return wrongFromMc;
-        return question.correctAnswer;
-      }
-      if (
-        question.kind === "comparison" ||
-        question.kind === "equivalent_expression" ||
-        question.kind === "fraction_visual" ||
-        question.kind === "shape_recognition" ||
-        question.kind === "clock" ||
-        question.kind === "pattern" ||
-        question.kind === "calculus" ||
-        question.kind === "trigonometry" ||
-        question.kind === "logarithm" ||
-        question.kind === "advanced_equation" ||
-        question.kind === "limit" ||
-        question.kind === "number_sense"
-      ) {
-        const wrongFromMc = question.answerOptions.find(
-          (o) => !submittedAnswerIsCorrect(question, o),
-        );
-        return wrongFromMc ?? question.answerOptions[0] ?? "";
-      }
-      if (question.kind === "equation_two_unknown") {
-        const wrongFromMc = question.answerOptions.find(
-          (o) => !submittedAnswerIsCorrect(question, o),
-        );
-        if (wrongFromMc !== undefined) return wrongFromMc;
-        return question.correctAnswer + 1;
-      }
-      const wrongFromMc = question.answerOptions.find(
-        (o) => !submittedAnswerIsCorrect(question, o),
-      );
-      if (wrongFromMc !== undefined) return wrongFromMc;
-      if (question.answerKind === 'number') {
-        return pickWrongDistractorNearCorrect(
-          question.correctAnswer,
-          operationAllowsNegativeResults(effectiveConfig, question.operation),
-          getAnswerDistractorBounds(effectiveConfig),
-        );
-      }
-      if (isFractionQuestion(question) && question.correctFraction) {
-        const opts = buildFractionMcOptions(question.correctFraction, 4);
-        const wrong = opts.find((o) => !submittedAnswerIsCorrect(question, o));
-        return wrong ?? opts[0] ?? "1/2";
-      }
-      return question.answerOptions[0] ?? String(question.correctAnswer);
-    },
-    [effectiveConfig],
-  );
-
   useEffect(() => {
     clearQuestionTimer();
     setTimedOut(false);
@@ -318,32 +209,13 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
           intervalRef.current = null;
         }
         setSecondsLeft(null);
-        if (selectedRef.current !== null) {
-          if (
-            requireConfirmMc &&
-            mode === "practice" &&
-            !showFeedbackRef.current
-          ) {
-            setShowFeedback(true);
-            setTimedOut(true);
-            if (
-              submittedAnswerIsCorrect(current, selectedRef.current)
-            ) {
-              setPositiveLine(
-                positiveFeedbackForCorrectCount(
-                  countPriorCorrectAnswers(questions, answers, index) + 1,
-                  questions.length,
-                ),
-              );
-            }
-          }
-          return;
-        }
-        const wrong = timeoutWrongAnswer(current);
-        setSelected(wrong);
+        setSelected(null);
+        setAnswerInputText("");
+        setInputError("");
+        Keyboard.dismiss();
+        setTimedOut(true);
         if (mode === "practice") {
           setShowFeedback(true);
-          setTimedOut(true);
         }
       }
     }, 1000);
@@ -361,11 +233,6 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
     effectiveConfig?.timerSecondsPerQuestion,
     mode,
     clearQuestionTimer,
-    timeoutWrongAnswer,
-    requireConfirmMc,
-    questions,
-    answers,
-    index,
   ]);
 
   useEffect(() => {
@@ -402,10 +269,11 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
 
   const handleSelect = (value: number | string) => {
     if (!current) return;
+    if (timedOut) return;
     if (mode === "practice" && showFeedback) return;
-    clearQuestionTimer();
     setSelected(value);
     if (requireConfirmMc) return;
+    clearQuestionTimer();
     if (mode === "practice") {
       setShowFeedback(true);
       if (submittedAnswerIsCorrect(current, value)) {
@@ -498,7 +366,9 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
 
     let answer: number | string | null = selected;
 
-    if (showKeyboardInput) {
+    if (timedOut) {
+      answer = null;
+    } else if (showKeyboardInput) {
       if (mode === "practice") {
         if (selected === null || !showFeedback) return;
         answer = selected;
@@ -554,17 +424,18 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
     resetForQuestion(index + 1);
   };
 
-  const inputLocked = mode === "practice" && showFeedback && showKeyboardInput;
+  const inputLocked =
+    showKeyboardInput && (timedOut || (mode === "practice" && showFeedback));
 
   const scrollContentStyle = [
     styles.scrollInner,
-    { paddingBottom: Math.max(spacing.xl, insets.bottom + spacing.md) },
-    showKeyboardInput && keyboardOpen ? { paddingTop: insets.top } : null,
-    keyboardOpen ? { paddingBottom: spacing.xl * 3 } : null,
+    {
+      paddingBottom: Math.max(spacing.xl, insets.bottom) + keyboardInset,
+    },
   ];
 
   const answerPlaceholder =
-    showKeyboardInput && !keyboardOpen && !inputLocked
+    showKeyboardInput && !inputLocked
       ? isEquationUnknownQuestion(current)
         ? t("common:equationPlaceholder")
         : isArithmeticQuestion(current) && isFractionQuestion(current)
@@ -588,16 +459,16 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
     index: index + 1,
     total: questions.length,
   });
-  const correctLabel = correctAnswerDisplayLabel(current);
+  const correctLabel = correctAnswerFeedbackLabel(current);
   const incorrectLine = t("common:incorrectAnswer", { answer: correctLabel });
 
-  const optionDisabled = mode === "practice" ? showFeedback : false;
+  const optionDisabled = timedOut || (mode === "practice" && showFeedback);
 
   const isCorrectSelection =
     selected !== null && submittedAnswerIsCorrect(current, selected);
 
   const feedbackMessage =
-    mode === "practice" && showFeedback && selected !== null
+    mode === "practice" && showFeedback && (selected !== null || timedOut)
       ? timedOut
         ? t("common:timeUpAnswer", { answer: correctLabel })
         : isCorrectSelection
@@ -605,39 +476,19 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
           : incorrectLine
       : "";
 
-  const parsedKeyboard = parseKeyboardAnswer();
-  const equationBodyNorm = normalizeEquationAnswerInput(
-    answerInputText.replace(/^\s*x\s*=\s*/i, ""),
-  );
-  const equationInputReady =
-    isEquationUnknownQuestion(current) && equationBodyNorm !== "";
-  const fractionInputReady =
-    isArithmeticQuestion(current) &&
-    isFractionQuestion(current) &&
-    isCompleteFractionAnswer(answerInputText);
-  const numericInputReady =
-    (isArithmeticQuestion(current) &&
-      !isFractionQuestion(current) &&
-      parseNumberAnswer(answerInputText) !== null) ||
-    (isGeometryQuestion(current) &&
-      current.answerKind === "number" &&
-      parseNumberAnswer(answerInputText) !== null) ||
-    (isEquationTwoUnknownQuestion(current) &&
-      parseNumberAnswer(answerInputText) !== null);
-  const quizKeyboardReady =
-    selected !== null ||
-    (isEquationUnknownQuestion(current)
-      ? equationInputReady
-      : fractionInputReady || numericInputReady);
-  const nextDisabled = showKeyboardInput
-    ? mode === "practice"
-      ? !showFeedback
-        ? !(equationInputReady || fractionInputReady || numericInputReady)
-        : false
-      : !quizKeyboardReady
-    : requireConfirmMc && mode === "practice" && !showFeedback
-      ? selected === null
-      : selected === null || (mode === "practice" && !showFeedback);
+  const keyboardInputReady = keyboardAnswerIsReady(current, answerInputText);
+  const quizKeyboardReady = selected !== null || keyboardInputReady;
+  const nextDisabled = timedOut
+    ? false
+    : showKeyboardInput
+      ? mode === "practice"
+        ? !showFeedback
+          ? !keyboardInputReady
+          : false
+        : !quizKeyboardReady
+      : requireConfirmMc && mode === "practice" && !showFeedback
+        ? selected === null
+        : selected === null || (mode === "practice" && !showFeedback);
 
   const awaitingCheck =
     mode === "practice" && !showFeedback && (showKeyboardInput || requireConfirmMc);
@@ -651,32 +502,43 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
       : t("common:next");
 
   return (
-    <KeyboardAvoidingView
+    <KeyboardScreenShell
       style={styles.keyboardRoot}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={headerHeight}
     >
       <ScrollView
         ref={scrollRef}
         style={styles.scroll}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="none"
+        removeClippedSubviews={false}
         contentContainerStyle={scrollContentStyle}
         showsVerticalScrollIndicator={false}
+        onContentSizeChange={() => {
+          if (showFeedback) scrollRef.current?.scrollToEnd({ animated: true });
+        }}
       >
-        {effectiveConfig.timerEnabled && secondsLeft !== null ? (
-          <AppText
-            variant="subtitle"
-            accessibilityLiveRegion="polite"
-            accessibilityLabel={t("common:secondsLeft", { seconds: secondsLeft })}
-          >
-            {t("common:timeLeftSeconds", { seconds: secondsLeft })}
-          </AppText>
-        ) : null}
-
         <QuestionCard
           progressLabel={progressLabel}
           questionText={current.questionText}
           compact={usesCompactQuestionCard(current)}
+          timerProgress={
+            effectiveConfig.timerEnabled
+              ? timedOut
+                ? 0
+                : (secondsLeft ?? effectiveConfig.timerSecondsPerQuestion) /
+                  effectiveConfig.timerSecondsPerQuestion
+              : undefined
+          }
+          timerAccessibilityLabel={
+            effectiveConfig.timerEnabled
+              ? t("common:secondsLeft", {
+                  seconds: timedOut
+                    ? 0
+                    : secondsLeft ?? effectiveConfig.timerSecondsPerQuestion,
+                })
+              : undefined
+          }
           questionContent={current.kind === "limit" ? (
             <LimitQuestionDisplay approach={current.approach} expression={current.expression} fraction={current.expressionFraction} />
           ) : undefined}
@@ -746,9 +608,9 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
                   x=
                 </AppText>
                 <SessionEquationAnswerInput
-                  scrollRef={scrollRef}
                   accessibilityLabel={t("common:valueForX")}
                   editable={!inputLocked}
+                  onFocus={scrollToInput}
                   onSubmitEditing={() => {
                     if (mode === "practice" && !showFeedback)
                       handlePrimaryAction();
@@ -767,9 +629,9 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
             ) : (
               <SessionAnswerTextInput
                 question={current}
-                scrollRef={scrollRef}
                 accessibilityLabel={t("common:yourAnswer")}
                 editable={!inputLocked}
+                onFocus={scrollToInput}
                 onSubmitEditing={() => {
                   if (mode === "practice" && !showFeedback)
                     handlePrimaryAction();
@@ -792,7 +654,13 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
             ) : null}
           </View>
         ) : answerOptionsArePlainNumbers(current) ? (
-          <View style={styles.options}>
+          <View
+            style={
+              shouldStackAnswerOptions(current)
+                ? styles.optionsStacked
+                : styles.options
+            }
+          >
             {current.answerOptions.map((opt) => (
               <AnswerOptionButton
                 key={String(opt)}
@@ -801,6 +669,7 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
                 disabled={optionDisabled}
                 selected={selected === opt}
                 onPress={handleSelect}
+                stacked={shouldStackAnswerOptions(current)}
               />
             ))}
           </View>
@@ -845,13 +714,33 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
                       ) : null;
                     })()
                   : isPatternQuestion(current) && current.subtype === "shape_pattern"
-                    ? <ShapePatternFigure icon={String(opt)} />
+                    ? (() => {
+                        const visual = current.shapePatternAnswerOptions?.find(
+                          (item) => item.label === String(opt),
+                        );
+                        return visual ? (
+                          <BasicShapeDiagram
+                            shape={visual.shape}
+                            fill="transparent"
+                            stroke={colors.text}
+                            size={58}
+                          />
+                        ) : (
+                          <ShapePatternFigure icon={String(opt)} />
+                        );
+                      })()
                     : undefined}
               </AnswerOptionButton>
             ))}
           </View>
         ) : (
-          <View style={styles.options}>
+          <View
+            style={
+              shouldStackAnswerOptions(current)
+                ? styles.optionsStacked
+                : styles.options
+            }
+          >
             {current.answerOptions.map((opt) => (
               <AnswerOptionButton
                 key={String(opt)}
@@ -860,6 +749,7 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
                 disabled={optionDisabled}
                 selected={selected === opt}
                 onPress={handleSelect}
+                stacked={shouldStackAnswerOptions(current)}
               />
             ))}
           </View>
@@ -880,14 +770,14 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
           }
         />
 
-        {mode === "practice" && showFeedback && selected !== null ? (
+        {mode === "practice" && showFeedback && (selected !== null || timedOut) ? (
           <FeedbackMessage
             variant={isCorrectSelection ? "correct" : "incorrect"}
             message={feedbackMessage}
           />
         ) : null}
       </ScrollView>
-    </KeyboardAvoidingView>
+    </KeyboardScreenShell>
   );
 }
 

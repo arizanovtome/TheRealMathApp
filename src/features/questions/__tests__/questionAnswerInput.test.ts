@@ -2,6 +2,7 @@ import type { MathQuestion } from '@/features/questions/question.types';
 import {
   NUMBER_SENSE_KEYBOARD_INPUT,
   QUESTION_KEYBOARD_INPUT,
+  keyboardAnswerIsReady,
   supportsKeyboardInput,
 } from '@/features/questions/questionAnswerInput';
 
@@ -187,6 +188,24 @@ describe('questionAnswerInput', () => {
           }),
         ),
       ).toBe(false);
+    });
+  });
+
+  describe('keyboardAnswerIsReady', () => {
+    it('enables numeric number-sense questions when a valid answer is typed', () => {
+      const question = makeQuestion({
+        kind: 'number_sense',
+        id: 'before-17',
+        operation: 'number_sense',
+        subtype: 'beforeAfter',
+        questionText: 'What number comes before 17?',
+        correctAnswer: '16',
+        answerOptions: ['15', '16', '17', '18'],
+        requiresMultipleChoice: false,
+      });
+
+      expect(keyboardAnswerIsReady(question, '')).toBe(false);
+      expect(keyboardAnswerIsReady(question, '16')).toBe(true);
     });
   });
 });

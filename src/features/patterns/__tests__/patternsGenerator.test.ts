@@ -1,6 +1,13 @@
 import { getRecommendedLearningPlan } from '@/features/learning-plan/recommendedLearningPlan';
 import type { AnswerOptionsCount } from '@/features/learning-plan/learningPlan.types';
 import { tryGeneratePatternQuestion } from '@/features/patterns/patternsGenerator';
+import { basicShapeLabel } from '@/features/shapes/shapeRecognitionLabels';
+import type { BasicShape } from '@/features/shapes/shapeRecognition.types';
+import { i18n } from '@/i18n';
+
+function shapeLabel(shape: BasicShape): string {
+  return basicShapeLabel(shape, i18n.t.bind(i18n));
+}
 
 describe('patternsGenerator', () => {
   it('generates arithmetic sequence questions', () => {
@@ -108,7 +115,7 @@ describe('patternsGenerator', () => {
         const cycle = shown.slice(0, cycleLength);
         const repeats = shown.every((shape, index) => shape === cycle[index % cycleLength]);
         if (repeats) {
-          expect(q!.correctAnswer).toBe(cycle[4 % cycleLength]);
+          expect(q!.correctAnswer).toBe(shapeLabel(cycle[4 % cycleLength] as BasicShape));
           matched = true;
           break;
         }
@@ -210,7 +217,39 @@ describe('patternsGenerator', () => {
     for (let i = 0; i < 30; i++) {
       const q = tryGeneratePatternQuestion(config)!;
       expect(q.sequenceShapes?.every((shape) => shape === 'circle' || shape === 'star')).toBe(true);
-      expect(q.answerOptions.every((shape) => shape === 'circle' || shape === 'star')).toBe(true);
+      expect(
+        q.shapePatternAnswerOptions?.every(
+          (option) => option.shape === 'circle' || option.shape === 'star',
+        ),
+      ).toBe(true);
+      expect(q.answerOptions.every((label) => label === shapeLabel('circle') || label === shapeLabel('star'))).toBe(true);
+    }
+  });
+
+  it('uses localized shape labels instead of English keys in feedback answers', () => {
+    const config = getRecommendedLearningPlan(8);
+    config.shapeRecognition.enabled = true;
+    config.patterns = {
+      enabled: true,
+      arithmeticSequence: false,
+      geometricSequence: false,
+      numberPattern: false,
+      shapePattern: true,
+      coloredShapePattern: false,
+    };
+
+    const originalLanguage = i18n.language;
+    i18n.changeLanguage('mk');
+
+    try {
+      for (let i = 0; i < 20; i++) {
+        const q = tryGeneratePatternQuestion(config);
+        expect(q?.subtype).toBe('shape_pattern');
+        expect(q!.correctAnswer).not.toMatch(/\b(circle|square|rectangle|triangle|star|oval)\b/i);
+        expect(q!.answerOptions.every((option) => !/\b(circle|square|rectangle|triangle|star|oval)\b/i.test(option))).toBe(true);
+      }
+    } finally {
+      i18n.changeLanguage(originalLanguage);
     }
   });
 });

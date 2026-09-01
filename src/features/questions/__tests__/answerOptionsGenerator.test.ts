@@ -3,6 +3,7 @@ import {
   buildAnswerOptions,
   buildDecimalAnswerOptions,
   buildFixedAnswerOptions,
+  buildSteppedAnswerOptions,
   limitAnswerOptions,
 } from '@/features/questions/answerOptionsGenerator';
 
@@ -41,6 +42,24 @@ describe('answerOptionsGenerator helpers', () => {
 
       expect(options).toContain(-2.5);
       expect(options).toContain(2.5);
+    });
+
+    it('includes the exact hundredths answer', () => {
+      const options = buildDecimalAnswerOptions(-24.18, 4, true);
+
+      expect(options).toHaveLength(4);
+      expect(options).toContain(-24.18);
+      expect(new Set(options).size).toBe(4);
+    });
+  });
+
+  describe('buildSteppedAnswerOptions', () => {
+    it('always includes preferred rounding bracket distractors first', () => {
+      const options = buildSteppedAnswerOptions(40, 4, 10, [30]);
+
+      expect(options).toHaveLength(4);
+      expect(options).toContain(40);
+      expect(options).toContain(30);
     });
   });
 });

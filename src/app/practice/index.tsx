@@ -3,7 +3,7 @@ import { MathSessionView } from '@/components/practice/MathSessionView';
 
 export default function PracticeScreen() {
   return (
-    <AppScreen>
+    <AppScreen keyboardAvoiding={false}>
       <MathSessionView mode="practice" />
     </AppScreen>
   );

@@ -1,9 +1,30 @@
 import {
+  FRACTION_ANSWER_MAX_LENGTH,
+  NUMERIC_ANSWER_MAX_LENGTH,
+} from '@/constants/inputLimits';
+import {
+  answerInputKeyboardProps,
   sanitizeDecimalAnswerInput,
   sanitizeFractionAnswerInput,
+  sanitizeAnswerInput,
 } from '@/utils/answerInputKeyboard';
 
 describe('answerInputKeyboard sanitizers', () => {
+  describe('answerInputKeyboardProps', () => {
+    it('uses Android signed numeric input instead of decimal-pad', () => {
+      expect(answerInputKeyboardProps('numeric', 'android')).toEqual({
+        keyboardType: 'numeric',
+      });
+    });
+
+    it('uses the iOS punctuation keyboard so a minus sign is available', () => {
+      expect(answerInputKeyboardProps('numeric', 'ios')).toEqual({
+        keyboardType: 'numbers-and-punctuation',
+        inputMode: 'text',
+      });
+    });
+  });
+
   describe('sanitizeFractionAnswerInput', () => {
     it('allows digits, slash, and dot', () => {
       expect(sanitizeFractionAnswerInput('2/5')).toBe('2/5');
@@ -37,6 +58,12 @@ describe('answerInputKeyboard sanitizers', () => {
 
     it('strips non-numeric characters', () => {
       expect(sanitizeDecimalAnswerInput('abc12.3')).toBe('12.3');
+    });
+
+    it('truncates very long pasted input', () => {
+      expect(sanitizeDecimalAnswerInput('1'.repeat(30))).toHaveLength(NUMERIC_ANSWER_MAX_LENGTH);
+      expect(sanitizeFractionAnswerInput('9'.repeat(30))).toHaveLength(FRACTION_ANSWER_MAX_LENGTH);
+      expect(sanitizeAnswerInput('x'.repeat(50), 'equation')).toHaveLength(NUMERIC_ANSWER_MAX_LENGTH);
     });
   });
 });

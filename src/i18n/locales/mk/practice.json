@@ -3,11 +3,13 @@
   "scoreSummary": "Точно одговоривте на {{correct}} од {{total}}.",
   "scorePct": "Резултат: {{pct}}%",
   "quizAgain": "Квиз повторно",
-  "timedAgain": "На време повторно",
+  "timedAgain": "Вежбање на време повторно",
   "practiceAgain": "Вежбај повторно",
   "hintOpenSettings": "Отвори поставки за да ги смените профилот или математичките опции",
   "questionReview": "Преглед на прашања",
   "qIndex": "П{{index}}",
   "questionCorrectA11y": "Прашање {{index}}. Точно. Ваш одговор {{chosen}}.",
-  "questionIncorrectA11y": "Прашање {{index}}. Неточно. Ваш одговор {{chosen}}. Точен одговор {{correct}}."
+  "questionIncorrectA11y": "Прашање {{index}}. Неточно. Ваш одговор {{chosen}}. Точен одговор {{correct}}.",
+  "questionTimedOutA11y": "Прашање {{index}}. Неточно. Без одговор; времето истече. Точен одговор {{correct}}.",
+  "noAnswerTimeExpired": "Без одговор — времето истече"
 }

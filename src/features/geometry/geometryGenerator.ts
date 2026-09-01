@@ -8,6 +8,7 @@ import {
   measureLabel,
   shapeLabel,
   shapeUsesPiForm,
+  type GeometryFormulaEntry,
 } from '@/features/geometry/geometryFormulas';
 import type {
   GeometryMeasure,
@@ -420,7 +421,7 @@ export function buildCalculateQuestionText(
   const shapeName = localizedShapeLabel(shape);
   const isMk = i18n.language === 'mk';
 
-  return i18n.t('questions:geometryCalculate', {
+  return i18n.t(`questions:geometryCalculate.${measure}`, {
     article: isMk ? '' : 'A',
     shape: isMk ? capitalizeFirst(shapeName) : shapeName,
     dimensions: dimText,
@@ -437,15 +438,16 @@ function buildFormulaQuestionText(measure: GeometryMeasure, shape: GeometryShape
 
 function buildFormulaMcOptions(
   measure: GeometryMeasure,
-  correct: string,
+  correct: GeometryFormulaEntry,
   optionCount: AnswerOptionsCount,
 ): string[] {
   const pool = listFormulasForMeasure(measure)
-    .map((f) => f.label)
-    .filter((label) => label !== correct);
+    .filter((formula) => formula.canonical !== correct.canonical)
+    .map((formula) => formula.label)
+    .filter((label) => label !== correct.label);
   const shuffled = [...pool].sort(() => Math.random() - 0.5);
   const wrong = shuffled.slice(0, optionCount - 1);
-  const options = [...wrong, correct];
+  const options = [...wrong, correct.label];
   return options.sort(() => Math.random() - 0.5);
 }
 
@@ -517,7 +519,7 @@ function generateFromSource(
     if (!formula) return null;
     const answerOptions = buildFormulaMcOptions(
       measure,
-      formula.label,
+      formula,
       config.answerOptionsCount,
     );
     return finalizeGeometryQuestion(config, {

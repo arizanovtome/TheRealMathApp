@@ -5,6 +5,7 @@ import { AgeNumberInput } from "@/components/common/AgeNumberInput";
 import { AppButton } from "@/components/common/AppButton";
 import { AppText } from "@/components/common/AppText";
 import { Card } from "@/components/common/Card";
+import { SETTINGS_TOPIC_CATEGORIES } from "@/components/settings/settingsTopicCategories";
 import { AnswerOptionsSelector } from "@/components/learning-plan/AnswerOptionsSelector";
 import { FractionDenominatorModeExample, formatFractionModeExampleA11y } from "@/components/fractions/FractionNotation";
 import { CompactSwitch } from "@/components/learning-plan/CompactSwitch";
@@ -29,10 +30,15 @@ import { OneToTenFactorPicker } from "@/components/learning-plan/OneToTenFactorP
 import { OperationConfigCard } from "@/components/learning-plan/OperationConfigCard";
 import { RangeSelector } from "@/components/learning-plan/RangeSelector";
 import { TimerSettings } from "@/components/learning-plan/TimerSettings";
+import { TimeAdjustmentSlider } from "@/components/learning-plan/TimeAdjustmentSlider";
 import {
   ADDITION_ANSWER_MAX_OPTIONS,
   DIVISION_ANSWER_RANGE_PRESETS,
 } from "@/constants/ranges";
+import {
+  LEARNER_NAME_MAX_LENGTH,
+  PROFILE_NAME_MAX_LENGTH,
+} from "@/constants/inputLimits";
 import { getOperationLabel } from "@/constants/operationLabels";
 import type {
   FractionDenominatorMode,
@@ -49,7 +55,8 @@ import {
   QUESTION_COUNT_OPTIONS,
   SQUARE_OPERAND_MAX_OPTIONS,
   SQUARE_ROOT_ROOT_MAX_OPTIONS,
-  TIMED_WRONG_ANSWER_PENALTY_SECONDS,
+  TIMED_CORRECT_BONUS_SECONDS_MAX,
+  TIMED_WRONG_PENALTY_SECONDS_MAX,
 } from "@/features/learning-plan/learningPlan.types";
 import {
   ensureLearningConfigShape,
@@ -74,6 +81,8 @@ type LearningPlanEditorProps = {
     dirty: boolean,
   ) => void;
   focusedOperation?: MathOperation;
+  scope?: "all" | "profile" | "session" | "topics";
+  visibleOperations?: readonly string[];
   hideSaveButton?: boolean;
   scrollRef?: RefObject<ScrollView | null>;
 };
@@ -116,12 +125,23 @@ function fractionExampleOperator(operation: MathOperation): string {
   return FRACTION_EXAMPLE_OPERATOR[operation] ?? "+";
 }
 
+function isOperationsTopicScreen(visibleOperations?: readonly string[]): boolean {
+  const operations = SETTINGS_TOPIC_CATEGORIES.find((category) => category.id === 'operations')
+    ?.operations;
+  if (!operations || !visibleOperations || visibleOperations.length !== operations.length) {
+    return false;
+  }
+  return operations.every((operation) => visibleOperations.includes(operation));
+}
+
 export function LearningPlanEditor({
   initialConfig,
   profile,
   onSave,
   onDraftChange,
   focusedOperation,
+  scope = "all",
+  visibleOperations,
   hideSaveButton = false,
   scrollRef,
 }: LearningPlanEditorProps) {
@@ -135,16 +155,16 @@ export function LearningPlanEditor({
   const [name, setName] = useState(profile.name);
   const [age, setAge] = useState<number | null>(profile.age);
   const validation = useMemo(() => validateLearningConfig(config), [config]);
-  const profileValid =
-    name.trim().length > 0 && profileName.trim().length > 0 && age !== null;
+  const profileValid = name.trim().length > 0 && profileName.trim().length > 0;
   const personal = useMemo<ChildProfilePersonal>(
     () => ({
       id: profile.id,
       profileName: profileName.trim(),
       name: name.trim(),
-      age: age ?? profile.age,
+      age,
+      mathKnowledgeLevel: profile.mathKnowledgeLevel,
     }),
-    [age, name, profile.age, profile.id, profileName],
+    [age, name, profile.id, profile.mathKnowledgeLevel, profileName],
   );
   const dirty = useMemo(
     () =>
@@ -154,6 +174,17 @@ export function LearningPlanEditor({
       age !== profile.age,
     [age, config, initialConfig, name, profile, profileName],
   );
+  const operationVisibility = useMemo(
+    () =>
+      visibleOperations
+        ? new Set<string>(visibleOperations)
+        : focusedOperation ?? null,
+    [focusedOperation, visibleOperations],
+  );
+  const showPersonal = scope === "all";
+  const showTopics = scope === "all" || scope === "topics" || Boolean(focusedOperation);
+  const showSession = (scope === "all" || scope === "session") && !focusedOperation;
+  const showOperationsSliderHelp = isOperationsTopicScreen(visibleOperations);
 
   useEffect(() => {
     onDraftChange?.(config, personal, dirty);
@@ -171,9 +202,6 @@ export function LearningPlanEditor({
       return null;
     }
   }, [config, t, validation.valid]);
-
-  const setMode = (mode: MathLearningConfig["mode"]) =>
-    setConfig((c) => ({ ...c, mode }));
 
   const setQuestionCount = (n: number) =>
     setConfig((c) => ({ ...c, questionsCount: n }));
@@ -264,9 +292,9 @@ export function LearningPlanEditor({
   };
 
   return (
-    <FocusedOperationContext.Provider value={focusedOperation ?? null}>
+    <FocusedOperationContext.Provider value={operationVisibility}>
     <View style={styles.gap}>
-      {!focusedOperation ? <View style={styles.sectionBlock}>
+      {showPersonal ? <View style={styles.sectionBlock}>
         <AppText variant="subtitle">{t("common:personalInfo")}</AppText>
         <Card>
           <AppText variant="label">{t("onboarding:profileName")}</AppText>
@@ -278,6 +306,7 @@ export function LearningPlanEditor({
             onChangeText={setProfileName}
             onFocus={scrollRef ? scrollToInput : undefined}
             autoCapitalize="words"
+            maxLength={PROFILE_NAME_MAX_LENGTH}
             style={styles.nameInput}
           />
           <AppText variant="label">{t("onboarding:nameOrNickname")}</AppText>
@@ -289,18 +318,33 @@ export function LearningPlanEditor({
             onChangeText={setName}
             onFocus={scrollRef ? scrollToInput : undefined}
             autoCapitalize="words"
+            maxLength={LEARNER_NAME_MAX_LENGTH}
             style={styles.nameInput}
           />
-          <AppText variant="label">{t("common:ageYears")}</AppText>
-          <AgeNumberInput value={age} onChange={setAge} />
+          <AppText variant="label">{t("settings:ageOptional")}</AppText>
+          <AgeNumberInput
+            value={age}
+            onChange={setAge}
+            accessibilityLabel={t("settings:ageOptional")}
+            placeholder={t("settings:ageOptionalPlaceholder")}
+          />
         </Card>
       </View> : null}
 
-      <View style={styles.sectionBlock}>
+      {showTopics || showSession ? <View style={styles.sectionBlock}>
+        {showSession ? (
+          <AppText variant="subtitle">{t("settings:generalSettings")}</AppText>
+        ) : null}
+        {showTopics ? <>
         <AppText variant="subtitle">{t("common:learningPlan")}</AppText>
         <AppText variant="body" muted>
           {t("settings:learningPlanHelp")}
         </AppText>
+        {showOperationsSliderHelp ? (
+          <AppText variant="body" muted>
+            {t("settings:learningPlanAdditionSubtractionHelp")}
+          </AppText>
+        ) : null}
         {exampleText ? (
           <AppText variant="body" muted accessibilityLabel={exampleText}>
             {exampleText}
@@ -1424,111 +1468,10 @@ export function LearningPlanEditor({
           integration={config.integration}
           onChange={(integration) => setConfig((c) => ({ ...c, integration }))}
         />
+        </> : null}
 
-        {!focusedOperation ? <>
+        {showSession ? <>
         <View style={styles.section}>
-          <AppText variant="label">{t("settings:sessionMode")}</AppText>
-          <View style={styles.modeRow}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t("common:practice")}
-              accessibilityState={{ selected: config.mode === "practice" }}
-              onPress={() => setMode("practice")}
-              style={[
-                styles.modeChip,
-                config.mode === "practice" && styles.modeChipSelected,
-              ]}
-            >
-              <AppText
-                variant="subtitle"
-                style={
-                  config.mode === "practice"
-                    ? styles.modeTextSelected
-                    : styles.modeText
-                }
-              >
-                {t("common:practice")}
-              </AppText>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t("common:quiz")}
-              accessibilityState={{ selected: config.mode === "quiz" }}
-              onPress={() => setMode("quiz")}
-              style={[
-                styles.modeChip,
-                config.mode === "quiz" && styles.modeChipSelected,
-              ]}
-            >
-              <AppText
-                variant="subtitle"
-                style={
-                  config.mode === "quiz"
-                    ? styles.modeTextSelected
-                    : styles.modeText
-                }
-              >
-                {t("common:quiz")}
-              </AppText>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t("common:timed")}
-              accessibilityState={{ selected: config.mode === "timed" }}
-              onPress={() => setMode("timed")}
-              style={[
-                styles.modeChip,
-                config.mode === "timed" && styles.modeChipSelected,
-              ]}
-            >
-              <AppText
-                variant="subtitle"
-                style={
-                  config.mode === "timed"
-                    ? styles.modeTextSelected
-                    : styles.modeText
-                }
-              >
-                {t("common:timed")}
-              </AppText>
-            </Pressable>
-          </View>
-          {config.mode === "timed" ? (
-            <View style={[styles.section, { marginTop: spacing.sm }]}>
-              <DiscreteMinuteSlider
-                valueMinutes={config.timedDurationMinutes}
-                onChange={(timedDurationMinutes) =>
-                  setConfig((c) => ({ ...c, timedDurationMinutes }))
-                }
-                accessibilityLabel={t("questions:a11yTimedTotalMinutes")}
-              />
-              <View style={styles.rowBetween}>
-                <AppText variant="label" style={styles.toggleRowLabel}>
-                  {t("settings:subtractSeconds", {
-                    n: TIMED_WRONG_ANSWER_PENALTY_SECONDS,
-                  })}
-                </AppText>
-                <View style={styles.settingsSwitchWrap}>
-                  <CompactSwitch
-                    accessibilityLabel={t("settings:subtractSeconds", {
-                      n: TIMED_WRONG_ANSWER_PENALTY_SECONDS,
-                    })}
-                    value={config.timedSubtractSecondsOnWrong}
-                    onValueChange={(timedSubtractSecondsOnWrong) =>
-                      setConfig((c) => ({
-                        ...c,
-                        timedSubtractSecondsOnWrong,
-                      }))
-                    }
-                  />
-                </View>
-              </View>
-            </View>
-          ) : null}
-        </View>
-
-        {config.mode !== "timed" ? (
-          <View style={styles.section}>
             <AppText variant="label">{t("common:questions")}</AppText>
             <View style={styles.modeRow}>
               {QUESTION_COUNT_OPTIONS.map((n) => (
@@ -1556,8 +1499,7 @@ export function LearningPlanEditor({
                 </Pressable>
               ))}
             </View>
-          </View>
-        ) : null}
+        </View>
 
         <AnswerOptionsSelector
           optionCount={config.answerOptionsCount}
@@ -1573,7 +1515,7 @@ export function LearningPlanEditor({
           }
         />
 
-        <Card>
+        {config.answerEntryMode === "multiple_choice" ? <Card>
           <View style={styles.settingsSwitchRow}>
             <View style={styles.confirmAnswerCopy}>
               <AppText variant="subtitle">{t("settings:confirmAnswer")}</AppText>
@@ -1593,22 +1535,61 @@ export function LearningPlanEditor({
               />
             </View>
           </View>
-        </Card>
+        </Card> : (
+          <AppText variant="body" muted>
+            {t("settings:keyboardConfirmBuiltIn")}
+          </AppText>
+        )}
 
-        {config.mode !== "timed" ? (
-          <TimerSettings
-            enabled={config.timerEnabled}
-            secondsPerQuestion={config.timerSecondsPerQuestion}
-            onEnabledChange={(timerEnabled) =>
-              setConfig((c) => ({ ...c, timerEnabled }))
+        <TimerSettings
+          enabled={config.timerEnabled}
+          secondsPerQuestion={config.timerSecondsPerQuestion}
+          onEnabledChange={(timerEnabled) =>
+            setConfig((c) => ({ ...c, timerEnabled }))
+          }
+          onSecondsChange={(timerSecondsPerQuestion) =>
+            setConfig((c) => ({ ...c, timerSecondsPerQuestion }))
+          }
+        />
+
+        <View style={styles.sectionDivider} />
+        <View style={styles.section}>
+          <AppText variant="subtitle">{t("settings:timedRunSettings")}</AppText>
+          <AppText variant="body" muted>
+            {t("settings:timedRunSettingsHint")}
+          </AppText>
+          <DiscreteMinuteSlider
+            valueMinutes={config.timedDurationMinutes}
+            onChange={(timedDurationMinutes) =>
+              setConfig((c) => ({ ...c, timedDurationMinutes }))
             }
-            onSecondsChange={(timerSecondsPerQuestion) =>
-              setConfig((c) => ({ ...c, timerSecondsPerQuestion }))
+            accessibilityLabel={t("questions:a11yTimedTotalMinutes")}
+          />
+          <TimeAdjustmentSlider
+            accessibilityLabel={t("settings:wrongAnswerPenalty")}
+            label={t("settings:wrongAnswerPenalty")}
+            value={config.timedWrongPenaltySeconds}
+            maximumValue={TIMED_WRONG_PENALTY_SECONDS_MAX}
+            onChange={(timedWrongPenaltySeconds) =>
+              setConfig((c) => ({
+                ...c,
+                timedWrongPenaltySeconds,
+                timedSubtractSecondsOnWrong: timedWrongPenaltySeconds > 0,
+              }))
             }
           />
-        ) : null}
+          <TimeAdjustmentSlider
+            accessibilityLabel={t("settings:correctAnswerBonus")}
+            label={t("settings:correctAnswerBonus")}
+            value={config.timedCorrectBonusSeconds}
+            maximumValue={TIMED_CORRECT_BONUS_SECONDS_MAX}
+            onChange={(timedCorrectBonusSeconds) =>
+              setConfig((c) => ({ ...c, timedCorrectBonusSeconds }))
+            }
+          />
+        </View>
         </> : null}
-      </View>
+      </View> : null}
 
       {!profileValid ? (
         <AppText variant="body" style={styles.errorText}>
@@ -1633,7 +1614,8 @@ export function LearningPlanEditor({
             id: profile.id,
             profileName: profileName.trim(),
             name: name.trim(),
-            age: age!,
+            age,
+            mathKnowledgeLevel: profile.mathKnowledgeLevel,
           })
         }
         disabled={!validation.valid || !profileValid}
@@ -1653,6 +1635,11 @@ const styles = StyleSheet.create({
   },
   section: {
     gap: spacing.xs,
+  },
+  sectionDivider: {
+    height: 1,
+    marginVertical: spacing.md,
+    backgroundColor: colors.border,
   },
   orderOfOpsSwitches: {
     marginTop: spacing.sm,

@@ -188,7 +188,7 @@ export function buildSteppedAnswerOptions(
   return shuffleInPlace([correctAnswer, ...[...wrong].slice(0, wrongNeeded)]);
 }
 
-/** Multiple-choice options for one-decimal-place numeric answers. */
+/** Multiple-choice options matching the answer's decimal precision (tenths or hundredths). */
 export function buildDecimalAnswerOptions(
   correctAnswer: number,
   optionCount: AnswerOptionsCount,
@@ -196,10 +196,11 @@ export function buildDecimalAnswerOptions(
   bounds?: AnswerDistractorBounds,
   preferredWrongAnswers: readonly number[] = [],
 ): number[] {
+  const hasHundredths = Number(correctAnswer.toFixed(2)) !== Number(correctAnswer.toFixed(1));
   return buildSteppedAnswerOptions(
     correctAnswer,
     optionCount,
-    0.1,
+    hasHundredths ? 0.01 : 0.1,
     preferredWrongAnswers,
   );
 }

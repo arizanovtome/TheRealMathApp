@@ -37,14 +37,18 @@ function QuizOutcomeRow({
   outcome: QuizQuestionOutcome;
   t: TFunction;
 }) {
-  const { isCorrect, questionText, chosenAnswerLabel, correctAnswerLabel } = outcome;
+  const { isCorrect, questionText, chosenAnswer, chosenAnswerLabel, correctAnswerLabel } = outcome;
+  const timedOut = chosenAnswer === null;
+  const displayedAnswer = timedOut ? t('practice:noAnswerTimeExpired') : chosenAnswerLabel;
 
   return (
     <View
       style={[styles.card, isCorrect ? styles.cardCorrect : styles.cardWrong]}
       accessibilityRole="summary"
       accessibilityLabel={
-        isCorrect
+        timedOut
+          ? t('practice:questionTimedOutA11y', { index, correct: correctAnswerLabel })
+          : isCorrect
           ? t('practice:questionCorrectA11y', { index, chosen: chosenAnswerLabel })
           : t('practice:questionIncorrectA11y', {
               index,
@@ -65,7 +69,13 @@ function QuizOutcomeRow({
             <AppText variant="body" muted>
               {t('common:yourAnswerLabel')}
             </AppText>
-            <MathDisplayText text={chosenAnswerLabel} size="body" textAlign="left" />
+            {timedOut ? (
+              <AppText variant="body" style={styles.noAnswer}>
+                {displayedAnswer}
+              </AppText>
+            ) : (
+              <MathDisplayText text={displayedAnswer} size="body" textAlign="left" />
+            )}
           </View>
           {!isCorrect ? (
             <View style={styles.answerRow}>
@@ -107,6 +117,11 @@ const styles = StyleSheet.create({
   },
   cardWrong: {
     borderColor: colors.feedbackIncorrectBorder,
+  },
+  noAnswer: {
+    color: colors.error,
+    fontWeight: '600',
+    flexShrink: 1,
   },
   row: {
     flexDirection: 'row',

@@ -1,4 +1,8 @@
 import type { MathQuestion } from '@/features/questions/question.types';
+import { isArithmeticQuestion, isFractionQuestion } from '@/features/questions/question.types';
+import { normalizeEquationAnswerInput } from '@/features/questions/equationUnknown';
+import { isCompleteFractionAnswer } from '@/utils/parseFractionAnswer';
+import { parseNumberAnswer } from '@/utils/parseIntegerAnswer';
 
 /** Whether a question type can accept typed keyboard answers (when the setting is on). */
 export type QuestionKeyboardSupport = 'keyboard' | 'multiple_choice_only';
@@ -76,6 +80,19 @@ export function supportsKeyboardInput(q: MathQuestion): boolean {
     default:
       return false;
   }
+}
+
+/** True when the current typed value is complete and can enable the session action. */
+export function keyboardAnswerIsReady(q: MathQuestion, raw: string): boolean {
+  if (!supportsKeyboardInput(q)) return false;
+  if (q.kind === 'equation_unknown') {
+    const body = raw.replace(/^\s*x\s*=\s*/i, '');
+    return normalizeEquationAnswerInput(body) !== '';
+  }
+  if (isArithmeticQuestion(q) && isFractionQuestion(q)) {
+    return isCompleteFractionAnswer(raw);
+  }
+  return parseNumberAnswer(raw) !== null;
 }
 
 /** True when the session must show multiple-choice buttons (never keyboard). */

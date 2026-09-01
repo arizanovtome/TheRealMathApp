@@ -7,7 +7,7 @@ import {
 import {
   applyPracticeFocusOverride,
 } from '@/features/learning-plan/learningPlan.utils';
-import { getRecommendedLearningPlan } from '@/features/learning-plan/recommendedLearningPlan';
+import { buildRecommendedLearningPlan } from '@/features/learning-plan/buildRecommendedLearningPlan';
 
 export type LearnPracticeTarget =
   | { kind: 'operation'; operation: MathOperation }
@@ -60,9 +60,10 @@ function disableAllQuestionSources(config: MathLearningConfig): MathLearningConf
 export function applyLearnPracticeFocus(
   config: MathLearningConfig,
   target: LearnPracticeTarget,
-  age: number,
+  age: number | null,
+  mathKnowledgeLevel: number | null = null,
 ): MathLearningConfig {
-  const defaults = getRecommendedLearningPlan(age);
+  const defaults = buildRecommendedLearningPlan({ age, mathKnowledgeLevel });
   const base: MathLearningConfig = {
     ...defaults,
     answerEntryMode: config.answerEntryMode,

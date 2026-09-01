@@ -1,5 +1,3 @@
-import '@/i18n';
-
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
@@ -10,15 +8,17 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import type { TFunction } from 'i18next';
 
 import { LanguageOnboarding } from '@/components/onboarding/LanguageOnboarding';
+import { LanguageQuickSwitch } from '@/components/settings/LanguageQuickSwitch';
 import { stackScreenTitle } from '@/constants/stackScreenTitles';
 import { initI18n, i18n } from '@/i18n';
 import { useAppTranslation } from '@/i18n/useAppTranslation';
+import { usePhonePortraitOrientation } from '@/hooks/usePhonePortraitOrientation';
 import { useStoreHydration } from '@/hooks/useStoreHydration';
 import { useAppStore } from '@/store/useAppStore';
 import { colors } from '@/theme/colors';
 
 function RootStack() {
-  const { t } = useAppTranslation(['navigation', 'common']);
+  const { t } = useAppTranslation(['navigation', 'common', 'settings']);
 
   return (
     <Stack
@@ -31,6 +31,7 @@ function RootStack() {
         contentStyle: { backgroundColor: colors.background },
         title: stackScreenTitle(route.name, t as TFunction),
         headerBackButtonDisplayMode: 'minimal',
+        headerRight: () => <LanguageQuickSwitch compact />,
         ...(route.name === 'result' || route.name === 'result/index'
           ? { gestureEnabled: false, fullScreenGestureEnabled: false }
           : { gestureEnabled: true, fullScreenGestureEnabled: true }),
@@ -82,6 +83,8 @@ function LocaleGate({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout() {
+  usePhonePortraitOrientation();
+
   return (
     <SafeAreaProvider>
       <I18nGate>

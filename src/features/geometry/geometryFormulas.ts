@@ -23,11 +23,11 @@ type FormulaDef = {
 
 const PERIMETER_FORMULAS: Record<PerimeterShape, FormulaDef> = {
   square: { canonical: '4s', shape: 'square' },
-  rectangle: { canonical: '2(l+w)', shape: 'rectangle' },
+  rectangle: { canonical: '2(a+b)', shape: 'rectangle' },
   triangle: { canonical: 'a+b+c', shape: 'triangle' },
   circle: { canonical: '2πr', shape: 'circle' },
   rhombus: { canonical: '4s', shape: 'rhombus' },
-  kite: { canonical: '2a+2b', shape: 'kite' },
+  kite: { canonical: '2(a+b)', shape: 'kite' },
   parallelogram: { canonical: '2(a+b)', shape: 'parallelogram' },
   trapezoid: { canonical: 'a+b+c+d', shape: 'trapezoid' },
 };

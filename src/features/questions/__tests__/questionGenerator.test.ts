@@ -181,6 +181,24 @@ describe("createSessionQuestions", () => {
     }
   });
 
+  it("avoids repeating question text when seenQuestionText is shared across calls", () => {
+    const cfg: MathLearningConfig = {
+      ...getRecommendedLearningPlan(8),
+      subtraction: { ...getRecommendedLearningPlan(8).subtraction, enabled: false },
+      multiplication: { ...getRecommendedLearningPlan(8).multiplication, enabled: false },
+      division: { ...getRecommendedLearningPlan(8).division, enabled: false },
+      equationUnknown: NO_EQUATIONS,
+    };
+    const seen = new Set<string>();
+    const batch1 = createSessionQuestions(cfg, 4, { seenQuestionText: seen });
+    expect(seen.size).toBe(4);
+    const batch2 = createSessionQuestions(cfg, 4, { seenQuestionText: seen });
+    expect(seen.size).toBe(8);
+    for (const q of batch2) {
+      expect(batch1.some((prior) => prior.questionText === q.questionText)).toBe(false);
+    }
+  });
+
   it("generates a full session quickly when only one question source is enabled", () => {
     const template = getRecommendedLearningPlan(10);
     const cfg: MathLearningConfig = {

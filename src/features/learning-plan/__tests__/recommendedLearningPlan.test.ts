@@ -9,6 +9,9 @@ describe('getRecommendedLearningPlan', () => {
     expect(plan.answerEntryMode).toBe('multiple_choice');
     expect(plan.answerOptionsCount).toBe(2);
     expect(plan.maxFinalResult).toBe(10);
+    expect(plan.timedDurationMinutes).toBe(1);
+    expect(plan.timedWrongPenaltySeconds).toBe(5);
+    expect(plan.timedCorrectBonusSeconds).toBe(2);
   });
 
   it('enables multiplication and division for ages 10–12', () => {

@@ -1,11 +1,14 @@
 {
   "whatTimeIsIt": "What time is it?",
   "elapsedTime": "How much time from {{start}} to {{end}}?",
+  "durationUnits": { "hour": "hour", "hours": "hours", "minute": "minute", "minutes": "minutes" },
   "whatFractionShaded": "What fraction is shaded?",
   "whatComesNext": "What comes next?",
   "selectNumber": "Select the number {{number}}.", "countObjects": "How many objects are there?", "howManyTargetShapes": "How many of these shapes are there?", "howManyNamedShapes": "How many {{target}} are there?", "whatComesAfter": "What comes after {{number}}?", "whatComesBefore": "What comes before {{number}}?", "missingNumber": "Which number is missing?", "whichHasMore": "Which group has more?", "oddOrEven": "Is {{number}} odd or even?",
   "whatShapeComesNext": "What shape comes next?",
   "whatColorAndShapeComeNext": "Which color and shape come next?",
+  "orderSmallestToLargest": "Order from smallest to largest: {{values}}",
+  "orderLargestToSmallest": "Order from largest to smallest: {{values}}",
   "roundTo": "Round {{n}} to {{unit}}.",
   "trigFindAngle": "Find angle θ.",
   "trigFindSide": {
@@ -15,7 +18,11 @@
   },
   "trigRelativeSide": "Relative to angle θ, what is the highlighted side?",
   "geometryFormula": "What is the {{measure}} formula for a {{shape}}?",
-  "geometryCalculate": "{{article}} {{shape}} has {{dimensions}}. What is its {{measure}}?",
+  "geometryCalculate": {
+    "perimeter": "{{article}} {{shape}} has {{dimensions}}. What is its {{measure}}?",
+    "area": "{{article}} {{shape}} has {{dimensions}}. What is its {{measure}}?",
+    "volume": "{{article}} {{shape}} has {{dimensions}}. What is its {{measure}}?"
+  },
   "geometryDimensions": {
     "side": "side {{side}} cm",
     "rectangle": "length {{length}} cm and width {{width}} cm",
@@ -119,7 +126,7 @@
   "a11yAdditionAnswerMax": "Addition answer highest value",
   "a11ySubtractionFirstMax": "Subtraction first number highest value",
   "a11ySubtractionSecondMax": "Subtraction second number highest value",
-  "a11yTimedTotalMinutes": "Total minutes for a timed session",
+  "a11yTimedTotalMinutes": "Total time for a timed run",
   "measures": {
     "perimeter": "perimeter",
     "area": "area",

@@ -19,6 +19,13 @@ export function roundDecimal(n: number): number {
   return Math.round(n * DECIMAL_SCALE) / DECIMAL_SCALE;
 }
 
+/** Exact product of operands that each have at most one decimal place. */
+export function multiplyDecimalOperands(left: number, right: number): number {
+  const leftTenths = Math.round(left * DECIMAL_SCALE);
+  const rightTenths = Math.round(right * DECIMAL_SCALE);
+  return (leftTenths * rightTenths) / (DECIMAL_SCALE * DECIMAL_SCALE);
+}
+
 export function isDecimalValue(n: number): boolean {
   return !Number.isInteger(n);
 }
@@ -120,7 +127,7 @@ export function generateDecimalMultiplication(config: MathLearningConfig): Decim
     left = secondWhole;
     right = firstWhole;
   }
-  const result = roundDecimal(left * right);
+  const result = multiplyDecimalOperands(left, right);
   return {
     kind: 'arithmetic',
     operation: 'multiplication',

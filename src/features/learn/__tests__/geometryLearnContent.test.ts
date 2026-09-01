@@ -42,10 +42,10 @@ describe('geometryLearnContent', () => {
     try {
       await i18n.changeLanguage('mk');
       const tables = buildGeometryFormulaTables('mk');
-      expect(tables.map((t) => t.heading)).toEqual(['Обиколка', 'Плоштина', 'Волумен']);
+      expect(tables.map((t) => t.heading)).toEqual(['Периметар', 'Плоштина', 'Волумен']);
       expect(tables[0]?.rows[0]?.shape).toBe('Квадрат');
       expect(tables[1]?.rows.find((r) => r.shape === 'Квадрат')?.formula).toBe('страна × страна');
-      expect(tables[0]?.intro).toMatch(/Обиколката/);
+      expect(tables[0]?.intro).toMatch(/Периметарот/);
     } finally {
       await i18n.changeLanguage('en');
     }

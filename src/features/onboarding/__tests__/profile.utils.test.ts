@@ -4,6 +4,13 @@ import {
   nextDefaultProfileName,
 } from '@/features/onboarding/profile.utils';
 
+describe('createChildProfile', () => {
+  it('stores null math knowledge when not provided', () => {
+    const profile = createChildProfile({ name: 'Sam', age: 8 });
+    expect(profile.mathKnowledgeLevel).toBeNull();
+  });
+});
+
 describe('nextDefaultProfileName', () => {
   it('returns Profile 1 for an empty list', () => {
     expect(nextDefaultProfileName([])).toBe('Profile 1');

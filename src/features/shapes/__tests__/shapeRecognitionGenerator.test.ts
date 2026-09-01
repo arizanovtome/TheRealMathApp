@@ -1,5 +1,7 @@
 import { getRecommendedLearningPlan } from '@/features/learning-plan/recommendedLearningPlan';
 import { tryGenerateShapeRecognitionQuestion } from '@/features/shapes/shapeRecognitionGenerator';
+import { colorAndShapeLabel } from '@/features/shapes/shapeRecognitionLabels';
+import { i18n } from '@/i18n';
 
 describe('shapeRecognitionGenerator', () => {
   it('generates shape naming questions with MC options', () => {
@@ -22,7 +24,7 @@ describe('shapeRecognitionGenerator', () => {
     expect(q).not.toBeNull();
     expect(q!.questionText).toBe('What shape is this?');
     expect(q!.answerOptions).toContain(q!.correctAnswer);
-    expect(['Circle', 'Square', 'Rectangle', 'Triangle']).toContain(q!.correctAnswer);
+    expect(['circle', 'square', 'rectangle', 'triangle']).toContain(q!.correctAnswer);
   });
 
   it('uses disabled shapes as distractors to provide six shape answers', () => {
@@ -47,7 +49,7 @@ describe('shapeRecognitionGenerator', () => {
 
     expect(q?.shape).not.toBe('oval');
     expect(q?.answerOptions).toHaveLength(6);
-    expect(q?.answerOptions).toContain('Oval');
+    expect(q?.answerOptions).toContain('oval');
     expect(new Set(q?.answerOptions).size).toBe(6);
   });
 
@@ -82,7 +84,7 @@ describe('shapeRecognitionGenerator', () => {
     const q = tryGenerateShapeRecognitionQuestion(config);
     expect(q?.subtype).toBe('color');
     expect(q?.questionText).toBe('What color is this shape?');
-    expect(['Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple']).toContain(q?.correctAnswer);
+    expect(['red', 'blue', 'green', 'yellow', 'orange', 'purple']).toContain(q?.correctAnswer);
     expect(q?.answerOptions).toContain(q?.correctAnswer);
   });
 
@@ -119,5 +121,20 @@ describe('shapeRecognitionGenerator', () => {
     expect(q?.correctAnswer.split(' ')).toHaveLength(2);
     expect(q?.answerOptions).toContain(q?.correctAnswer);
     expect(new Set(q?.answerOptions).size).toBe(q?.answerOptions.length);
+  });
+
+  it('uses masculine Macedonian color adjectives with masculine shape names', async () => {
+    try {
+      await i18n.changeLanguage('mk');
+      const t = i18n.t.bind(i18n);
+
+      expect(colorAndShapeLabel('yellow', 'triangle', t, 'mk')).toBe('жолт триаголник');
+      expect(colorAndShapeLabel('blue', 'rectangle', t, 'mk')).toBe('син правоаголник');
+      expect(colorAndShapeLabel('red', 'circle', t, 'mk')).toBe('црвен круг');
+      expect(colorAndShapeLabel('green', 'square', t, 'mk')).toBe('зелен квадрат');
+      expect(colorAndShapeLabel('yellow', 'star', t, 'mk')).toBe('жолта ѕвезда');
+    } finally {
+      await i18n.changeLanguage('en');
+    }
   });
 });

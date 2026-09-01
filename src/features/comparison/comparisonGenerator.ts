@@ -20,6 +20,7 @@ import {
   formatSubtractExpression,
 } from '@/features/questions/mathExpressionFormat';
 import type { ComparisonMathQuestion } from '@/features/questions/question.types';
+import { i18n } from '@/i18n';
 import { pickRandom, randomIntInclusive } from '@/utils/random';
 
 const SYMBOLS: ComparisonSymbol[] = ['<', '>', '='];
@@ -169,9 +170,12 @@ function generateOrdering(config: MathLearningConfig): Omit<ComparisonMathQuesti
   const sorted = [...values].sort((a, b) => a - b);
   const ascending = Math.random() > 0.5;
   const correct = formatOrderingAnswer(ascending ? sorted : [...sorted].reverse());
-  const prompt = ascending
-    ? `Order from smallest to largest: ${values.join(', ')}`
-    : `Order from largest to smallest: ${values.join(', ')}`;
+  const prompt = i18n.t(
+    ascending
+      ? 'questions:orderSmallestToLargest'
+      : 'questions:orderLargestToSmallest',
+    { values: values.join(', ') },
+  );
   return {
     kind: 'comparison',
     operation: 'comparison',

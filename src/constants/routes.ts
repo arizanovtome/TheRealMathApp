@@ -4,6 +4,10 @@ export const ROUTES = {
   onboardingAge: '/onboarding/age',
   onboardingRecommendedPlan: '/onboarding/recommended-plan',
   learningPlan: '/learning-plan',
+  settingsProfile: '/learning-plan/profile',
+  settingsSession: '/learning-plan/session',
+  settingsTopics: '/learning-plan/topics',
+  settingsTopicCategory: (category: string) => `/learning-plan/topics/${category}` as const,
   practice: '/practice',
   quiz: '/quiz',
   timed: '/timed',
@@ -13,4 +17,5 @@ export const ROUTES = {
   learnTopic: (id: string) => `/learn/${id}` as const,
   learnPractice: '/learn/practice',
   privacy: '/privacy',
+  about: '/about',
 } as const;

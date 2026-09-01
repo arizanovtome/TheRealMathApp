@@ -1,5 +1,4 @@
-import type { RefObject } from 'react';
-import type { ScrollView, StyleProp, TextInputProps, TextStyle } from 'react-native';
+import type { StyleProp, TextStyle } from 'react-native';
 import { TextInput } from 'react-native';
 
 import type { MathQuestion } from '@/features/questions/question.types';
@@ -7,19 +6,19 @@ import { isGeometryQuestion } from '@/features/questions/question.types';
 import { answerInputKindForQuestion } from '@/utils/answerInputKind';
 import {
   answerInputKeyboardProps,
+  maxLengthForAnswerInputKind,
   sanitizeAnswerInput,
 } from '@/utils/answerInputKeyboard';
-import { useScrollToFocusedInput } from '@/utils/keyboardScroll';
 
 type SessionAnswerTextInputProps = {
   question: MathQuestion;
-  scrollRef: RefObject<ScrollView | null>;
   value: string;
   onChangeText: (text: string) => void;
   editable: boolean;
   placeholder: string;
   placeholderTextColor: string;
   onSubmitEditing: () => void;
+  onFocus?: () => void;
   accessibilityLabel: string;
   style: StyleProp<TextStyle>;
   lockedStyle?: StyleProp<TextStyle>;
@@ -27,22 +26,22 @@ type SessionAnswerTextInputProps = {
 
 export function SessionAnswerTextInput({
   question,
-  scrollRef,
   value,
   onChangeText,
   editable,
   placeholder,
   placeholderTextColor,
   onSubmitEditing,
+  onFocus,
   accessibilityLabel,
   style,
   lockedStyle,
 }: SessionAnswerTextInputProps) {
-  const scrollToInput = useScrollToFocusedInput(scrollRef);
   const kind = isGeometryQuestion(question)
     ? 'numeric'
     : answerInputKindForQuestion(question);
   const keyboard = answerInputKeyboardProps(kind);
+  const maxLength = maxLengthForAnswerInputKind(kind);
 
   const handleChangeText = (text: string) => {
     onChangeText(sanitizeAnswerInput(text, kind));
@@ -59,12 +58,13 @@ export function SessionAnswerTextInput({
       autoCapitalize="none"
       spellCheck={false}
       importantForAutofill="no"
-      onFocus={scrollToInput}
       onSubmitEditing={onSubmitEditing}
+      onFocus={onFocus}
       placeholder={placeholder}
       placeholderTextColor={placeholderTextColor}
       value={value}
       onChangeText={handleChangeText}
+      maxLength={maxLength}
       style={[style, !editable && lockedStyle]}
       {...keyboard}
     />
@@ -74,18 +74,17 @@ export function SessionAnswerTextInput({
 type SessionEquationAnswerInputProps = Omit<SessionAnswerTextInputProps, 'question'>;
 
 export function SessionEquationAnswerInput({
-  scrollRef,
   value,
   onChangeText,
   editable,
   placeholder,
   placeholderTextColor,
   onSubmitEditing,
+  onFocus,
   accessibilityLabel,
   style,
   lockedStyle,
 }: SessionEquationAnswerInputProps) {
-  const scrollToInput = useScrollToFocusedInput(scrollRef);
   const keyboard = answerInputKeyboardProps('equation');
 
   return (
@@ -97,12 +96,13 @@ export function SessionEquationAnswerInput({
       autoCorrect={false}
       autoComplete="off"
       importantForAutofill="no"
-      onFocus={scrollToInput}
       onSubmitEditing={onSubmitEditing}
+      onFocus={onFocus}
       placeholder={placeholder}
       placeholderTextColor={placeholderTextColor}
       value={value}
-      onChangeText={onChangeText}
+      onChangeText={(text) => onChangeText(sanitizeAnswerInput(text, 'equation'))}
+      maxLength={maxLengthForAnswerInputKind('equation')}
       style={[style, !editable && lockedStyle]}
       {...keyboard}
     />

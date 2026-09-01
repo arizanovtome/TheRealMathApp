@@ -9,6 +9,7 @@ import { radii, spacing } from '@/theme/spacing';
 type FeedbackMessageProps = {
   variant: 'correct' | 'incorrect';
   message: string;
+  detail?: string;
 };
 
 /** Split “Not quite. The correct answer is …” into a punchy lead + calmer detail. */
@@ -20,7 +21,7 @@ function splitIncorrectFeedback(message: string): { lead: string; rest?: string 
   return { lead: message.slice(0, idx + 1).trim(), rest };
 }
 
-export function FeedbackMessage({ variant, message }: FeedbackMessageProps) {
+export function FeedbackMessage({ variant, message, detail }: FeedbackMessageProps) {
   const isCorrect = variant === 'correct';
   const { lead, rest } = isCorrect ? { lead: message, rest: undefined } : splitIncorrectFeedback(message);
 
@@ -35,7 +36,12 @@ export function FeedbackMessage({ variant, message }: FeedbackMessageProps) {
         style={[styles.lead, isCorrect ? styles.leadCorrect : styles.leadIncorrect]}>
         {lead}
       </AppText>
-      {rest ? (
+      {detail ? (
+        <AppText variant="body" style={[styles.detail, isCorrect ? styles.detailCorrect : styles.detailIncorrect]}>
+          {detail}
+        </AppText>
+      ) : null}
+      {!detail && rest ? (
         <MathDisplayText text={rest} size="body" muted style={styles.detail} />
       ) : null}
     </View>
@@ -81,7 +87,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
     maxWidth: '100%',
-    fontWeight: '500',
-    ...(fonts.math ? { fontFamily: fonts.math } : {}),
+    fontWeight: '600',
+  },
+  detailCorrect: {
+    color: colors.success,
+  },
+  detailIncorrect: {
+    color: colors.error,
   },
 });

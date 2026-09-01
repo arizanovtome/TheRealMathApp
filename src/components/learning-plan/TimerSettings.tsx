@@ -45,7 +45,8 @@ export function TimerSettings({
       {enabled ? (
         <>
           <AppText variant="body" muted>
-            {t('settings:timerEnabled', { seconds })}
+            {t('settings:timerEnabled', { seconds })}{' '}
+            {t('settings:questionTimerNotOnTimedRun')}
           </AppText>
           <Slider
             accessibilityLabel={t('settings:questionTimer')}
@@ -68,7 +69,8 @@ export function TimerSettings({
         </>
       ) : (
         <AppText variant="body" muted>
-          {t('settings:timerOff', { default: TIMER_SECONDS_DEFAULT })}
+          {t('settings:timerOff', { default: TIMER_SECONDS_DEFAULT })}{' '}
+          {t('settings:questionTimerNotOnTimedRun')}
         </AppText>
       )}
     </Card>

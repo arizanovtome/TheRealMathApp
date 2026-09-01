@@ -2,13 +2,13 @@ import { useHeaderHeight } from "@react-navigation/elements";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Keyboard,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   StyleSheet,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { KeyboardScreenShell } from "@/components/common/KeyboardScreenShell";
 
 import { AnalogClockFace } from "@/components/clock/AnalogClockFace";
 import { BasicShapeDiagram } from "@/components/shapes/BasicShapeDiagram";
@@ -37,6 +37,7 @@ import { positiveFeedbackForCorrectCount } from "@/features/questions/answerOpti
 import { normalizeEquationAnswerInput } from "@/features/questions/equationUnknown";
 import { formatFraction } from "@/features/questions/fractions";
 import type { MathQuestion } from "@/features/questions/question.types";
+import { requiresMultipleChoiceQuestion } from "@/features/questions/questionAnswerInput";
 import {
   isArithmeticQuestion,
   isEquationUnknownQuestion,
@@ -52,7 +53,6 @@ import {
   isTrigonometryQuestion,
   isLogarithmQuestion,
   isEquationTwoUnknownQuestion,
-  requiresMultipleChoiceQuestion,
   usesCompactQuestionCard,
 } from "@/features/questions/question.types";
 import { FractionVisualModel } from "@/components/fractions/FractionModels";
@@ -60,7 +60,8 @@ import { createSessionQuestions } from "@/features/questions/questionGenerator";
 import {
   answerOptionDisplayLabel,
   answerOptionsArePlainNumbers,
-  correctAnswerDisplayLabel,
+  shouldStackAnswerOptions,
+  correctAnswerFeedbackLabel,
   submittedAnswerIsCorrect,
 } from "@/features/questions/questionScoring";
 import { useAppStore } from "@/store/useAppStore";
@@ -74,6 +75,7 @@ import { radii, spacing } from "@/theme/spacing";
 import { useAppTranslation } from "@/i18n/useAppTranslation";
 import { parseNumberAnswer } from "@/utils/parseIntegerAnswer";
 import { isCompleteFractionAnswer, parseFractionAnswer } from "@/utils/parseFractionAnswer";
+import { useKeyboardInset, useScrollToFocusedInput } from "@/utils/keyboardScroll";
 
 type LearnPracticeSessionViewProps = {
   target: LearnPracticeTarget;
@@ -87,6 +89,7 @@ export function LearnPracticeSessionView({
   const { t } = useAppTranslation(["common", "questions"]);
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
+  const keyboardInset = useKeyboardInset();
   const learningConfig = useAppStore(selectActiveLearningConfig);
   const activeProfile = useAppStore(selectActiveProfile);
 
@@ -107,8 +110,8 @@ export function LearnPracticeSessionView({
 
   const useKeyboard = effectiveConfig?.answerEntryMode === "keyboard";
 
-  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+  const scrollToInput = useScrollToFocusedInput(scrollRef, keyboardInset);
   const [questionNumber, setQuestionNumber] = useState(1);
   const [correctCount, setCorrectCount] = useState(0);
   const [current, setCurrent] = useState<MathQuestion | null>(null);
@@ -138,27 +141,6 @@ export function LearnPracticeSessionView({
   useEffect(() => {
     scrollRef.current?.scrollTo({ y: 0, animated: false });
   }, [current?.id]);
-
-  useEffect(() => {
-    if (!useKeyboard) {
-      setKeyboardOpen(false);
-      return;
-    }
-
-    const showEvt =
-      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
-    const hideEvt =
-      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
-
-    const subShow = Keyboard.addListener(showEvt, () => setKeyboardOpen(true));
-    const subHide = Keyboard.addListener(hideEvt, () => setKeyboardOpen(false));
-
-    return () => {
-      subShow.remove();
-      subHide.remove();
-      setKeyboardOpen(false);
-    };
-  }, [useKeyboard]);
 
   useEffect(() => {
     setAnswerInputText("");
@@ -268,9 +250,9 @@ export function LearnPracticeSessionView({
 
   const scrollContentStyle = [
     styles.scrollInner,
-    { paddingBottom: Math.max(spacing.xl, insets.bottom + spacing.md) },
-    showKeyboardInput && keyboardOpen ? { paddingTop: insets.top } : null,
-    keyboardOpen ? { paddingBottom: spacing.xl * 3 } : null,
+    {
+      paddingBottom: Math.max(spacing.xl, insets.bottom) + keyboardInset,
+    },
   ];
 
   if (!effectiveConfig || !validation.valid || !current) {
@@ -287,7 +269,7 @@ export function LearnPracticeSessionView({
   }
 
   const progressLabel = t("common:questionN", { n: questionNumber });
-  const correctLabel = correctAnswerDisplayLabel(current);
+  const correctLabel = correctAnswerFeedbackLabel(current);
   const incorrectLine = t("common:incorrectAnswer", { answer: correctLabel });
   const optionDisabled = showFeedback;
   const isCorrectSelection =
@@ -300,7 +282,7 @@ export function LearnPracticeSessionView({
 
   const inputLocked = showFeedback && showKeyboardInput;
   const answerPlaceholder =
-    showKeyboardInput && !keyboardOpen && !inputLocked
+    showKeyboardInput && !inputLocked
       ? isEquationUnknownQuestion(current)
         ? t("common:equationPlaceholder")
         : isArithmeticQuestion(current) && isFractionQuestion(current)
@@ -346,17 +328,21 @@ export function LearnPracticeSessionView({
     : t("common:nextQuestion");
 
   return (
-    <KeyboardAvoidingView
+    <KeyboardScreenShell
       style={styles.keyboardRoot}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={headerHeight}
     >
       <ScrollView
         ref={scrollRef}
         style={styles.scroll}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="none"
+        removeClippedSubviews={false}
         contentContainerStyle={scrollContentStyle}
         showsVerticalScrollIndicator={false}
+        onContentSizeChange={() => {
+          if (showFeedback) scrollRef.current?.scrollToEnd({ animated: true });
+        }}
       >
         <QuestionCard
           progressLabel={progressLabel}
@@ -431,9 +417,9 @@ export function LearnPracticeSessionView({
                   x=
                 </AppText>
                 <SessionEquationAnswerInput
-                  scrollRef={scrollRef}
                   accessibilityLabel={t("common:valueForX")}
                   editable={!inputLocked}
+                  onFocus={scrollToInput}
                   onSubmitEditing={() => {
                     if (!showFeedback) handlePrimaryAction();
                   }}
@@ -451,9 +437,9 @@ export function LearnPracticeSessionView({
             ) : (
               <SessionAnswerTextInput
                 question={current}
-                scrollRef={scrollRef}
                 accessibilityLabel={t("common:yourAnswer")}
                 editable={!inputLocked}
+                onFocus={scrollToInput}
                 onSubmitEditing={() => {
                   if (!showFeedback) handlePrimaryAction();
                 }}
@@ -475,7 +461,13 @@ export function LearnPracticeSessionView({
             ) : null}
           </View>
         ) : answerOptionsArePlainNumbers(current) ? (
-          <View style={styles.options}>
+          <View
+            style={
+              shouldStackAnswerOptions(current)
+                ? styles.optionsStacked
+                : styles.options
+            }
+          >
             {current.answerOptions.map((opt) => (
               <AnswerOptionButton
                 key={String(opt)}
@@ -484,6 +476,7 @@ export function LearnPracticeSessionView({
                 disabled={optionDisabled}
                 selected={selected === opt}
                 onPress={handleSelect}
+                stacked={shouldStackAnswerOptions(current)}
               />
             ))}
           </View>
@@ -528,13 +521,33 @@ export function LearnPracticeSessionView({
                       ) : null;
                     })()
                   : isPatternQuestion(current) && current.subtype === "shape_pattern"
-                    ? <ShapePatternFigure icon={String(opt)} />
+                    ? (() => {
+                        const visual = current.shapePatternAnswerOptions?.find(
+                          (item) => item.label === String(opt),
+                        );
+                        return visual ? (
+                          <BasicShapeDiagram
+                            shape={visual.shape}
+                            fill="transparent"
+                            stroke={colors.text}
+                            size={58}
+                          />
+                        ) : (
+                          <ShapePatternFigure icon={String(opt)} />
+                        );
+                      })()
                     : undefined}
               </AnswerOptionButton>
             ))}
           </View>
         ) : (
-          <View style={styles.options}>
+          <View
+            style={
+              shouldStackAnswerOptions(current)
+                ? styles.optionsStacked
+                : styles.options
+            }
+          >
             {current.answerOptions.map((opt) => (
               <AnswerOptionButton
                 key={String(opt)}
@@ -543,6 +556,7 @@ export function LearnPracticeSessionView({
                 disabled={optionDisabled}
                 selected={selected === opt}
                 onPress={handleSelect}
+                stacked={shouldStackAnswerOptions(current)}
               />
             ))}
           </View>
@@ -568,7 +582,7 @@ export function LearnPracticeSessionView({
           />
         ) : null}
       </ScrollView>
-    </KeyboardAvoidingView>
+    </KeyboardScreenShell>
   );
 }
 

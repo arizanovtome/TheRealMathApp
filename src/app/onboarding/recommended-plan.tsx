@@ -5,7 +5,7 @@ import { AppButton } from '@/components/common/AppButton';
 import { AppScreen } from '@/components/common/AppScreen';
 import { AppText } from '@/components/common/AppText';
 import { ROUTES } from '@/constants/routes';
-import { getRecommendedLearningPlan } from '@/features/learning-plan/recommendedLearningPlan';
+import { buildRecommendedLearningPlan } from '@/features/learning-plan/buildRecommendedLearningPlan';
 import { useAppTranslation } from '@/i18n/useAppTranslation';
 import { useAppStore } from '@/store/useAppStore';
 import { selectActiveProfile } from '@/store/profileSelectors';
@@ -21,7 +21,10 @@ export default function RecommendedPlanScreen() {
 
   const plan = useMemo(() => {
     if (!activeProfile) return null;
-    return getRecommendedLearningPlan(activeProfile.age);
+    return buildRecommendedLearningPlan({
+      age: activeProfile.age,
+      mathKnowledgeLevel: activeProfile.mathKnowledgeLevel,
+    });
   }, [activeProfile]);
 
   if (!activeProfile || !plan) {

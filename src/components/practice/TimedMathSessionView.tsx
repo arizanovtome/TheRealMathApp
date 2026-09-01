@@ -3,13 +3,14 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     Keyboard,
-    KeyboardAvoidingView,
-    Platform,
+    AccessibilityInfo,
     ScrollView,
     StyleSheet,
     View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { KeyboardScreenShell } from "@/components/common/KeyboardScreenShell";
 
 import { BasicShapeDiagram } from "@/components/shapes/BasicShapeDiagram";
 import { ColoredShapeSequence } from "@/components/patterns/ColoredShapeSequence";
@@ -29,9 +30,11 @@ import {
   SessionEquationAnswerInput,
 } from "@/components/practice/SessionAnswerTextInput";
 import { ROUTES } from "@/constants/routes";
-import type { MathOperation } from "@/features/learning-plan/learningPlan.types";
-import { ALL_MATH_OPERATIONS } from "@/features/learning-plan/learningPlan.types";
-import { TIMED_WRONG_ANSWER_PENALTY_SECONDS } from "@/features/learning-plan/learningPlan.types";
+import {
+  ALL_MATH_OPERATIONS,
+  type MathOperation,
+} from "@/features/learning-plan/learningPlan.types";
+import { adjustedTimedRemainingSeconds } from "@/features/learning-plan/timedRun.utils";
 import {
     applyPracticeFocusOverride,
     validateLearningConfig,
@@ -40,6 +43,7 @@ import { positiveFeedbackForCorrectCount } from "@/features/questions/answerOpti
 import { normalizeEquationAnswerInput } from "@/features/questions/equationUnknown";
 import { formatFraction } from "@/features/questions/fractions";
 import type { MathQuestion } from "@/features/questions/question.types";
+import { requiresMultipleChoiceQuestion } from "@/features/questions/questionAnswerInput";
 import {
   isArithmeticQuestion,
   isEquationUnknownQuestion,
@@ -55,7 +59,6 @@ import {
   isTrigonometryQuestion,
   isLogarithmQuestion,
   isGeometryQuestion,
-  requiresMultipleChoiceQuestion,
   usesCompactQuestionCard,
 } from "@/features/questions/question.types";
 import { FractionVisualModel } from "@/components/fractions/FractionModels";
@@ -63,6 +66,7 @@ import { createSessionQuestions } from "@/features/questions/questionGenerator";
 import {
     answerOptionDisplayLabel,
     answerOptionsArePlainNumbers,
+    shouldStackAnswerOptions,
     buildTimedSessionResult,
     submittedAnswerIsCorrect,
 } from "@/features/questions/questionScoring";
@@ -74,6 +78,7 @@ import { radii, spacing } from "@/theme/spacing";
 import { useAppTranslation } from "@/i18n/useAppTranslation";
 import { parseNumberAnswer } from "@/utils/parseIntegerAnswer";
 import { isCompleteFractionAnswer, parseFractionAnswer } from "@/utils/parseFractionAnswer";
+import { useKeyboardInset, useScrollToFocusedInput } from "@/utils/keyboardScroll";
 
 const FEEDBACK_MS = 600;
 
@@ -92,11 +97,16 @@ function formatSessionClock(totalSeconds: number): string {
   return `${m}:${String(r).padStart(2, "0")}`;
 }
 
+function formatTimeDelta(delta: number): string {
+  return delta > 0 ? `+${delta}s` : `−${Math.abs(delta)}s`;
+}
+
 export function TimedMathSessionView() {
   const { t } = useAppTranslation(["common", "questions"]);
   const router = useRouter();
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
+  const keyboardInset = useKeyboardInset();
   const learningConfig = useAppStore(selectActiveLearningConfig);
   const setLastSessionResult = useAppStore((s) => s.setLastSessionResult);
   const params = useLocalSearchParams<{ focus?: string | string[] }>();
@@ -118,33 +128,8 @@ export function TimedMathSessionView() {
 
   const useKeyboard = effectiveConfig?.answerEntryMode === "keyboard";
 
-  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
-
-  useEffect(() => {
-    if (!useKeyboard) {
-      setKeyboardOpen(false);
-      return;
-    }
-
-    const showEvt =
-      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
-    const hideEvt =
-      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
-
-    const subShow = Keyboard.addListener(showEvt, () => {
-      setKeyboardOpen(true);
-    });
-    const subHide = Keyboard.addListener(hideEvt, () => {
-      setKeyboardOpen(false);
-    });
-
-    return () => {
-      subShow.remove();
-      subHide.remove();
-      setKeyboardOpen(false);
-    };
-  }, [useKeyboard]);
+  const scrollToInput = useScrollToFocusedInput(scrollRef, keyboardInset);
 
   const [remaining, setRemaining] = useState(-1);
   const [paused, setPaused] = useState(false);
@@ -157,9 +142,14 @@ export function TimedMathSessionView() {
   const [positiveLine, setPositiveLine] = useState(() => t("correct"));
   const [answerInputText, setAnswerInputText] = useState("");
   const [inputError, setInputError] = useState("");
+  const [feedbackTimeDelta, setFeedbackTimeDelta] = useState<number | null>(null);
 
   const finishingRef = useRef(false);
   const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const seenQuestionTextRef = useRef(new Set<string>());
+  const survivedSecondsRef = useRef(0);
+  const pausedRef = useRef(paused);
+  pausedRef.current = paused;
 
   useEffect(() => {
     if (!effectiveConfig || !validation?.valid) {
@@ -172,11 +162,17 @@ export function TimedMathSessionView() {
       setInputError("");
       setPaused(false);
       finishingRef.current = false;
+      survivedSecondsRef.current = 0;
       return;
     }
-    setRemaining(effectiveConfig.timedDurationMinutes * 60);
+    setRemaining(Math.round(effectiveConfig.timedDurationMinutes * 60));
+    setFeedbackTimeDelta(null);
+    survivedSecondsRef.current = 0;
+    seenQuestionTextRef.current.clear();
     try {
-      const qs = createSessionQuestions(effectiveConfig, 1);
+      const qs = createSessionQuestions(effectiveConfig, 1, {
+        seenQuestionText: seenQuestionTextRef.current,
+      });
       setCurrent(qs[0] ?? null);
     } catch {
       setCurrent(null);
@@ -201,6 +197,9 @@ export function TimedMathSessionView() {
       return;
     }
     const t = setInterval(() => {
+      if (!pausedRef.current) {
+        survivedSecondsRef.current += 1;
+      }
       setRemaining((s) => (s <= 1 ? 0 : s - 1));
     }, 1000);
     return () => clearInterval(t);
@@ -224,6 +223,12 @@ export function TimedMathSessionView() {
       buildTimedSessionResult(
         records.map((r) => r.q),
         records.map((r) => r.a),
+        {
+          survivedSeconds: survivedSecondsRef.current,
+          initialSeconds: Math.round(effectiveConfig.timedDurationMinutes * 60),
+          bonusSeconds: effectiveConfig.timedCorrectBonusSeconds,
+          penaltySeconds: effectiveConfig.timedWrongPenaltySeconds,
+        },
       ),
     );
     router.replace(ROUTES.result);
@@ -258,7 +263,9 @@ export function TimedMathSessionView() {
   const loadNextQuestion = useCallback(() => {
     if (!effectiveConfig) return;
     try {
-      const qs = createSessionQuestions(effectiveConfig, 1);
+      const qs = createSessionQuestions(effectiveConfig, 1, {
+        seenQuestionText: seenQuestionTextRef.current,
+      });
       setCurrent(qs[0] ?? null);
     } catch {
       setCurrent(null);
@@ -274,9 +281,24 @@ export function TimedMathSessionView() {
       setSelected(answer);
       setShowFeedback(true);
       const ok = submittedAnswerIsCorrect(qSnapshot, answer);
-      if (!ok && effectiveConfig.timedSubtractSecondsOnWrong) {
-        setRemaining((r) =>
-          Math.max(0, r - TIMED_WRONG_ANSWER_PENALTY_SECONDS),
+      const configuredDelta = ok
+        ? effectiveConfig.timedCorrectBonusSeconds
+        : -effectiveConfig.timedWrongPenaltySeconds;
+      setFeedbackTimeDelta(configuredDelta !== 0 ? configuredDelta : null);
+      if (configuredDelta !== 0) {
+        const initialSeconds = Math.round(effectiveConfig.timedDurationMinutes * 60);
+        setRemaining((currentRemaining) =>
+          adjustedTimedRemainingSeconds(
+            currentRemaining,
+            configuredDelta,
+            initialSeconds,
+          ),
+        );
+        const seconds = Math.abs(configuredDelta);
+        void AccessibilityInfo.announceForAccessibility(
+          t(configuredDelta > 0 ? "common:timeAddedA11y" : "common:timeRemovedA11y", {
+            n: seconds,
+          }),
         );
       }
       setRecords((prev) => [...prev, { q: qSnapshot, a: answer }]);
@@ -295,11 +317,12 @@ export function TimedMathSessionView() {
         if (finishingRef.current) return;
         setShowFeedback(false);
         setSelected(null);
+        setFeedbackTimeDelta(null);
         loadNextQuestion();
         setPaused(false);
       }, FEEDBACK_MS);
     },
-    [current, effectiveConfig, clearAdvanceTimer, loadNextQuestion],
+    [current, effectiveConfig, clearAdvanceTimer, loadNextQuestion, records, t],
   );
 
   const handleSelect = (value: number | string) => {
@@ -361,9 +384,9 @@ export function TimedMathSessionView() {
 
   const scrollContentStyle = [
     styles.scrollInner,
-    { paddingBottom: Math.max(spacing.xl, insets.bottom + spacing.md) },
-    showKeyboardInput && keyboardOpen ? { paddingTop: insets.top } : null,
-    keyboardOpen ? { paddingBottom: spacing.xl * 3 } : null,
+    {
+      paddingBottom: Math.max(spacing.xl, insets.bottom) + keyboardInset,
+    },
   ];
 
   if (!effectiveConfig || !validation?.valid || !current) {
@@ -378,9 +401,14 @@ export function TimedMathSessionView() {
     );
   }
 
+  const initialSeconds = Math.round(effectiveConfig.timedDurationMinutes * 60);
+  const sessionSeconds = Math.max(0, remaining);
+  const sessionTimerProgress =
+    initialSeconds > 0 ? Math.min(1, sessionSeconds / initialSeconds) : 0;
+
   const progressLabel = t("common:questionTimeLeft", {
     n: records.length + 1,
-    clock: formatSessionClock(remaining),
+    clock: formatSessionClock(sessionSeconds),
   });
   /** Timed run: keep wrong feedback short—no correct answer (clock is running). */
   const wrongLine = t("common:notQuiteNext");
@@ -393,12 +421,28 @@ export function TimedMathSessionView() {
         : wrongLine
       : "";
 
-  const penaltyNote = effectiveConfig.timedSubtractSecondsOnWrong
-    ? t("common:wrongAnswersSubtract", { n: TIMED_WRONG_ANSWER_PENALTY_SECONDS })
-    : null;
+  const adjustmentNote =
+    effectiveConfig.timedWrongPenaltySeconds > 0 &&
+    effectiveConfig.timedCorrectBonusSeconds > 0
+      ? t("common:timedAdjustmentsSummary", {
+          bonus: effectiveConfig.timedCorrectBonusSeconds,
+          penalty: effectiveConfig.timedWrongPenaltySeconds,
+        })
+      : effectiveConfig.timedWrongPenaltySeconds > 0
+        ? t("common:wrongAnswersSubtract", {
+            n: effectiveConfig.timedWrongPenaltySeconds,
+          })
+        : effectiveConfig.timedCorrectBonusSeconds > 0
+          ? t("common:correctAnswersAdd", {
+              n: effectiveConfig.timedCorrectBonusSeconds,
+            })
+          : null;
+
+  const feedbackDetail =
+    feedbackTimeDelta !== null ? formatTimeDelta(feedbackTimeDelta) : undefined;
 
   const answerPlaceholder =
-    showKeyboardInput && !keyboardOpen && !(showFeedback && showKeyboardInput)
+    showKeyboardInput && !(showFeedback && showKeyboardInput)
       ? isEquationUnknownQuestion(current)
         ? t("common:equationPlaceholder")
         : isArithmeticQuestion(current) && isFractionQuestion(current)
@@ -448,21 +492,25 @@ export function TimedMathSessionView() {
   };
 
   return (
-    <KeyboardAvoidingView
+    <KeyboardScreenShell
       style={styles.keyboardRoot}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={headerHeight}
     >
       <ScrollView
         ref={scrollRef}
         style={styles.scroll}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="none"
+        removeClippedSubviews={false}
         contentContainerStyle={scrollContentStyle}
         showsVerticalScrollIndicator={false}
+        onContentSizeChange={() => {
+          if (showFeedback) scrollRef.current?.scrollToEnd({ animated: true });
+        }}
       >
-        {penaltyNote ? (
+        {adjustmentNote ? (
           <AppText variant="body" muted>
-            {penaltyNote}
+            {adjustmentNote}
           </AppText>
         ) : null}
 
@@ -470,6 +518,8 @@ export function TimedMathSessionView() {
           progressLabel={progressLabel}
           questionText={current.questionText}
           compact={usesCompactQuestionCard(current)}
+          timerProgress={sessionTimerProgress}
+          timerAccessibilityLabel={t("common:secondsLeft", { seconds: sessionSeconds })}
           questionContent={current.kind === "limit" ? (
             <LimitQuestionDisplay approach={current.approach} expression={current.expression} fraction={current.expressionFraction} />
           ) : undefined}
@@ -539,9 +589,9 @@ export function TimedMathSessionView() {
                   x=
                 </AppText>
                 <SessionEquationAnswerInput
-                  scrollRef={scrollRef}
                   accessibilityLabel={t("common:valueForX")}
                   editable={!inputLocked}
+                  onFocus={scrollToInput}
                   onSubmitEditing={() => {
                     if (!showFeedback && showKeyboardInput) handleSubmitAction();
                   }}
@@ -559,9 +609,9 @@ export function TimedMathSessionView() {
             ) : (
               <SessionAnswerTextInput
                 question={current}
-                scrollRef={scrollRef}
                 accessibilityLabel={t("common:yourAnswer")}
                 editable={!inputLocked}
+                onFocus={scrollToInput}
                 onSubmitEditing={() => {
                   if (!showFeedback && showKeyboardInput) handleSubmitAction();
                 }}
@@ -583,7 +633,13 @@ export function TimedMathSessionView() {
             ) : null}
           </View>
         ) : answerOptionsArePlainNumbers(current) ? (
-          <View style={styles.options}>
+          <View
+            style={
+              shouldStackAnswerOptions(current)
+                ? styles.optionsStacked
+                : styles.options
+            }
+          >
             {current.answerOptions.map((opt) => (
               <AnswerOptionButton
                 key={String(opt)}
@@ -592,6 +648,7 @@ export function TimedMathSessionView() {
                 disabled={showFeedback}
                 selected={selected === opt}
                 onPress={handleSelect}
+                stacked={shouldStackAnswerOptions(current)}
               />
             ))}
           </View>
@@ -636,13 +693,33 @@ export function TimedMathSessionView() {
                       ) : null;
                     })()
                   : isPatternQuestion(current) && current.subtype === "shape_pattern"
-                    ? <ShapePatternFigure icon={String(opt)} />
+                    ? (() => {
+                        const visual = current.shapePatternAnswerOptions?.find(
+                          (item) => item.label === String(opt),
+                        );
+                        return visual ? (
+                          <BasicShapeDiagram
+                            shape={visual.shape}
+                            fill="transparent"
+                            stroke={colors.text}
+                            size={58}
+                          />
+                        ) : (
+                          <ShapePatternFigure icon={String(opt)} />
+                        );
+                      })()
                     : undefined}
               </AnswerOptionButton>
             ))}
           </View>
         ) : (
-          <View style={styles.options}>
+          <View
+            style={
+              shouldStackAnswerOptions(current)
+                ? styles.optionsStacked
+                : styles.options
+            }
+          >
             {current.answerOptions.map((opt) => (
               <AnswerOptionButton
                 key={String(opt)}
@@ -651,6 +728,7 @@ export function TimedMathSessionView() {
                 disabled={showFeedback}
                 selected={selected === opt}
                 onPress={handleSelect}
+                stacked={shouldStackAnswerOptions(current)}
               />
             ))}
           </View>
@@ -673,10 +751,11 @@ export function TimedMathSessionView() {
           <FeedbackMessage
             variant={isCorrectSelection ? "correct" : "incorrect"}
             message={feedbackMessage}
+            detail={feedbackDetail}
           />
         ) : null}
       </ScrollView>
-    </KeyboardAvoidingView>
+    </KeyboardScreenShell>
   );
 }
 

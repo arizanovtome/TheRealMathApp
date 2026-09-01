@@ -6,6 +6,10 @@ import { AppText } from '@/components/common/AppText';
 import { ProgressInsights } from '@/components/progress/ProgressInsights';
 import { QuizResultBreakdown } from '@/components/result/QuizResultBreakdown';
 import { ROUTES } from '@/constants/routes';
+import {
+  formatTimedRunSettingsLabel,
+  formatTimedRunSurvivedLabel,
+} from '@/features/progress/sessionLabels';
 import { useAppTranslation } from '@/i18n/useAppTranslation';
 import { useAppStore } from '@/store/useAppStore';
 import { selectActiveProfile, selectActiveSessionHistory } from '@/store/profileSelectors';
@@ -13,7 +17,7 @@ import { selectActiveProfile, selectActiveSessionHistory } from '@/store/profile
 export const options = { headerBackVisible: false };
 
 export default function ResultScreen() {
-  const { t } = useAppTranslation(['practice', 'common', 'settings']);
+  const { t } = useAppTranslation(['practice', 'common', 'settings', 'progress']);
   const router = useRouter();
   const activeProfile = useAppStore(selectActiveProfile);
   const lastSessionResult = useAppStore((s) => s.lastSessionResult);
@@ -50,6 +54,21 @@ export default function ResultScreen() {
       <AppText variant="subtitle">
         {t('practice:scorePct', { pct: lastSessionResult.scorePercentage })}
       </AppText>
+
+      {lastSessionResult.timedRun ? (
+        <>
+          <AppText variant="body" muted>
+            {formatTimedRunSurvivedLabel(
+              lastSessionResult.timedRun,
+              lastSessionResult.correctAnswers,
+              t,
+            )}
+          </AppText>
+          <AppText variant="body" muted>
+            {formatTimedRunSettingsLabel(lastSessionResult.timedRun, t)}
+          </AppText>
+        </>
+      ) : null}
 
       <ProgressInsights history={sessionHistory} variant="full" />
 

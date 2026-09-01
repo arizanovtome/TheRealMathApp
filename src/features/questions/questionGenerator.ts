@@ -507,6 +507,46 @@ function roundingAnswerStep(unit: RoundingNearest): number {
   return 1;
 }
 
+function normalizeRoundingGridValue(n: number, unit: RoundingNearest): number {
+  if (unit === 'tenth') return Number(n.toFixed(1));
+  if (unit === 'hundredth') return Number(n.toFixed(2));
+  return n;
+}
+
+/** The other bracket endpoint when rounding `value` (e.g. 30 when 35 rounds to 40). */
+export function roundingAlternateAnswer(
+  value: number,
+  unit: RoundingNearest,
+  correctAnswer: number,
+): number | undefined {
+  const step = roundingAnswerStep(unit);
+  let lower: number;
+  let upper: number;
+  if (unit === 10 || unit === 100) {
+    lower = Math.floor(value / step) * step;
+    upper = lower + step;
+  } else if (unit === 'whole') {
+    lower = Math.floor(value);
+    upper = lower + 1;
+  } else {
+    const decimals = unit === 'tenth' ? 1 : 2;
+    const scale = 10 ** decimals;
+    lower = Math.floor(value * scale) / scale;
+    upper = normalizeRoundingGridValue(lower + step, unit);
+    lower = normalizeRoundingGridValue(lower, unit);
+  }
+  if (lower === upper) return undefined;
+  const alternate = correctAnswer === upper ? lower : upper;
+  return alternate === correctAnswer ? undefined : alternate;
+}
+
+function roundingPreferredWrongAnswers(base: StyledArithmeticDraft): number[] {
+  const snap = base.operandSnapshot;
+  if (base.operation !== 'rounding' || snap?.operation !== 'rounding') return [];
+  const alternate = roundingAlternateAnswer(snap.value, snap.unit, base.correctAnswer);
+  return alternate === undefined ? [] : [alternate];
+}
+
 function roundingUnitLabelLocal(unit: RoundingNearest): string {
   return roundingUnitLabel(unit);
 }
@@ -879,6 +919,7 @@ function finalizeArithmeticQuestion(
             base.correctAnswer,
             config.answerOptionsCount,
             roundingAnswerStep(base.roundingNearest),
+            roundingPreferredWrongAnswers(base),
           )
       : base.operation === 'order_of_operations' && base.ooOperands
         ? buildOrderOfOperationsAnswerOptions(
@@ -1065,7 +1106,16 @@ function anyValidAttemptBudget(sourcePoolSize: number): number {
   return ATTEMPTS_ANY_VALID_PER_QUESTION;
 }
 
-export function createSessionQuestions(config: MathLearningConfig, count: number): MathQuestion[] {
+export type CreateSessionQuestionsOptions = {
+  /** Shared across timed runs so prompts are not repeated until the pool is exhausted. */
+  seenQuestionText?: Set<string>;
+};
+
+export function createSessionQuestions(
+  config: MathLearningConfig,
+  count: number,
+  options?: CreateSessionQuestionsOptions,
+): MathQuestion[] {
   const sourcePool = buildQuestionSourcePool(config);
   if (sourcePool.length === 0) {
     throw new Error(
@@ -1075,7 +1125,7 @@ export function createSessionQuestions(config: MathLearningConfig, count: number
 
   const uniqueAttempts = uniqueAttemptBudget(sourcePool.length);
   const anyValidAttempts = anyValidAttemptBudget(sourcePool.length);
-  const seenQuestionText = new Set<string>();
+  const seenQuestionText = options?.seenQuestionText ?? new Set<string>();
   const questions: MathQuestion[] = [];
 
   const tryPickUnusedQuestion = (): MathQuestion | null => {

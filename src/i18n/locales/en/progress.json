@@ -2,7 +2,9 @@
   "title": "Recent performance",
   "subtitle": "Based on your saved sessions on this device (up to {{limit}} recent runs).",
   "overallAvg": "Overall last {{n}} sessions: {{avg}}% average score",
-  "noSessions": "Finish a practice or quiz session to see it listed here.",
+  "filteredAvg": "Last {{n}} {{mode}} sessions: {{avg}}% average score",
+  "filterAll": "All",
+  "noSessions": "Finish a practice, quiz, or timed run to see it listed here.",
   "keepStreak": "Practice on consecutive days to keep it going.",
   "startStreak": "Practice today or tomorrow to start a streak.",
   "growStreak": "Practice on consecutive days to grow your streak",
@@ -12,6 +14,10 @@
   "lastSessionsAvg": "Last {{n}} sessions average: {{pct}}%",
   "recentScores": "Recent scores (newest first)",
   "sessionA11y": "{{mode}}, {{pct}} percent",
+  "timedRunSummary": "Lasted {{duration}} · {{correct}} correct",
+  "timedRunStartedOnly": "Started {{duration}}",
+  "timedRunSettings": "Started {{duration}} · {{adjustments}}",
+  "timedRunLegacySummary": "{{correct}}/{{total}} correct · {{pct}}%",
   "opNoProblems": "{{label}}, no problems yet",
   "opStats": "{{label}}, {{pct}}% correct over {{attempted}} problems"
 }

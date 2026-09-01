@@ -15,7 +15,10 @@ export type AppState = {
   updateProfile: (
     profileId: string,
     updates: Partial<
-      Pick<ChildProfile, 'profileName' | 'name' | 'age' | 'learningConfig' | 'sessionHistory'>
+      Pick<
+        ChildProfile,
+        'profileName' | 'name' | 'age' | 'mathKnowledgeLevel' | 'learningConfig' | 'sessionHistory'
+      >
     >,
   ) => void;
   switchProfile: (profileId: string) => void;

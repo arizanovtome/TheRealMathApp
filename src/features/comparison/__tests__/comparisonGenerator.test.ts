@@ -5,6 +5,7 @@ import {
 } from '@/features/comparison/comparisonConfig.utils';
 import { tryGenerateComparisonQuestion } from '@/features/comparison/comparisonGenerator';
 import { submittedAnswerIsCorrect } from '@/features/questions/questionScoring';
+import { i18n } from '@/i18n';
 
 describe('comparisonGenerator', () => {
   const base = getRecommendedLearningPlan(8);
@@ -44,6 +45,23 @@ describe('comparisonGenerator', () => {
     expect(q!.subtype).toBe('ordering');
     expect(q!.answerOptions.length).toBeGreaterThanOrEqual(2);
     expect(q!.answerOptions).toContain(q!.correctAnswer);
+  });
+
+  it('translates ordering prompts into Macedonian', async () => {
+    try {
+      await i18n.changeLanguage('mk');
+
+      expect(i18n.t('questions:orderSmallestToLargest', { values: '4, 9, 14, 16' }))
+        .toBe('Подреди од најмал до најголем: 4, 9, 14, 16');
+      expect(i18n.t('questions:orderLargestToSmallest', { values: '4, 9, 14, 16' }))
+        .toBe('Подреди од најголем до најмал: 4, 9, 14, 16');
+
+      const q = tryGenerateComparisonQuestion(withComparison, 'ordering');
+      expect(q?.questionText).toMatch(/^Подреди од нај(?:мал|голем) до нај(?:голем|мал): /);
+      expect(q?.questionText).not.toContain('Order from');
+    } finally {
+      await i18n.changeLanguage('en');
+    }
   });
 
   it('expression compare requires enabled basic ops', () => {

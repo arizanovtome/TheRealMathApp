@@ -6,6 +6,7 @@ import {
   formatClockTime,
   formatDurationMinutes,
   type ClockTime,
+  type DurationUnitLabels,
 } from '@/features/clock/clockFormat';
 import type { ClockMathQuestion } from '@/features/questions/question.types';
 import { i18n } from '@/i18n';
@@ -36,6 +37,19 @@ function randomAnalogReadTime(config: MathLearningConfig): ClockTime {
   return { hour, minute };
 }
 
+function durationUnitLabels(): DurationUnitLabels {
+  return {
+    hour: i18n.t('questions:durationUnits.hour'),
+    hours: i18n.t('questions:durationUnits.hours'),
+    minute: i18n.t('questions:durationUnits.minute'),
+    minutes: i18n.t('questions:durationUnits.minutes'),
+  };
+}
+
+function formatLocalizedDuration(totalMinutes: number): string {
+  return formatDurationMinutes(totalMinutes, durationUnitLabels());
+}
+
 function buildTimeMcOptions(
   correctLabel: string,
   time: ClockTime,
@@ -64,13 +78,13 @@ function buildTimeMcOptions(
 }
 
 function buildDurationMcOptions(correctMinutes: number, count: number): string[] {
-  const correctLabel = formatDurationMinutes(correctMinutes);
+  const correctLabel = formatLocalizedDuration(correctMinutes);
   const pool = new Set<string>([correctLabel]);
   const offsets = [-45, -30, -15, -10, -5, 5, 10, 15, 30, 45, 60, 90];
   for (const offset of offsets) {
     const mins = correctMinutes + offset;
     if (mins > 0 && mins <= 24 * 60) {
-      pool.add(formatDurationMinutes(mins));
+      pool.add(formatLocalizedDuration(mins));
     }
   }
   pool.delete(correctLabel);
@@ -115,7 +129,7 @@ function generateElapsedTime(config: MathLearningConfig): Omit<ClockMathQuestion
   const elapsed = elapsedMinutesBetween(start, end);
   const startLabel = formatClockTime(start, config.clock.hourFormat);
   const endLabel = formatClockTime(end, config.clock.hourFormat);
-  const correctAnswer = formatDurationMinutes(elapsed);
+  const correctAnswer = formatLocalizedDuration(elapsed);
   return {
     kind: 'clock',
     operation: 'clock',

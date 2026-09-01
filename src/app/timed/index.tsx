@@ -3,7 +3,7 @@ import { TimedMathSessionView } from '@/components/practice/TimedMathSessionView
 
 export default function TimedScreen() {
   return (
-    <AppScreen>
+    <AppScreen keyboardAvoiding={false}>
       <TimedMathSessionView />
     </AppScreen>
   );

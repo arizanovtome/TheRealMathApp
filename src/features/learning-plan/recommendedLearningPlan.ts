@@ -19,6 +19,8 @@ import {
     DEFAULT_SHAPE_RECOGNITION_CONFIG,
     DEFAULT_NUMBER_SENSE_CONFIG,
     ONE_TO_TEN_NUMBERS,
+    TIMED_DEFAULT_CORRECT_BONUS_SECONDS,
+    TIMED_DEFAULT_WRONG_PENALTY_SECONDS,
     TIMER_SECONDS_DEFAULT,
     type MathLearningConfig,
     type MultiplicationSecondFactorSource,
@@ -128,8 +130,10 @@ const PLAN_4_5: MathLearningConfig = {
   maxFinalResult: 10,
   timerEnabled: false,
   timerSecondsPerQuestion: TIMER_SECONDS_DEFAULT,
-  timedDurationMinutes: 3,
-  timedSubtractSecondsOnWrong: false,
+  timedDurationMinutes: 1,
+  timedSubtractSecondsOnWrong: true,
+  timedWrongPenaltySeconds: TIMED_DEFAULT_WRONG_PENALTY_SECONDS,
+  timedCorrectBonusSeconds: TIMED_DEFAULT_CORRECT_BONUS_SECONDS,
   confirmAnswerBeforeSubmit: false,
 };
 
@@ -220,8 +224,10 @@ const PLAN_6_7: MathLearningConfig = {
   maxFinalResult: 100,
   timerEnabled: false,
   timerSecondsPerQuestion: TIMER_SECONDS_DEFAULT,
-  timedDurationMinutes: 3,
-  timedSubtractSecondsOnWrong: false,
+  timedDurationMinutes: 1,
+  timedSubtractSecondsOnWrong: true,
+  timedWrongPenaltySeconds: TIMED_DEFAULT_WRONG_PENALTY_SECONDS,
+  timedCorrectBonusSeconds: TIMED_DEFAULT_CORRECT_BONUS_SECONDS,
   confirmAnswerBeforeSubmit: false,
 };
 
@@ -312,8 +318,10 @@ const PLAN_8_9: MathLearningConfig = {
   maxFinalResult: 1000,
   timerEnabled: false,
   timerSecondsPerQuestion: TIMER_SECONDS_DEFAULT,
-  timedDurationMinutes: 3,
-  timedSubtractSecondsOnWrong: false,
+  timedDurationMinutes: 1,
+  timedSubtractSecondsOnWrong: true,
+  timedWrongPenaltySeconds: TIMED_DEFAULT_WRONG_PENALTY_SECONDS,
+  timedCorrectBonusSeconds: TIMED_DEFAULT_CORRECT_BONUS_SECONDS,
   confirmAnswerBeforeSubmit: false,
 };
 
@@ -432,13 +440,19 @@ const PLAN_10_12: MathLearningConfig = {
   maxFinalResult: 1000,
   timerEnabled: false,
   timerSecondsPerQuestion: TIMER_SECONDS_DEFAULT,
-  timedDurationMinutes: 3,
-  timedSubtractSecondsOnWrong: false,
+  timedDurationMinutes: 1,
+  timedSubtractSecondsOnWrong: true,
+  timedWrongPenaltySeconds: TIMED_DEFAULT_WRONG_PENALTY_SECONDS,
+  timedCorrectBonusSeconds: TIMED_DEFAULT_CORRECT_BONUS_SECONDS,
   confirmAnswerBeforeSubmit: false,
 };
 
 export function getRecommendedLearningPlan(age: number): MathLearningConfig {
   const bracket = getAgeBracket(age);
+  return getAgeBracketLearningPlan(bracket);
+}
+
+export function getAgeBracketLearningPlan(bracket: ReturnType<typeof getAgeBracket>): MathLearningConfig {
   switch (bracket) {
     case "4-5":
       return { ...PLAN_4_5 };
@@ -450,3 +464,6 @@ export function getRecommendedLearningPlan(age: number): MathLearningConfig {
       return { ...PLAN_10_12 };
   }
 }
+
+/** Balanced defaults when age and math knowledge are both unknown. */
+export const PLAN_NEUTRAL_DEFAULT: MathLearningConfig = { ...PLAN_8_9 };

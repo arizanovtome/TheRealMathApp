@@ -74,6 +74,10 @@ import {
     type SquareRootRootMax,
     type SubtractionConfig,
     TIMED_DURATION_MINUTES_OPTIONS,
+    TIMED_CORRECT_BONUS_SECONDS_MAX,
+    TIMED_DEFAULT_WRONG_PENALTY_SECONDS,
+    TIMED_WRONG_ANSWER_PENALTY_SECONDS,
+    TIMED_WRONG_PENALTY_SECONDS_MAX,
     type TimedDurationMinutes,
     TIMER_SECONDS_DEFAULT,
     TIMER_SECONDS_MAX,
@@ -98,15 +102,26 @@ function normalizeLearningMode(raw: unknown): LearningMode {
 
 function normalizeTimedDurationMinutes(raw: unknown): TimedDurationMinutes {
   const n = typeof raw === "number" ? raw : Number(raw);
-  const snapped = Number.isFinite(n) ? Math.round(n) : 3;
-  const clamped = Math.min(10, Math.max(1, snapped));
-  return (TIMED_DURATION_MINUTES_OPTIONS as readonly number[]).includes(clamped)
-    ? (clamped as TimedDurationMinutes)
-    : (3 as TimedDurationMinutes);
+  if (!Number.isFinite(n)) return 1;
+  let nearest: TimedDurationMinutes = TIMED_DURATION_MINUTES_OPTIONS[0];
+  for (const option of TIMED_DURATION_MINUTES_OPTIONS) {
+    if (Math.abs(option - n) < Math.abs(nearest - n)) nearest = option;
+  }
+  return nearest;
 }
 
 function normalizeTimedSubtractSecondsOnWrong(raw: unknown): boolean {
   return raw === true;
+}
+
+function normalizeTimedAdjustment(
+  raw: unknown,
+  fallback: number,
+  max: number,
+): number {
+  const n = typeof raw === "number" ? raw : Number(raw);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(max, Math.max(0, Math.round(n)));
 }
 
 function isFinalResultCapValue(v: unknown): v is FinalResultCap {
@@ -899,11 +914,9 @@ export function validateLearningConfig(
     errors.push(t('settings:validation.limitSubtypes'));
   }
 
-  if (config.mode !== "timed") {
-    const counts = new Set<number>(QUESTION_COUNT_OPTIONS);
-    if (!counts.has(config.questionsCount)) {
-      errors.push(t('settings:validation.questionCount'));
-    }
+  const counts = new Set<number>(QUESTION_COUNT_OPTIONS);
+  if (!counts.has(config.questionsCount)) {
+    errors.push(t('settings:validation.questionCount'));
   }
 
   if (!VALID_ANSWER_OPTION_COUNTS.includes(config.answerOptionsCount)) {
@@ -912,6 +925,17 @@ export function validateLearningConfig(
 
   if (config.timerEnabled && !Number.isFinite(config.timerSecondsPerQuestion)) {
     errors.push(t('settings:validation.timer'));
+  }
+
+  if (
+    !Number.isFinite(config.timedWrongPenaltySeconds) ||
+    config.timedWrongPenaltySeconds < 0 ||
+    config.timedWrongPenaltySeconds > TIMED_WRONG_PENALTY_SECONDS_MAX ||
+    !Number.isFinite(config.timedCorrectBonusSeconds) ||
+    config.timedCorrectBonusSeconds < 0 ||
+    config.timedCorrectBonusSeconds > TIMED_CORRECT_BONUS_SECONDS_MAX
+  ) {
+    errors.push(t('settings:validation.timedAdjustments'));
   }
 
   if (config.square.enabled) {
@@ -1406,6 +1430,28 @@ export function ensureLearningConfigShape(
     typeof config.timerSecondsPerQuestion === "number"
       ? config.timerSecondsPerQuestion
       : TIMER_SECONDS_DEFAULT;
+  const rawTimedWrongPenalty = (
+    config as MathLearningConfig & { timedWrongPenaltySeconds?: unknown }
+  ).timedWrongPenaltySeconds;
+  const legacyTimedPenaltyEnabled = normalizeTimedSubtractSecondsOnWrong(
+    (config as MathLearningConfig & { timedSubtractSecondsOnWrong?: unknown })
+      .timedSubtractSecondsOnWrong,
+  );
+  const timedWrongPenaltySeconds = normalizeTimedAdjustment(
+    rawTimedWrongPenalty,
+    rawTimedWrongPenalty === undefined
+      ? legacyTimedPenaltyEnabled
+        ? TIMED_WRONG_ANSWER_PENALTY_SECONDS
+        : 0
+      : TIMED_DEFAULT_WRONG_PENALTY_SECONDS,
+    TIMED_WRONG_PENALTY_SECONDS_MAX,
+  );
+  const timedCorrectBonusSeconds = normalizeTimedAdjustment(
+    (config as MathLearningConfig & { timedCorrectBonusSeconds?: unknown })
+      .timedCorrectBonusSeconds,
+    0,
+    TIMED_CORRECT_BONUS_SECONDS_MAX,
+  );
 
   const addLMax = snapAdditionSubtractionMax(normalizedAddition.leftMax);
   const addRMax = snapAdditionSubtractionMax(normalizedAddition.rightMax);
@@ -1435,10 +1481,9 @@ export function ensureLearningConfigShape(
       (config as MathLearningConfig & { timedDurationMinutes?: unknown })
         .timedDurationMinutes,
     ),
-    timedSubtractSecondsOnWrong: normalizeTimedSubtractSecondsOnWrong(
-      (config as MathLearningConfig & { timedSubtractSecondsOnWrong?: unknown })
-        .timedSubtractSecondsOnWrong,
-    ),
+    timedSubtractSecondsOnWrong: timedWrongPenaltySeconds > 0,
+    timedWrongPenaltySeconds,
+    timedCorrectBonusSeconds,
     addition: {
       ...normalizedAddition,
       leftMax: addLMax,

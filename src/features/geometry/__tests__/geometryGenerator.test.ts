@@ -77,6 +77,17 @@ describe('geometryGenerator', () => {
     }
   });
 
+  it('uses the masculine Macedonian wording for perimeter', async () => {
+    try {
+      await i18n.changeLanguage('mk');
+      expect(
+        buildCalculateQuestionText('perimeter', 'square', { side: 5 }),
+      ).toBe('Квадрат има страна 5 см. Кој е неговиот периметар?');
+    } finally {
+      await i18n.changeLanguage('en');
+    }
+  });
+
   it('generates formula questions with multiple choices', () => {
     const config = geometryConfig({
       questionKinds: { formula: true, calculate: false },
@@ -99,6 +110,40 @@ describe('geometryGenerator', () => {
     expect(q!.requiresMultipleChoice).toBe(true);
     expect(q!.answerOptions.length).toBeGreaterThanOrEqual(2);
     expect(q!.answerOptions).toContain(q!.correctAnswer);
+  });
+
+  it('does not offer equivalent perimeter formulas as different answers', async () => {
+    try {
+      await i18n.changeLanguage('en');
+      const config = geometryConfig({
+        questionKinds: { formula: true, calculate: false },
+        perimeter: {
+          enabled: true,
+          shapes: {
+            ...DEFAULT_GEOMETRY_CONFIG.perimeter.shapes,
+            square: false,
+            rectangle: true,
+            triangle: false,
+            circle: false,
+            rhombus: false,
+            kite: false,
+            parallelogram: false,
+            trapezoid: false,
+          },
+        },
+        area: { enabled: false, shapes: DEFAULT_GEOMETRY_CONFIG.area.shapes },
+        volume: { enabled: false, shapes: DEFAULT_GEOMETRY_CONFIG.volume.shapes },
+      });
+
+      const q = tryGenerateGeometryQuestion(config);
+
+      expect(q).not.toBeNull();
+      expect(q!.correctAnswer).toBe('2 × (length + width)');
+      expect(q!.answerOptions).not.toContain('2 × (side a + side b)');
+      expect(q!.answerOptions).not.toContain('2 × a + 2 × b');
+    } finally {
+      await i18n.changeLanguage('en');
+    }
   });
 
   it('generates integer calculate questions for a square', () => {

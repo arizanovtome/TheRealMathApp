@@ -7,6 +7,7 @@ import {
   TIMED_DURATION_MINUTES_OPTIONS,
   type TimedDurationMinutes,
 } from '@/features/learning-plan/learningPlan.types';
+import { formatTimedDurationCompact } from '@/features/learning-plan/timedRun.utils';
 import { useAppTranslation } from '@/i18n/useAppTranslation';
 import { colors } from '@/theme/colors';
 import { spacing } from '@/theme/spacing';
@@ -35,7 +36,7 @@ export function DiscreteMinuteSlider({
   disabled,
   accessibilityLabel,
 }: DiscreteMinuteSliderProps) {
-  const { t } = useAppTranslation(['settings', 'common']);
+  const { t } = useAppTranslation('settings');
   const snapped = nearestMinute(valueMinutes);
   const propIndex = TIMED_DURATION_MINUTES_OPTIONS.indexOf(snapped);
   const [localIndex, setLocalIndex] = useState(propIndex >= 0 ? propIndex : 0);
@@ -46,15 +47,24 @@ export function DiscreteMinuteSlider({
   }, [snapped]);
 
   const currentMinutes = TIMED_DURATION_MINUTES_OPTIONS[localIndex]!;
+  const valueLabel = formatTimedDurationCompact(currentMinutes);
 
   return (
     <View style={styles.wrap}>
-      <AppText variant="label" accessibilityLabel={accessibilityLabel}>
-        {t('settings:totalTime', { n: currentMinutes })}
-      </AppText>
+      <View style={styles.row}>
+        <AppText variant="label">{t('settings:totalTimeLabel')}</AppText>
+        <AppText
+          variant="subtitle"
+          style={styles.value}
+          accessibilityLabel={`${accessibilityLabel}: ${valueLabel}`}
+        >
+          {valueLabel}
+        </AppText>
+      </View>
       <Slider
         style={styles.slider}
         accessibilityLabel={accessibilityLabel}
+        accessibilityValue={{ text: valueLabel }}
         disabled={disabled}
         minimumValue={0}
         maximumValue={TIMED_DURATION_MINUTES_OPTIONS.length - 1}
@@ -72,38 +82,25 @@ export function DiscreteMinuteSlider({
         maximumTrackTintColor={colors.border}
         thumbTintColor={colors.primary}
       />
-      <View style={styles.ticks}>
-        {TIMED_DURATION_MINUTES_OPTIONS.map((n) => (
-          <AppText
-            key={n}
-            variant="label"
-            muted
-            style={styles.tickLabel}
-            accessibilityLabel={`${n} minutes`}>
-            {n}
-          </AppText>
-        ))}
-      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: {
-    gap: spacing.sm,
+    gap: spacing.xs,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  value: {
+    color: colors.primary,
   },
   slider: {
     width: '100%',
     height: 44,
-  },
-  ticks: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.xs,
-  },
-  tickLabel: {
-    fontSize: 9,
-    textAlign: 'center',
-    flex: 1,
   },
 });

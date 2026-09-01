@@ -3,7 +3,7 @@ import { MathSessionView } from '@/components/practice/MathSessionView';
 
 export default function QuizScreen() {
   return (
-    <AppScreen>
+    <AppScreen keyboardAvoiding={false}>
       <MathSessionView mode="quiz" />
     </AppScreen>
   );

@@ -327,12 +327,19 @@ export const DEFAULT_EQUIVALENT_EXPRESSIONS_CONFIG: EquivalentExpressionsConfig 
 
 export type LearningMode = 'practice' | 'quiz' | 'timed';
 
-/** Minutes 1–10 for timed session total length. */
-export const TIMED_DURATION_MINUTES_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
+/** Compact timed-run presets in minutes (15s … 10 min). */
+export const TIMED_DURATION_MINUTES_OPTIONS = [0.25, 0.5, 1, 2, 3, 5, 10] as const;
 export type TimedDurationMinutes = (typeof TIMED_DURATION_MINUTES_OPTIONS)[number];
 
-/** Seconds removed from the session clock on each wrong answer when `timedSubtractSecondsOnWrong` is on. */
+/** Legacy penalty used when migrating the old on/off timed-run setting. */
 export const TIMED_WRONG_ANSWER_PENALTY_SECONDS = 15;
+export const TIMED_ADJUSTMENT_SECONDS_MIN = 0;
+export const TIMED_WRONG_PENALTY_SECONDS_MAX = 15;
+export const TIMED_CORRECT_BONUS_SECONDS_MAX = 5;
+export const TIMED_ADJUSTMENT_SECONDS_STEP = 1;
+export const TIMED_DEFAULT_WRONG_PENALTY_SECONDS = 5;
+export const TIMED_DEFAULT_CORRECT_BONUS_SECONDS = 2;
+export const TIMED_BONUS_HEADROOM_SECONDS = 30;
 
 /** Multiple-choice chip count, or keyboard entry (no choice buttons). */
 export type AnswerEntryMode = 'multiple_choice' | 'keyboard';
@@ -522,6 +529,10 @@ export type MathLearningConfig = {
   timedDurationMinutes: TimedDurationMinutes;
   /** When true, each wrong answer subtracts {@link TIMED_WRONG_ANSWER_PENALTY_SECONDS} from remaining time. */
   timedSubtractSecondsOnWrong: boolean;
+  /** Seconds removed from the timed-run clock after a wrong answer; zero disables the penalty. */
+  timedWrongPenaltySeconds: number;
+  /** Seconds added to the timed-run clock after a correct answer; zero disables the bonus. */
+  timedCorrectBonusSeconds: number;
   /**
    * When true, multiple-choice answers need a Confirm/Next tap after selection.
    * When false, the choice is submitted immediately (practice shows feedback at once; timed counts the answer at once).

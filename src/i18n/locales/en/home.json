@@ -1,7 +1,7 @@
 {
   "greeting": "Hi {{name}}!",
   "activeProfile": "Active profile: {{profileLabel}}",
-  "intro": "Practice for instant feedback, quiz for a challenge at the end, or timed for as many questions as you can before the clock runs out.",
+  "intro": "Practice for instant feedback, quiz for a challenge at the end, or timed run for as many questions as you can before the clock runs out.",
   "noSetup": "You do not have a saved setup yet for this profile. Open Settings to finish setup.",
   "learnTitle": "Learn",
   "learnIntro": "Browse tutorials for every topic. Practice settings do not limit what you can read here.",
@@ -15,5 +15,6 @@
   "hintLearn": "Browse math tutorials by topic",
   "hintSettings": "Change profiles, name, age, and math practice options",
   "hintProgress": "View streak, scores by operation, and recent sessions",
-  "hintPrivacy": "Opens the privacy policy for this app"
+  "hintPrivacy": "Opens the privacy policy for this app",
+  "aboutLink": "About · v{{version}}"
 }

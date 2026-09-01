@@ -146,6 +146,7 @@ export type PatternMathQuestion = {
   sequenceDisplay?: string;
   sequenceShapes?: string[];
   sequenceColoredShapes?: { shape: BasicShape; color: ShapeColor }[];
+  shapePatternAnswerOptions?: { label: string; shape: BasicShape }[];
   coloredShapeAnswerOptions?: { label: string; shape: BasicShape; color: ShapeColor }[];
   correctAnswer: string;
   answerOptions: string[];
@@ -301,8 +302,6 @@ export function usesCompactQuestionCard(q: MathQuestion): boolean {
   if (isPatternQuestion(q)) return true;
   return false;
 }
-
-export { requiresMultipleChoiceQuestion } from '@/features/questions/questionAnswerInput';
 
 export function isFractionQuestion(q: ArithmeticMathQuestion): boolean {
   return q.answerKind === 'fraction';

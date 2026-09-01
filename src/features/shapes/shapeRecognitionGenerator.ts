@@ -1,6 +1,6 @@
 import type { MathLearningConfig } from '@/features/learning-plan/learningPlan.types';
 import { getEnabledBasicShapes } from '@/features/shapes/shapeRecognitionConfig.utils';
-import { basicShapeLabel } from '@/features/shapes/shapeRecognitionLabels';
+import { basicShapeLabel, colorAndShapeLabel } from '@/features/shapes/shapeRecognitionLabels';
 import { BASIC_SHAPES, type BasicShape } from '@/features/shapes/shapeRecognition.types';
 import { SHAPE_COLORS, type ShapeColor } from '@/features/shapes/shapeColors';
 import type { ShapeRecognitionMathQuestion } from '@/features/questions/question.types';
@@ -16,10 +16,7 @@ function labelColor(color: ShapeColor): string {
 }
 
 function labelColorAndShape(color: ShapeColor, shape: BasicShape): string {
-  return i18n.t('common:colorAndShape', {
-    color: labelColor(color),
-    shape: labelShape(shape).toLocaleLowerCase(i18n.language),
-  });
+  return colorAndShapeLabel(color, shape, i18n.t.bind(i18n), i18n.language);
 }
 
 function buildShapeMcOptions<T>(

@@ -34,7 +34,12 @@ export default function LearnPracticeScreen() {
   const [started, setStarted] = useState(false);
   const initialFocused = useMemo(() => {
     if (!target || !learningConfig || !activeProfile) return null;
-    return applyLearnPracticeFocus(learningConfig, target, activeProfile.age);
+    return applyLearnPracticeFocus(
+      learningConfig,
+      target,
+      activeProfile.age,
+      activeProfile.mathKnowledgeLevel,
+    );
   }, [activeProfile, learningConfig, target]);
   const [draft, setDraft] = useState<MathLearningConfig | null>(null);
 
@@ -95,7 +100,7 @@ export default function LearnPracticeScreen() {
   return (
     <>
       <Stack.Screen options={{ title: tutorial.title }} />
-      <AppScreen>
+      <AppScreen keyboardAvoiding={false}>
         <LearnPracticeSessionView target={target} configOverride={draft ?? initialFocused} />
       </AppScreen>
     </>

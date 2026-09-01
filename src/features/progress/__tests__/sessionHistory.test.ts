@@ -2,10 +2,13 @@ import {
   appendSessionHistory,
   averageScoreRecent,
   computeCurrentStreak,
+  filterSessionHistory,
   localDateKey,
+  normalizeSessionHistory,
   parseIsoToLocalDateKey,
   previousLocalDateKey,
   recordFromSessionResult,
+  SESSION_HISTORY_LIMIT,
 } from '@/features/progress/sessionHistory';
 import type { SessionHistoryEntry } from '@/features/progress/sessionHistory.types';
 import type { SessionResult } from '@/features/questions/questionScoring';
@@ -31,6 +34,31 @@ describe('appendSessionHistory', () => {
     h = appendSessionHistory(h, second, 5);
     expect(h[0]!.scorePercentage).toBe(90);
     expect(h[1]!.scorePercentage).toBe(70);
+  });
+
+  it('trims to SESSION_HISTORY_LIMIT by default', () => {
+    let h: SessionHistoryEntry[] = [];
+    for (let i = 0; i < SESSION_HISTORY_LIMIT + 5; i++) {
+      h = appendSessionHistory(h, mockResult({ scorePercentage: i }));
+    }
+    expect(h).toHaveLength(SESSION_HISTORY_LIMIT);
+  });
+});
+
+describe('filterSessionHistory', () => {
+  const history: SessionHistoryEntry[] = [
+    { completedAt: 'a', scorePercentage: 80, sessionMode: 'practice', totalQuestions: 5, correctAnswers: 4 },
+    { completedAt: 'b', scorePercentage: 70, sessionMode: 'timed', totalQuestions: 8, correctAnswers: 6 },
+    { completedAt: 'c', scorePercentage: 90, sessionMode: 'quiz', totalQuestions: 10, correctAnswers: 9 },
+  ];
+
+  it('returns all entries for all filter', () => {
+    expect(filterSessionHistory(history, 'all')).toHaveLength(3);
+  });
+
+  it('filters by mode', () => {
+    expect(filterSessionHistory(history, 'timed')).toHaveLength(1);
+    expect(filterSessionHistory(history, 'timed')[0]?.sessionMode).toBe('timed');
   });
 });
 
@@ -143,6 +171,47 @@ describe('recordFromSessionResult', () => {
     const e = recordFromSessionResult(r);
     expect(e.sessionMode).toBe('quiz');
     expect(e.scorePercentage).toBe(60);
+  });
+
+  it('persists timed run metadata', () => {
+    const r = mockResult({
+      sessionMode: 'timed',
+      timedRun: {
+        survivedSeconds: 92,
+        initialSeconds: 60,
+        bonusSeconds: 2,
+        penaltySeconds: 5,
+      },
+    });
+    const e = recordFromSessionResult(r);
+    expect(e.timedRun).toEqual({
+      survivedSeconds: 92,
+      initialSeconds: 60,
+      bonusSeconds: 2,
+      penaltySeconds: 5,
+    });
+  });
+});
+
+describe('normalizeSessionHistory', () => {
+  it('round-trips timed run metadata', () => {
+    const normalized = normalizeSessionHistory([
+      {
+        completedAt: new Date().toISOString(),
+        scorePercentage: 75,
+        sessionMode: 'timed',
+        totalQuestions: 12,
+        correctAnswers: 9,
+        timedRun: {
+          survivedSeconds: 110,
+          initialSeconds: 60,
+          bonusSeconds: 2,
+          penaltySeconds: 0,
+        },
+      },
+    ]);
+    expect(normalized[0]?.timedRun?.survivedSeconds).toBe(110);
+    expect(normalized[0]?.timedRun?.penaltySeconds).toBe(0);
   });
 });
 

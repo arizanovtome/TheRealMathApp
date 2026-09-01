@@ -1,14 +1,10 @@
 import type { PropsWithChildren, Ref } from 'react';
 import type { ScrollViewProps } from 'react-native';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
+import { KeyboardScreenShell } from '@/components/common/KeyboardScreenShell';
+import { shouldUseKeyboardAvoidingView } from '@/utils/keyboardAvoidance';
 import { colors } from '@/theme/colors';
 import { radii, spacing } from '@/theme/spacing';
 
@@ -23,6 +19,8 @@ type AppScreenProps = PropsWithChildren<{
   includeTopSafeArea?: boolean;
   /** Extra offset when avoiding the keyboard (e.g. stack header height). */
   keyboardVerticalOffset?: number;
+  /** When false, children manage keyboard avoidance themselves. */
+  keyboardAvoiding?: boolean;
 }>;
 
 export function AppScreen({
@@ -31,30 +29,40 @@ export function AppScreen({
   scrollProps,
   includeTopSafeArea = false,
   keyboardVerticalOffset = 0,
+  keyboardAvoiding = true,
 }: AppScreenProps) {
   const edges = includeTopSafeArea ? SAFE_AREA_EDGES_FULL : SAFE_AREA_EDGES_HEADER;
+  const {
+    contentContainerStyle: scrollContentStyle,
+    ...restScrollProps
+  } = scrollProps ?? {};
+
+  const frame = (
+    <View style={styles.wrap}>
+      <View style={styles.boardFrame}>
+        {scroll ? (
+          <ScrollView
+            contentContainerStyle={[styles.scrollContent, scrollContentStyle]}
+            keyboardShouldPersistTaps="handled"
+            {...restScrollProps}>
+            {children}
+          </ScrollView>
+        ) : (
+          <View style={styles.fill}>{children}</View>
+        )}
+      </View>
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.safe} edges={edges}>
-      <KeyboardAvoidingView
-        style={styles.keyboardAvoid}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={keyboardVerticalOffset}>
-        <View style={styles.wrap}>
-          <View style={styles.boardFrame}>
-            {scroll ? (
-              <ScrollView
-                contentContainerStyle={styles.scrollContent}
-                keyboardShouldPersistTaps="handled"
-                {...scrollProps}>
-                {children}
-              </ScrollView>
-            ) : (
-              <View style={styles.fill}>{children}</View>
-            )}
-          </View>
-        </View>
-      </KeyboardAvoidingView>
+      {keyboardAvoiding && shouldUseKeyboardAvoidingView ? (
+        <KeyboardScreenShell keyboardVerticalOffset={keyboardVerticalOffset}>
+          {frame}
+        </KeyboardScreenShell>
+      ) : (
+        frame
+      )}
     </SafeAreaView>
   );
 }
@@ -65,9 +73,6 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  keyboardAvoid: {
-    flex: 1,
   },
   wrap: {
     flex: 1,

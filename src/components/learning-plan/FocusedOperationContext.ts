@@ -1,5 +1,5 @@
 import { createContext } from 'react';
 
-import type { MathOperation } from '@/features/learning-plan/learningPlan.types';
+export type OperationVisibility = string | ReadonlySet<string> | null;
 
-export const FocusedOperationContext = createContext<MathOperation | null>(null);
+export const FocusedOperationContext = createContext<OperationVisibility>(null);

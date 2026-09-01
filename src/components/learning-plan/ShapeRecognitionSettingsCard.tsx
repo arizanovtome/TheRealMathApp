@@ -13,6 +13,7 @@ import { basicShapeLabel } from '@/features/shapes/shapeRecognitionLabels';
 import { useAppTranslation } from '@/i18n/useAppTranslation';
 import { colors } from '@/theme/colors';
 import { radii, spacing } from '@/theme/spacing';
+import { capitalizeFirst } from '@/utils/textCase';
 
 type ShapeRecognitionSettingsCardProps = {
   shapeRecognition: ShapeRecognitionConfig;
@@ -131,11 +132,12 @@ export function ShapeRecognitionSettingsCard({
         <View style={styles.chipRow}>
           {BASIC_SHAPES.map((shape) => {
             const selected = shapeRecognition.shapes[shape];
+            const label = capitalizeFirst(basicShapeLabel(shape, t));
             return (
               <Pressable
                 key={shape}
                 accessibilityRole="button"
-                accessibilityLabel={basicShapeLabel(shape, t)}
+                accessibilityLabel={label}
                 accessibilityState={{ selected }}
                 disabled={disabled}
                 onPress={() => toggleShape(shape)}
@@ -149,7 +151,7 @@ export function ShapeRecognitionSettingsCard({
                   variant="label"
                   style={selected ? styles.chipTextSelected : styles.chipText}
                 >
-                  {basicShapeLabel(shape, t)}
+                  {label}
                 </AppText>
               </Pressable>
             );

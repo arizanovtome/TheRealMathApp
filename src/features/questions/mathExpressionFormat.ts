@@ -4,12 +4,12 @@ export function formatInteger(n: number): string {
   return n < 0 ? `${MINUS}${Math.abs(n)}` : String(n);
 }
 
-/** Formats whole numbers or decimals (one decimal place when needed). */
+/** Formats whole numbers or exact decimal results with up to two decimal places. */
 export function formatNumber(n: number): string {
   if (!Number.isFinite(n)) return String(n);
-  const rounded = Math.round(n * 10) / 10;
+  const rounded = Number(n.toFixed(2));
   if (Number.isInteger(rounded)) return formatInteger(rounded);
-  const text = Math.abs(rounded).toFixed(1);
+  const text = String(Math.abs(rounded));
   return rounded < 0 ? `${MINUS}${text}` : text;
 }
 

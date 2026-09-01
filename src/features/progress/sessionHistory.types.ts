@@ -1,4 +1,10 @@
-import type { OperationStatsRollup, SessionModeResult } from '@/features/questions/questionScoring';
+import type {
+  OperationStatsRollup,
+  SessionModeResult,
+  TimedRunSummary,
+} from '@/features/questions/questionScoring';
+
+export type { TimedRunSummary };
 
 export type SessionHistoryEntry = {
   completedAt: string;
@@ -7,4 +13,7 @@ export type SessionHistoryEntry = {
   totalQuestions: number;
   correctAnswers: number;
   operationStats?: OperationStatsRollup;
+  timedRun?: TimedRunSummary;
 };
+
+export type SessionHistoryModeFilter = SessionModeResult | 'all';

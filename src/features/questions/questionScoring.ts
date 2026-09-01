@@ -11,7 +11,6 @@ import {
   parseQuotientRemainderString,
   quotientRemainderEquals,
 } from '@/features/questions/divisionRemainder';
-import { roundDecimal } from '@/features/questions/decimalArithmetic';
 import { formatFraction } from '@/features/questions/fractions';
 import { equationAnswerMatches, normalizeEquationAnswerInput } from '@/features/questions/equationUnknown';
 import { formatNumber, formatRoundingNumber } from '@/features/questions/mathExpressionFormat';
@@ -36,6 +35,7 @@ import {
 } from '@/features/questions/question.types';
 import { parseIntegerAnswer } from '@/utils/parseIntegerAnswer';
 import { fractionAnswerMatches } from '@/utils/parseFractionAnswer';
+import { capitalizeFirst } from '@/utils/textCase';
 
 export type OperationAttemptStats = {
   attempted: number;
@@ -46,7 +46,7 @@ export type OperationAttemptStats = {
 export type OperationStatsRollup = Partial<Record<MathOperation, OperationAttemptStats>>;
 
 function numericAnswersMatch(a: number, b: number): boolean {
-  return roundDecimal(a) === roundDecimal(b);
+  return Math.abs(a - b) < 1e-9;
 }
 
 export function correctAnswerDisplayLabel(q: MathQuestion): string {
@@ -70,13 +70,24 @@ export function correctAnswerDisplayLabel(q: MathQuestion): string {
   if (isGeometryQuestion(q)) {
     return String(q.correctAnswer);
   }
-  if (isComparisonQuestion(q) || isEquivalentExpressionQuestion(q) || isFractionVisualQuestion(q) || isShapeRecognitionQuestion(q) || isClockQuestion(q) || isPatternQuestion(q) || isCalculusQuestion(q) || isTrigonometryQuestion(q) || isLogarithmQuestion(q) || isNumberSenseQuestion(q)) {
+  if (isShapeRecognitionQuestion(q) || isPatternQuestion(q)) {
+    return capitalizeFirst(String(q.correctAnswer));
+  }
+  if (isComparisonQuestion(q) || isEquivalentExpressionQuestion(q) || isFractionVisualQuestion(q) || isClockQuestion(q) || isCalculusQuestion(q) || isTrigonometryQuestion(q) || isLogarithmQuestion(q) || isNumberSenseQuestion(q)) {
     return String(q.correctAnswer);
   }
   if (isEquationTwoUnknownQuestion(q)) {
     return String(q.correctAnswer);
   }
   return `x=${q.correctExpression}`;
+}
+
+/** Answer text embedded after prose such as “The correct answer is …”. */
+export function correctAnswerFeedbackLabel(q: MathQuestion): string {
+  if (isShapeRecognitionQuestion(q) || isPatternQuestion(q)) {
+    return String(q.correctAnswer);
+  }
+  return correctAnswerDisplayLabel(q);
 }
 
 export function answerOptionDisplayLabel(q: MathQuestion, option: number | string): string {
@@ -86,7 +97,10 @@ export function answerOptionDisplayLabel(q: MathQuestion, option: number | strin
   if (isArithmeticQuestion(q) && typeof option === 'number' && !Number.isInteger(option)) {
     return formatNumber(option);
   }
-  if (isFractionVisualQuestion(q) || isComparisonQuestion(q) || isEquivalentExpressionQuestion(q) || isShapeRecognitionQuestion(q) || isClockQuestion(q) || isPatternQuestion(q) || isCalculusQuestion(q) || isTrigonometryQuestion(q) || isLogarithmQuestion(q) || isNumberSenseQuestion(q)) {
+  if (isShapeRecognitionQuestion(q) || isPatternQuestion(q)) {
+    return capitalizeFirst(String(option));
+  }
+  if (isFractionVisualQuestion(q) || isComparisonQuestion(q) || isEquivalentExpressionQuestion(q) || isClockQuestion(q) || isCalculusQuestion(q) || isTrigonometryQuestion(q) || isLogarithmQuestion(q) || isNumberSenseQuestion(q)) {
     return String(option);
   }
   return String(option);
@@ -101,6 +115,12 @@ export function answerOptionsArePlainNumbers(q: MathQuestion): boolean {
     return /^[-+]?(?:\d+(?:\.\d+)?|\.\d+)$/.test(label) ||
       /^[-+]?\d+\s*\/\s*\d+$/.test(label);
   });
+}
+
+/** Full-width rows for symbolic labels and for exactly three choices (avoids a lone third button). */
+export function shouldStackAnswerOptions(q: MathQuestion): boolean {
+  if (q.answerOptions.length === 3) return true;
+  return !answerOptionsArePlainNumbers(q);
 }
 
 export function chosenAnswerDisplayLabel(q: MathQuestion, chosen: number | string | null): string {
@@ -201,6 +221,13 @@ export type QuizQuestionOutcome = {
 
 export type SessionModeResult = 'practice' | 'quiz' | 'timed';
 
+export type TimedRunSummary = {
+  survivedSeconds: number;
+  initialSeconds: number;
+  bonusSeconds: number;
+  penaltySeconds: number;
+};
+
 export type SessionResult = {
   totalQuestions: number;
   correctAnswers: number;
@@ -209,6 +236,7 @@ export type SessionResult = {
   sessionMode?: SessionModeResult;
   quizQuestionOutcomes?: QuizQuestionOutcome[];
   operationStats?: OperationStatsRollup;
+  timedRun?: TimedRunSummary;
 };
 
 export function computeScorePercentage(correct: number, total: number): number {
@@ -279,6 +307,7 @@ export function buildQuizSessionResult(
 export function buildTimedSessionResult(
   questions: MathQuestion[],
   answers: (number | string | null)[],
+  timedRun?: TimedRunSummary,
 ): SessionResult {
   const quizQuestionOutcomes: QuizQuestionOutcome[] = questions.map((q, i) => {
     const chosen = answers[i] ?? null;
@@ -298,5 +327,6 @@ export function buildTimedSessionResult(
     sessionMode: 'timed',
     quizQuestionOutcomes,
     operationStats: computeOperationStats(questions, answers),
+    timedRun,
   };
 }

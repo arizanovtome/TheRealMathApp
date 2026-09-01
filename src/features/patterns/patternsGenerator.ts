@@ -4,11 +4,15 @@ import type { PatternMathQuestion } from '@/features/questions/question.types';
 import { i18n } from '@/i18n';
 import { pickRandom, randomIntInclusive } from '@/utils/random';
 import type { BasicShape } from '@/features/shapes/shapeRecognition.types';
-import { basicShapeLabel } from '@/features/shapes/shapeRecognitionLabels';
+import { basicShapeLabel, colorAndShapeLabel } from '@/features/shapes/shapeRecognitionLabels';
 import { SHAPE_COLORS, type ShapeColor } from '@/features/shapes/shapeColors';
 import { getEnabledBasicShapes } from '@/features/shapes/shapeRecognitionConfig.utils';
 
 const VISIBLE_SHAPE_PATTERN_COUNT = 4;
+
+function labelShape(shape: BasicShape): string {
+  return basicShapeLabel(shape, i18n.t.bind(i18n));
+}
 
 function buildNumericMcOptions(correct: number, count: number): string[] {
   const correctLabel = String(correct);
@@ -132,7 +136,15 @@ function generateShapePattern(config: MathLearningConfig): Omit<PatternMathQuest
     { length: VISIBLE_SHAPE_PATTERN_COUNT },
     (_, i) => chosen[i % cycleLength]!,
   );
-  const correct = chosen[VISIBLE_SHAPE_PATTERN_COUNT % cycleLength]!;
+  const correctShape = chosen[VISIBLE_SHAPE_PATTERN_COUNT % cycleLength]!;
+  const correctAnswer = labelShape(correctShape);
+  const labeledShapes = enabledShapes.map((shape) => ({ shape, label: labelShape(shape) }));
+  const answerOptions = buildShapeMcOptions(
+    correctAnswer,
+    labeledShapes.map((item) => item.label),
+    Math.min(config.answerOptionsCount, enabledShapes.length),
+  );
+  const shapePatternAnswerOptions = labeledShapes.filter((item) => answerOptions.includes(item.label));
   const sequenceDisplay = `${sequenceShapes.join(' ')} ?`;
   return {
     kind: 'pattern',
@@ -140,8 +152,9 @@ function generateShapePattern(config: MathLearningConfig): Omit<PatternMathQuest
     subtype: 'shape_pattern',
     questionText: i18n.t('questions:whatShapeComesNext'),
     sequenceDisplay,
-    correctAnswer: correct,
-    answerOptions: buildShapeMcOptions(correct, enabledShapes, Math.min(config.answerOptionsCount, enabledShapes.length)),
+    correctAnswer,
+    answerOptions,
+    shapePatternAnswerOptions,
     requiresMultipleChoice: true,
     sequenceShapes,
   };
@@ -165,7 +178,7 @@ function generateColoredShapePattern(config: MathLearningConfig): Omit<PatternMa
     (_, index) => cycle[index % cycleLength]!,
   );
   const label = (item: { shape: BasicShape; color: ShapeColor }) =>
-    `${i18n.t(`common:colors.${item.color}`)} ${basicShapeLabel(item.shape, i18n.t.bind(i18n))}`;
+    colorAndShapeLabel(item.color, item.shape, i18n.t.bind(i18n), i18n.language);
   const correctItem = cycle[VISIBLE_SHAPE_PATTERN_COUNT % cycleLength]!;
   const correctAnswer = label(correctItem);
   const candidates = [

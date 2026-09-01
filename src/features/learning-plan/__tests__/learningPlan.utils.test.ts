@@ -602,4 +602,39 @@ describe("validateLearningConfig", () => {
     const shaped = ensureLearningConfigShape(withoutConfirm as MathLearningConfig);
     expect(shaped.confirmAnswerBeforeSubmit).toBe(false);
   });
+
+  it("migrates the legacy timed penalty switch to seconds", () => {
+    const {
+      timedWrongPenaltySeconds: _wrong,
+      timedCorrectBonusSeconds: _bonus,
+      ...legacy
+    } = basePlan;
+    const enabled = ensureLearningConfigShape({
+      ...legacy,
+      timedSubtractSecondsOnWrong: true,
+    } as MathLearningConfig);
+    const disabled = ensureLearningConfigShape({
+      ...legacy,
+      timedSubtractSecondsOnWrong: false,
+    } as MathLearningConfig);
+
+    expect(enabled.timedWrongPenaltySeconds).toBe(15);
+    expect(enabled.timedCorrectBonusSeconds).toBe(0);
+    expect(disabled.timedWrongPenaltySeconds).toBe(0);
+  });
+
+  it("supports timed-run duration presets", () => {
+    expect(
+      ensureLearningConfigShape({ ...basePlan, timedDurationMinutes: 0.25 })
+        .timedDurationMinutes,
+    ).toBe(0.25);
+    expect(
+      ensureLearningConfigShape({ ...basePlan, timedDurationMinutes: 0.5 })
+        .timedDurationMinutes,
+    ).toBe(0.5);
+    expect(
+      ensureLearningConfigShape({ ...basePlan, timedDurationMinutes: 10 })
+        .timedDurationMinutes,
+    ).toBe(10);
+  });
 });
