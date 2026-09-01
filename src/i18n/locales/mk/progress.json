@@ -14,10 +14,12 @@
   "lastSessionsAvg": "Просек на последни {{n}} сесии: {{pct}}%",
   "recentScores": "Неодамнешни резултати (најнови прво)",
   "sessionA11y": "{{mode}}, {{pct}} проценти",
-  "timedRunSummary": "Одговараше {{duration}} · {{correct}} точни",
-  "timedRunStartedOnly": "Почна {{duration}}",
-  "timedRunSettings": "Почна {{duration}} · {{adjustments}}",
-  "timedRunLegacySummary": "{{correct}}/{{total}} точни · {{pct}}%",
+  "timedRunTotalTime": "Вкупно време: {{duration}}",
+  "timedRunCorrectAnswers": "{{count}} точни одговори",
+  "timedRunWrongAnswers": "{{count}} погрешни одговори",
+  "timedRunAdjustments": "+{{bonus}}s / −{{penalty}}s",
+  "timedRunStartSettings": "Почетно време: {{duration}} · {{adjustments}}",
+  "timedRunLegacySummary": "{{correct}} точни · {{wrong}} погрешни одговори",
   "opNoProblems": "{{label}}, сè уште нема задачи",
   "opStats": "{{label}}, {{pct}}% точни од {{attempted}} задачи"
 }

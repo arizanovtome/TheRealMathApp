@@ -6,8 +6,8 @@ import { RECENT_SESSIONS_DISPLAY_COUNT } from '@/features/progress/sessionHistor
 import {
   formatSessionDayLabel,
   formatSessionModeLabel,
-  formatTimedRunSettingsLabel,
-  formatTimedRunSurvivedLabel,
+  formatTimedRunAdjustmentsLabel,
+  formatTimedRunTotalTimeLabel,
 } from '@/features/progress/sessionLabels';
 import { useAppTranslation } from '@/i18n/useAppTranslation';
 import { colors } from '@/theme/colors';
@@ -34,8 +34,9 @@ export function RecentSessionList({ history }: RecentSessionListProps) {
       {rows.map((entry, i) => {
         const isTimed = entry.sessionMode === 'timed';
         const timedRun = entry.timedRun;
+        const wrongAnswers = Math.max(0, entry.totalQuestions - entry.correctAnswers);
         const a11yLabel = isTimed && timedRun
-          ? `${formatSessionDayLabel(entry.completedAt, locale, t)}, ${formatSessionModeLabel(entry.sessionMode, t)}, ${formatTimedRunSurvivedLabel(timedRun, entry.correctAnswers, t)}`
+          ? `${formatSessionDayLabel(entry.completedAt, locale, t)}, ${formatSessionModeLabel(entry.sessionMode, t)}, ${entry.scorePercentage} percent, ${formatTimedRunTotalTimeLabel(timedRun, t)}, ${t('progress:timedRunCorrectAnswers', { count: entry.correctAnswers })}, ${t('progress:timedRunWrongAnswers', { count: wrongAnswers })}, ${formatTimedRunAdjustmentsLabel(timedRun, t)}`
           : `${formatSessionDayLabel(entry.completedAt, locale, t)}, ${formatSessionModeLabel(entry.sessionMode, t)}, ${entry.scorePercentage} percent`;
 
         return (
@@ -54,19 +55,24 @@ export function RecentSessionList({ history }: RecentSessionListProps) {
                   {formatSessionModeLabel(entry.sessionMode, t)}
                 </AppText>
               </View>
-              {!isTimed || !timedRun ? (
-                <AppText variant="body" style={styles.pct}>
-                  {entry.scorePercentage}%
-                </AppText>
-              ) : null}
+              <AppText variant="body" style={styles.pct}>
+                {entry.scorePercentage}%
+              </AppText>
             </View>
             {isTimed && timedRun ? (
               <View style={styles.timedDetails}>
                 <AppText variant="body" muted style={styles.timedLine}>
-                  {formatTimedRunSurvivedLabel(timedRun, entry.correctAnswers, t)}
+                  {formatTimedRunTotalTimeLabel(
+                    timedRun,
+                    t,
+                  )}
+                  {' · '}
+                  {formatTimedRunAdjustmentsLabel(timedRun, t)}
                 </AppText>
-                <AppText variant="label" muted style={styles.timedLine}>
-                  {formatTimedRunSettingsLabel(timedRun, t)}
+                <AppText variant="body" muted style={styles.timedLine}>
+                  {t('progress:timedRunCorrectAnswers', { count: entry.correctAnswers })}
+                  {' · '}
+                  {t('progress:timedRunWrongAnswers', { count: wrongAnswers })}
                 </AppText>
               </View>
             ) : null}
@@ -74,8 +80,7 @@ export function RecentSessionList({ history }: RecentSessionListProps) {
               <AppText variant="label" muted style={styles.timedFallback}>
                 {t('progress:timedRunLegacySummary', {
                   correct: entry.correctAnswers,
-                  total: entry.totalQuestions,
-                  pct: entry.scorePercentage,
+                  wrong: wrongAnswers,
                 })}
               </AppText>
             ) : null}

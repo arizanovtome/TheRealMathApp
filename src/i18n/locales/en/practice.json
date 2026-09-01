@@ -2,6 +2,7 @@
   "greatJobName": "Great job, {{name}}!",
   "scoreSummary": "You answered {{correct}} out of {{total}} correctly.",
   "scorePct": "Score: {{pct}}%",
+  "timedAnswerSummary": "{{correct}} correct · {{wrong}} wrong · {{pct}}% accuracy",
   "quizAgain": "Quiz again",
   "timedAgain": "Timed run again",
   "practiceAgain": "Practice again",

@@ -2,6 +2,7 @@
   "greatJobName": "Браво, {{name}}!",
   "scoreSummary": "Точно одговоривте на {{correct}} од {{total}}.",
   "scorePct": "Резултат: {{pct}}%",
+  "timedAnswerSummary": "{{correct}} точни · {{wrong}} погрешни · {{pct}}% точност",
   "quizAgain": "Квиз повторно",
   "timedAgain": "Вежбање на време повторно",
   "practiceAgain": "Вежбај повторно",

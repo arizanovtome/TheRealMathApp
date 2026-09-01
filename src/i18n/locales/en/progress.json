@@ -14,10 +14,12 @@
   "lastSessionsAvg": "Last {{n}} sessions average: {{pct}}%",
   "recentScores": "Recent scores (newest first)",
   "sessionA11y": "{{mode}}, {{pct}} percent",
-  "timedRunSummary": "Lasted {{duration}} · {{correct}} correct",
-  "timedRunStartedOnly": "Started {{duration}}",
-  "timedRunSettings": "Started {{duration}} · {{adjustments}}",
-  "timedRunLegacySummary": "{{correct}}/{{total}} correct · {{pct}}%",
+  "timedRunTotalTime": "Total time: {{duration}}",
+  "timedRunCorrectAnswers": "{{count}} correct answers",
+  "timedRunWrongAnswers": "{{count}} wrong answers",
+  "timedRunAdjustments": "+{{bonus}}s / −{{penalty}}s",
+  "timedRunStartSettings": "Start time: {{duration}} · {{adjustments}}",
+  "timedRunLegacySummary": "{{correct}} correct · {{wrong}} wrong answers",
   "opNoProblems": "{{label}}, no problems yet",
   "opStats": "{{label}}, {{pct}}% correct over {{attempted}} problems"
 }

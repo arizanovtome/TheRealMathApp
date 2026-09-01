@@ -1,7 +1,4 @@
-import {
-  TIMED_BONUS_HEADROOM_SECONDS,
-  type TimedDurationMinutes,
-} from '@/features/learning-plan/learningPlan.types';
+import type { TimedDurationMinutes } from '@/features/learning-plan/learningPlan.types';
 
 export function formatTimedDurationCompact(minutes: TimedDurationMinutes): string {
   if (minutes < 1) {
@@ -21,13 +18,8 @@ export function formatTimedSecondsClock(totalSeconds: number): string {
 export function adjustedTimedRemainingSeconds(
   currentRemaining: number,
   delta: number,
-  initialDuration: number,
 ): number {
   const current = Math.max(0, Math.round(currentRemaining));
   const change = Math.round(delta);
-  const initial = Math.max(0, Math.round(initialDuration));
-  return Math.min(
-    initial + TIMED_BONUS_HEADROOM_SECONDS,
-    Math.max(0, current + change),
-  );
+  return Math.max(0, current + change);
 }

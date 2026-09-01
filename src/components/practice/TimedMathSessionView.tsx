@@ -132,7 +132,6 @@ export function TimedMathSessionView() {
   const scrollToInput = useScrollToFocusedInput(scrollRef, keyboardInset);
 
   const [remaining, setRemaining] = useState(-1);
-  const [paused, setPaused] = useState(false);
   const [current, setCurrent] = useState<MathQuestion | null>(null);
   const [records, setRecords] = useState<
     { q: MathQuestion; a: number | string | null }[]
@@ -148,8 +147,6 @@ export function TimedMathSessionView() {
   const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const seenQuestionTextRef = useRef(new Set<string>());
   const survivedSecondsRef = useRef(0);
-  const pausedRef = useRef(paused);
-  pausedRef.current = paused;
 
   useEffect(() => {
     if (!effectiveConfig || !validation?.valid) {
@@ -160,7 +157,6 @@ export function TimedMathSessionView() {
       setShowFeedback(false);
       setAnswerInputText("");
       setInputError("");
-      setPaused(false);
       finishingRef.current = false;
       survivedSecondsRef.current = 0;
       return;
@@ -182,28 +178,24 @@ export function TimedMathSessionView() {
     setShowFeedback(false);
     setAnswerInputText("");
     setInputError("");
-    setPaused(false);
     finishingRef.current = false;
   }, [effectiveConfig, validation?.valid]);
 
   useEffect(() => {
     if (
       finishingRef.current ||
-      paused ||
-      remaining <= 0 ||
       !effectiveConfig ||
       !validation?.valid
     ) {
       return;
     }
     const t = setInterval(() => {
-      if (!pausedRef.current) {
-        survivedSecondsRef.current += 1;
-      }
+      if (finishingRef.current) return;
+      survivedSecondsRef.current += 1;
       setRemaining((s) => (s <= 1 ? 0 : s - 1));
     }, 1000);
     return () => clearInterval(t);
-  }, [paused, remaining, effectiveConfig, validation?.valid]);
+  }, [effectiveConfig, validation?.valid]);
 
   useEffect(() => {
     if (
@@ -218,7 +210,6 @@ export function TimedMathSessionView() {
       clearTimeout(advanceTimerRef.current);
       advanceTimerRef.current = null;
     }
-    setPaused(true);
     setLastSessionResult(
       buildTimedSessionResult(
         records.map((r) => r.q),
@@ -277,7 +268,6 @@ export function TimedMathSessionView() {
       if (!current || !effectiveConfig || finishingRef.current) return;
       const qSnapshot = current;
       clearAdvanceTimer();
-      setPaused(true);
       setSelected(answer);
       setShowFeedback(true);
       const ok = submittedAnswerIsCorrect(qSnapshot, answer);
@@ -286,12 +276,10 @@ export function TimedMathSessionView() {
         : -effectiveConfig.timedWrongPenaltySeconds;
       setFeedbackTimeDelta(configuredDelta !== 0 ? configuredDelta : null);
       if (configuredDelta !== 0) {
-        const initialSeconds = Math.round(effectiveConfig.timedDurationMinutes * 60);
         setRemaining((currentRemaining) =>
           adjustedTimedRemainingSeconds(
             currentRemaining,
             configuredDelta,
-            initialSeconds,
           ),
         );
         const seconds = Math.abs(configuredDelta);
@@ -319,7 +307,6 @@ export function TimedMathSessionView() {
         setSelected(null);
         setFeedbackTimeDelta(null);
         loadNextQuestion();
-        setPaused(false);
       }, FEEDBACK_MS);
     },
     [current, effectiveConfig, clearAdvanceTimer, loadNextQuestion, records, t],
