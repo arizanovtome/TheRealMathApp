@@ -7,8 +7,8 @@ import { ProgressInsights } from '@/components/progress/ProgressInsights';
 import { QuizResultBreakdown } from '@/components/result/QuizResultBreakdown';
 import { ROUTES } from '@/constants/routes';
 import {
-  formatTimedRunSettingsLabel,
-  formatTimedRunSurvivedLabel,
+  formatTimedRunStartSettingsLabel,
+  formatTimedRunTotalTimeLabel,
 } from '@/features/progress/sessionLabels';
 import { useAppTranslation } from '@/i18n/useAppTranslation';
 import { useAppStore } from '@/store/useAppStore';
@@ -45,27 +45,38 @@ export default function ResultScreen() {
   return (
     <AppScreen scroll>
       <AppText variant="title">{t('practice:greatJobName', { name })}</AppText>
-      <AppText variant="body">
-        {t('practice:scoreSummary', {
-          correct: lastSessionResult.correctAnswers,
-          total: lastSessionResult.totalQuestions,
-        })}
-      </AppText>
-      <AppText variant="subtitle">
-        {t('practice:scorePct', { pct: lastSessionResult.scorePercentage })}
-      </AppText>
+      {sessionMode === 'timed' ? (
+        <AppText variant="subtitle">
+          {t('practice:timedAnswerSummary', {
+            correct: lastSessionResult.correctAnswers,
+            wrong: lastSessionResult.wrongAnswers,
+            pct: lastSessionResult.scorePercentage,
+          })}
+        </AppText>
+      ) : (
+        <>
+          <AppText variant="body">
+            {t('practice:scoreSummary', {
+              correct: lastSessionResult.correctAnswers,
+              total: lastSessionResult.totalQuestions,
+            })}
+          </AppText>
+          <AppText variant="subtitle">
+            {t('practice:scorePct', { pct: lastSessionResult.scorePercentage })}
+          </AppText>
+        </>
+      )}
 
       {lastSessionResult.timedRun ? (
         <>
           <AppText variant="body" muted>
-            {formatTimedRunSurvivedLabel(
+            {formatTimedRunTotalTimeLabel(
               lastSessionResult.timedRun,
-              lastSessionResult.correctAnswers,
               t,
             )}
           </AppText>
           <AppText variant="body" muted>
-            {formatTimedRunSettingsLabel(lastSessionResult.timedRun, t)}
+            {formatTimedRunStartSettingsLabel(lastSessionResult.timedRun, t)}
           </AppText>
         </>
       ) : null}

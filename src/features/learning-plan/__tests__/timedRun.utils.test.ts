@@ -25,15 +25,15 @@ describe('formatTimedSecondsClock', () => {
 
 describe('adjustedTimedRemainingSeconds', () => {
   it('adds and removes configured seconds', () => {
-    expect(adjustedTimedRemainingSeconds(40, 2, 60)).toBe(42);
-    expect(adjustedTimedRemainingSeconds(40, -5, 60)).toBe(35);
+    expect(adjustedTimedRemainingSeconds(40, 2)).toBe(42);
+    expect(adjustedTimedRemainingSeconds(40, -5)).toBe(35);
   });
 
   it('never drops below zero', () => {
-    expect(adjustedTimedRemainingSeconds(3, -5, 60)).toBe(0);
+    expect(adjustedTimedRemainingSeconds(3, -5)).toBe(0);
   });
 
-  it('caps bonus time at thirty seconds above the starting duration', () => {
-    expect(adjustedTimedRemainingSeconds(89, 5, 60)).toBe(90);
+  it('always applies the full configured bonus', () => {
+    expect(adjustedTimedRemainingSeconds(89, 5)).toBe(94);
   });
 });

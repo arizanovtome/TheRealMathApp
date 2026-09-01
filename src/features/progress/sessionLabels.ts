@@ -1,39 +1,43 @@
 import type { TFunction } from 'i18next';
 
-import { formatTimedSecondsClock } from '@/features/learning-plan/timedRun.utils';
-import type { TimedRunSummary } from '@/features/questions/questionScoring';
+import {
+  formatTimedSecondsClock,
+} from '@/features/learning-plan/timedRun.utils';
+import type {
+  SessionModeResult,
+  TimedRunSummary,
+} from '@/features/questions/questionScoring';
 import { i18n } from '@/i18n';
 import type { SupportedLocale } from '@/i18n/types';
 import { LOCALE_BCP47 } from '@/i18n/types';
-import type { SessionModeResult } from '@/features/questions/questionScoring';
 import { localDateKey, parseIsoToLocalDateKey, previousLocalDateKey } from '@/features/progress/sessionHistory';
 
-export function formatTimedRunSurvivedLabel(
+export function formatTimedRunTotalTimeLabel(
   timedRun: TimedRunSummary,
-  correctAnswers: number,
   t: TFunction = i18n.t.bind(i18n),
 ): string {
-  return t('progress:timedRunSummary', {
+  return t('progress:timedRunTotalTime', {
     duration: formatTimedSecondsClock(timedRun.survivedSeconds),
-    correct: correctAnswers,
   });
 }
 
-export function formatTimedRunSettingsLabel(
+export function formatTimedRunAdjustmentsLabel(
   timedRun: TimedRunSummary,
   t: TFunction = i18n.t.bind(i18n),
 ): string {
-  const parts: string[] = [];
-  if (timedRun.bonusSeconds > 0) parts.push(`+${timedRun.bonusSeconds}s`);
-  if (timedRun.penaltySeconds > 0) parts.push(`−${timedRun.penaltySeconds}s`);
-  if (parts.length === 0) {
-    return t('progress:timedRunStartedOnly', {
-      duration: formatTimedSecondsClock(timedRun.initialSeconds),
-    });
-  }
-  return t('progress:timedRunSettings', {
+  return t('progress:timedRunAdjustments', {
+    bonus: timedRun.bonusSeconds,
+    penalty: timedRun.penaltySeconds,
+  });
+}
+
+export function formatTimedRunStartSettingsLabel(
+  timedRun: TimedRunSummary,
+  t: TFunction = i18n.t.bind(i18n),
+): string {
+  return t('progress:timedRunStartSettings', {
     duration: formatTimedSecondsClock(timedRun.initialSeconds),
-    adjustments: parts.join(' / '),
+    adjustments: formatTimedRunAdjustmentsLabel(timedRun, t),
   });
 }
 
