@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { usePreventRemove } from 'expo-router/react-navigation';
+import { usePreventRemove } from '@react-navigation/native';
 import { Redirect, useNavigation, useRouter } from 'expo-router';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet } from 'react-native';

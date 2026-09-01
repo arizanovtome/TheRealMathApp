@@ -12,9 +12,17 @@
       "bundleIdentifier": "com.tome.arizanov.TheRealMathApp",
       "buildNumber": "1.0.0"
     },
+    "androidStatusBar": {
+      "translucent": true,
+      "barStyle": "light-content"
+    },
+    "androidNavigationBar": {
+      "enforceContrast": true
+    },
     "android": {
       "versionCode": 100002,
       "package": "com.tome.arizanov.TheRealMathApp",
+      "edgeToEdgeEnabled": true,
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "backgroundColor": "#15372B",
@@ -43,10 +51,7 @@
       ],
       "expo-font",
       "expo-localization",
-      "expo-screen-orientation",
-      "expo-image",
-      "expo-status-bar",
-      "expo-web-browser"
+      "expo-screen-orientation"
     ],
     "experiments": {
       "typedRoutes": true,
