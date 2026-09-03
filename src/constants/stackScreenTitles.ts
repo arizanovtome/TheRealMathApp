@@ -24,6 +24,8 @@ export function stackScreenTitle(routeName: string, t: TFunction): string {
     'learning-plan/session': t('settings:sessionSettings'),
     'learning-plan/topics': t('settings:topics'),
     'learning-plan/topics/[category]': t('settings:topics'),
+    'learning-plan/share': t('settings:sharePlanSection'),
+    'learning-plan/import': t('settings:importPlanTitle'),
     result: t('navigation:results'),
     'onboarding/name': t('navigation:profileSetup'),
     'onboarding/age': t('navigation:yourAge'),

@@ -3,6 +3,7 @@ import type { MathLearningConfig } from '@/features/learning-plan/learningPlan.t
 import { getEnabledGeometrySources } from '@/features/geometry/geometryConfig.utils';
 import {
   formatPiForm,
+  formulasMatch,
   getFormulaForShape,
   listFormulasForMeasure,
   measureLabel,
@@ -441,10 +442,16 @@ function buildFormulaMcOptions(
   correct: GeometryFormulaEntry,
   optionCount: AnswerOptionsCount,
 ): string[] {
-  const pool = listFormulasForMeasure(measure)
-    .filter((formula) => formula.canonical !== correct.canonical)
-    .map((formula) => formula.label)
-    .filter((label) => label !== correct.label);
+  const seenLabels = new Set<string>();
+  const pool: string[] = [];
+  for (const formula of listFormulasForMeasure(measure)) {
+    if (formula.canonical === correct.canonical) continue;
+    if (formula.label === correct.label) continue;
+    if (formulasMatch(formula.label, correct.label)) continue;
+    if (seenLabels.has(formula.label)) continue;
+    seenLabels.add(formula.label);
+    pool.push(formula.label);
+  }
   const shuffled = [...pool].sort(() => Math.random() - 0.5);
   const wrong = shuffled.slice(0, optionCount - 1);
   const options = [...wrong, correct.label];

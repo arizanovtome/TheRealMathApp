@@ -13,7 +13,7 @@
       "buildNumber": "1.0.0"
     },
     "android": {
-      "versionCode": 100002,
+      "versionCode": 100004,
       "package": "com.tome.arizanov.TheRealMathApp",
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
@@ -46,7 +46,16 @@
       "expo-screen-orientation",
       "expo-image",
       "expo-status-bar",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableMinifyInReleaseBuilds": true
+          }
+        }
+      ],
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true,

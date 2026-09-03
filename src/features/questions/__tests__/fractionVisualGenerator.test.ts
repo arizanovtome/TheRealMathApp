@@ -3,7 +3,7 @@ import { getRecommendedLearningPlan } from '@/features/learning-plan/recommended
 import { tryGenerateFractionVisualQuestion } from '@/features/questions/fractionVisualGenerator';
 
 describe('fractionVisualGenerator', () => {
-  it('generates MC fraction identification question', () => {
+  it('generates a fraction identification question that supports keyboard entry', () => {
     const config = {
       ...getRecommendedLearningPlan(8),
       fractionVisual: { enabled: true },
@@ -17,6 +17,7 @@ describe('fractionVisualGenerator', () => {
     expect(q!.shaded.numerator).toBeLessThan(q!.shaded.denominator);
     expect(q!.answerOptions).toContain(q!.correctAnswer);
     expect(q!.answerOptions.length).toBe(4);
+    expect(q!.requiresMultipleChoice).toBe(false);
   });
 
   it('randomizes between bar and circle models', () => {

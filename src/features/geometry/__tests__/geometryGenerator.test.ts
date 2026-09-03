@@ -146,6 +146,41 @@ describe('geometryGenerator', () => {
     }
   });
 
+  it('does not repeat the same formula label when six choices are requested', async () => {
+    try {
+      await i18n.changeLanguage('en');
+      const config = geometryConfig({
+        answerOptionsCount: 6,
+        questionKinds: { formula: true, calculate: false },
+        perimeter: {
+          enabled: true,
+          shapes: {
+            ...DEFAULT_GEOMETRY_CONFIG.perimeter.shapes,
+            square: true,
+            rectangle: true,
+            triangle: true,
+            circle: true,
+            rhombus: true,
+            kite: true,
+            parallelogram: true,
+            trapezoid: true,
+          },
+        },
+        area: { enabled: false, shapes: DEFAULT_GEOMETRY_CONFIG.area.shapes },
+        volume: { enabled: false, shapes: DEFAULT_GEOMETRY_CONFIG.volume.shapes },
+      });
+
+      for (let i = 0; i < 30; i++) {
+        const q = tryGenerateGeometryQuestion(config);
+        expect(q).not.toBeNull();
+        expect(q!.subtype).toBe('formula');
+        expect(new Set(q!.answerOptions).size).toBe(q!.answerOptions.length);
+      }
+    } finally {
+      await i18n.changeLanguage('en');
+    }
+  });
+
   it('generates integer calculate questions for a square', () => {
     const config = geometryConfig({
       questionKinds: { formula: false, calculate: true },

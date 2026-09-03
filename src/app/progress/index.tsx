@@ -4,10 +4,11 @@ import { StyleSheet, View } from 'react-native';
 import { AppScreen } from '@/components/common/AppScreen';
 import { AppText } from '@/components/common/AppText';
 import { Card } from '@/components/common/Card';
+import { OperationStatsByTopic } from '@/components/progress/OperationStatsByTopic';
 import { RecentSessionList } from '@/components/progress/RecentSessionList';
 import { SessionModeFilter } from '@/components/progress/SessionModeFilter';
-import { StreakAndOperationStats } from '@/components/progress/StreakAndOperationStats';
-import { computeOperationCorrectSnapshots } from '@/features/progress/adaptation';
+import { StreakCard } from '@/components/progress/StreakCard';
+import { computeOperationCorrectSnapshots, hasOperationStatsSnapshots } from '@/features/progress/adaptation';
 import type { SessionHistoryModeFilter } from '@/features/progress/sessionHistory.types';
 import {
   RECENT_SESSIONS_DISPLAY_COUNT,
@@ -32,8 +33,21 @@ export default function ProgressScreen() {
   );
 
   const streak = computeCurrentStreak(sessionHistory);
-  const snapshots = computeOperationCorrectSnapshots(sessionHistory, SESSION_HISTORY_LIMIT);
+  const filteredSnapshots = useMemo(
+    () => computeOperationCorrectSnapshots(filteredHistory, SESSION_HISTORY_LIMIT),
+    [filteredHistory],
+  );
+  const showTopicStats = hasOperationStatsSnapshots(filteredSnapshots);
   const filteredAvg = averageScoreRecent(filteredHistory, RECENT_SESSIONS_DISPLAY_COUNT);
+
+  const modeLabel =
+    modeFilter === 'practice'
+      ? t('common:practice')
+      : modeFilter === 'quiz'
+        ? t('common:quiz')
+        : modeFilter === 'timed'
+          ? t('common:timed')
+          : null;
 
   return (
     <AppScreen scroll>
@@ -43,43 +57,40 @@ export default function ProgressScreen() {
       </AppText>
 
       <Card>
-        <StreakAndOperationStats streak={streak} snapshots={snapshots} />
-        {filteredAvg !== null && modeFilter !== 'all' ? (
-          <AppText variant="body" muted style={styles.avgLine}>
-            {t('progress:filteredAvg', {
-              n: Math.min(filteredHistory.length, RECENT_SESSIONS_DISPLAY_COUNT),
-              avg: filteredAvg,
-              mode:
-                modeFilter === 'practice'
-                  ? t('common:practice')
-                  : modeFilter === 'quiz'
-                    ? t('common:quiz')
-                    : t('common:timed'),
-            })}
-          </AppText>
-        ) : filteredAvg !== null ? (
-          <AppText variant="body" muted style={styles.avgLine}>
-            {t('progress:overallAvg', {
-              n: Math.min(sessionHistory.length, RECENT_SESSIONS_DISPLAY_COUNT),
-              avg: filteredAvg,
-            })}
-          </AppText>
-        ) : null}
+        <StreakCard streak={streak} />
       </Card>
 
       <View style={styles.section}>
         <AppText variant="subtitle">{t('common:sessions')}</AppText>
         <SessionModeFilter value={modeFilter} onChange={setModeFilter} />
-        <RecentSessionList history={filteredHistory} />
+        {filteredAvg !== null ? (
+          <AppText variant="body" muted>
+            {modeFilter !== 'all' && modeLabel
+              ? t('progress:filteredAvg', {
+                  n: Math.min(filteredHistory.length, RECENT_SESSIONS_DISPLAY_COUNT),
+                  avg: filteredAvg,
+                  mode: modeLabel,
+                })
+              : t('progress:overallAvg', {
+                  n: Math.min(filteredHistory.length, RECENT_SESSIONS_DISPLAY_COUNT),
+                  avg: filteredAvg,
+                })}
+          </AppText>
+        ) : null}
+        <RecentSessionList history={filteredHistory} modeFilter={modeFilter} />
       </View>
+
+      {showTopicStats ? (
+        <View style={styles.section}>
+          <AppText variant="subtitle">{t('progress:topicAccuracy')}</AppText>
+          <OperationStatsByTopic snapshots={filteredSnapshots} />
+        </View>
+      ) : null}
     </AppScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  avgLine: {
-    marginTop: spacing.md,
-  },
   section: {
     gap: spacing.sm,
   },

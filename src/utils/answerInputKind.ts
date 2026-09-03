@@ -4,13 +4,17 @@ import {
   isEquationTwoUnknownQuestion,
   isEquationUnknownQuestion,
   isFractionQuestion,
+  isFractionVisualQuestion,
   isGeometryQuestion,
 } from '@/features/questions/question.types';
 import type { AnswerInputKind } from '@/utils/answerInputKeyboard';
 
 export function answerInputKindForQuestion(q: MathQuestion): AnswerInputKind {
   if (isEquationUnknownQuestion(q)) return 'equation';
-  if (isArithmeticQuestion(q) && isFractionQuestion(q)) return 'fraction';
+  if (
+    (isArithmeticQuestion(q) && isFractionQuestion(q)) ||
+    isFractionVisualQuestion(q)
+  ) return 'fraction';
   return 'numeric';
 }
 

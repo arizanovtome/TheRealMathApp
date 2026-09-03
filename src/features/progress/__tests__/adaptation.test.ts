@@ -3,6 +3,7 @@ import {
   aggregateOperationStatsFromHistory,
   computeAdaptationSuggestion,
   computeOperationCorrectSnapshots,
+  hasOperationStatsSnapshots,
 } from '@/features/progress/adaptation';
 import type { SessionHistoryEntry } from '@/features/progress/sessionHistory.types';
 
@@ -89,5 +90,20 @@ describe('computeOperationCorrectSnapshots', () => {
     expect(snap.rounding.attempted).toBe(0);
     expect(snap.order_of_operations.correctPercent).toBe(null);
     expect(snap.order_of_operations.attempted).toBe(0);
+  });
+});
+
+describe('hasOperationStatsSnapshots', () => {
+  it('returns false when every topic has zero attempts', () => {
+    const snap = computeOperationCorrectSnapshots([], 5);
+    expect(hasOperationStatsSnapshots(snap)).toBe(false);
+  });
+
+  it('returns true when at least one topic has attempts', () => {
+    const snap = computeOperationCorrectSnapshots(
+      [entry({ addition: { attempted: 2, wrong: 0 } })],
+      5,
+    );
+    expect(hasOperationStatsSnapshots(snap)).toBe(true);
   });
 });

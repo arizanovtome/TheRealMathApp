@@ -175,6 +175,25 @@ describe('questionScoring', () => {
     expect(correctAnswerDisplayLabel(q)).toBe('3/4');
   });
 
+  it('scores typed visual fraction answers by value', () => {
+    const q: MathQuestion = {
+      kind: 'fraction_visual',
+      id: 'fraction-visual-score',
+      operation: 'fraction_visual',
+      model: 'circle',
+      shaded: { numerator: 4, denominator: 5 },
+      questionText: 'What fraction is shaded?',
+      correctAnswer: '4/5',
+      answerOptions: ['2/5', '4/5', '1/2', '9/10'],
+      requiresMultipleChoice: false,
+    };
+
+    expect(submittedAnswerIsCorrect(q, '4/5')).toBe(true);
+    expect(submittedAnswerIsCorrect(q, '8/10')).toBe(true);
+    expect(submittedAnswerIsCorrect(q, '0.8')).toBe(true);
+    expect(submittedAnswerIsCorrect(q, '3/5')).toBe(false);
+  });
+
   it('requires the exact decimal multiplication result instead of a rounded tenth', () => {
     const q: MathQuestion = {
       kind: 'arithmetic',

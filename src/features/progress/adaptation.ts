@@ -71,6 +71,12 @@ export function computeOperationCorrectSnapshots(
   return result;
 }
 
+export function hasOperationStatsSnapshots(
+  snapshots: Record<MathOperation, OperationCorrectSnapshot>,
+): boolean {
+  return ALL_OPS.some((op) => snapshots[op]!.attempted > 0);
+}
+
 /**
  * If recent misses cluster on one enabled operation, suggest focused practice.
  */

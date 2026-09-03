@@ -7,6 +7,8 @@ export const ROUTES = {
   settingsProfile: '/learning-plan/profile',
   settingsSession: '/learning-plan/session',
   settingsTopics: '/learning-plan/topics',
+  settingsSharePlan: '/learning-plan/share',
+  settingsImportPlan: '/learning-plan/import',
   settingsTopicCategory: (category: string) => `/learning-plan/topics/${category}` as const,
   practice: '/practice',
   quiz: '/quiz',
