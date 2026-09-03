@@ -1,5 +1,9 @@
 # Business Requirements Document: The Real Math
 
+**Last updated:** 3 September 2026
+
+**Current implementation baseline:** Expo SDK 57
+
 ## 1. Document Purpose
 
 This document defines the business and functional requirements for a React Native Expo mobile application that helps people learn and practice math. The focus of this document is the application behavior, learning flow, configuration model, and question-generation logic.
@@ -33,7 +37,7 @@ The main learning operations are:
 - Equations with two unknowns (`x` and `y`) — when enabled
 - **Geometry** (perimeter, area, volume — formula and calculate questions)
 - **Comparison** (relational, ordering, expression compare, and cross-type compare — see §25)
-- **Fraction recognition** (visual bar models — see §28)
+- **Fraction recognition** (visual bar and circle models — see §28)
 - **Shapes** (shape/color recognition and visual patterns — see §28.6)
 - **Numbers / early number sense** (before/after, missing numbers, odd/even — see §39); visual counting and quantity comparison are configured under Shapes
 - **Clock / time** (analog read and elapsed time — see §31)
@@ -44,11 +48,13 @@ The main learning operations are:
 - **Linear and quadratic equations** (multi-step linear equations and factorable quadratics — see §43)
 - **Limits** (direct substitution, factor-and-cancel, infinity, and rationalization limits — see §44)
 
-**Shipped:** comparison (all subtypes in §25), equations with **two** unknowns (`x` and `y`), **linear and quadratic equations** (§43), **limits** (§44), **Learn** reference library (23 topics), visual fraction recognition, shape recognition, clock/time, patterns, **decimal toggles** on basic operations (1 decimal place), trigonometry v1 (§38), **logarithms** (§41), calculus with power/constant/sum, natural log, trig, and quotient/simplify-fraction rules (§34), privacy policy screen, compact question cards for visual prompts, **confirm before submit** for multiple choice, and **English + Macedonian** UI (§42).
+**Shipped:** comparison (all subtypes in §25), equations with **two** unknowns (`x` and `y`), **linear and quadratic equations** (§43), **limits** (§44), **Learn** reference library (23 topics), visual fraction recognition with keyboard entry, shape recognition, clock/time, patterns, **decimal toggles** on basic operations (1 decimal place), trigonometry v1 (§38), **logarithms** (§41), calculus with power/constant/sum, natural log, trig, and quotient/simplify-fraction rules (§34), expanded 2D/3D geometry, configurable timed penalties and bonuses, build/update information, privacy policy screen, compact question cards for visual prompts, **confirm before submit** for multiple choice, **English + Macedonian** UI (§42), **share settings export/import** (§62), and a **redesigned Progress screen** with session-mode filter, expandable session rows, timed-run detail lines, and topic accuracy (§36). The application currently targets **Expo SDK 57**.
 
-**Planned next:** dedicated decimal/percent practice module beyond rounding and comparison (see §24.6).
+**Planned next:** dedicated decimal/percent practice beyond rounding and comparison (see §24.3 and §51).
 
-**Later:** Learn quality pass (§35), richer timed-run stats (§36), session history question review (§37).
+**Potential curriculum expansion:** ratios and proportions (§45), Least Common Multiple and Greatest Common Divisor (§46), decade-based number reasoning (§47), matrices (§48), place value / number decomposition (§49), and the implementation-conscious curriculum candidates in §§50–60.
+
+**Later:** Learn quality pass (§35), session history question review (§37).
 
 The app should support recommended learning settings based on the learner’s age when provided, while always allowing manual customization of the learning plan per profile.
 
@@ -66,6 +72,7 @@ The main goals of the app are:
 - Support practice, quiz, and timed session modes.
 - Provide multiple-choice or keyboard answer entry where appropriate.
 - Track session results, recent performance, and gentle adaptation hints.
+- **Export and import** session/topic settings between profiles or devices (without sharing learner identity or progress).
 - Offer a **Learn** section with explanations and visuals for all 23 curriculum topics.
 - Support **English and Macedonian** UI with first-run language selection.
 
@@ -108,7 +115,7 @@ The recommended first-time user flow is:
 8. User answers via multiple choice or keyboard (depending on settings and question type); optional **Confirm** step for multiple choice.
 9. App provides feedback based on the selected mode.
 10. App displays progress or final result.
-11. User can open **Settings** to switch profiles, edit personal info, or change the learning plan.
+11. User can open **Settings** to switch profiles, edit personal info, change the learning plan, or **share settings** (export/import).
 12. User can open **Learn** from home to browse tutorials by topic.
 
 ---
@@ -213,7 +220,7 @@ Available operations (each can be enabled or disabled independently):
 - Equations with two unknowns (`x` and `y`) — see §26
 - **Geometry** (perimeter, area, volume — see §8.7)
 - **Comparison** (see §25)
-- **Fraction recognition** (visual bar models — see §28)
+- **Fraction recognition** (visual bar and circle models — see §28)
 - **Shapes** (recognition, colors, and visual patterns — see §28.6)
 - **Numbers / early number sense** (see §39)
 - **Clock / time** (see §31)
@@ -530,43 +537,67 @@ Suggested TypeScript model:
 ```ts
 type AdditionConfig = {
   enabled: boolean;
+  standardCalculation: boolean;
+  allowNegativeNumbers: boolean;
   leftMin: number;
   leftMax: number;
   rightMin: number;
   rightMax: number;
-  /** Shipped — 1 decimal place; see §8.1 */
-  allowDecimals?: boolean;
+  /** Addition-specific result cap. */
+  answerMax: 10 | 20 | 100 | 1000 | 'unlimited';
+  missingNumber: boolean;
+  fractions: boolean;
+  fractionDenominatorMode: 'same_only' | 'different_only' | 'mixed';
+  regrouping: boolean;
+  allowDecimals: boolean;
+  wordProblems: boolean;
 };
 
 type SubtractionConfig = {
   enabled: boolean;
+  standardCalculation: boolean;
+  allowNegativeNumbers: boolean;
   firstMin: number;
   firstMax: number;
   secondMin: number;
   secondMax: number;
+  missingNumber: boolean;
   allowNegativeAnswers: boolean;
-  /** Shipped — see §8.2 */
-  allowDecimals?: boolean;
+  fractions: boolean;
+  fractionDenominatorMode: 'same_only' | 'different_only' | 'mixed';
+  regrouping: boolean;
+  allowDecimals: boolean;
+  wordProblems: boolean;
 };
 
 type MultiplicationConfig = {
   enabled: boolean;
-  leftMin: number;
-  leftMax: number;
-  rightMin: number;
-  rightMax: number;
-  /** Shipped — see §8.3 */
-  allowDecimals?: boolean;
+  /** First factor is selected from these multiplication tables. */
+  factors: number[];
+  secondFactorSource: 'selection_only' | 'one_to_ten' | 'one_to_twenty';
+  randomizeFactorOrder: boolean;
+  standardCalculation: boolean;
+  allowNegativeNumbers: boolean;
+  missingNumber: boolean;
+  fractions: boolean;
+  fractionDenominatorMode: 'same_only' | 'different_only' | 'mixed';
+  allowDecimals: boolean;
+  wordProblems: boolean;
 };
 
 type DivisionConfig = {
   enabled: boolean;
+  standardCalculation: boolean;
+  allowNegativeNumbers: boolean;
   answerMin: number;
   answerMax: number;
-  divisorMin: number;
-  divisorMax: number;
-  /** Shipped — see §8.4 */
-  allowDecimals?: boolean;
+  divisors: number[];
+  allowRemainders: boolean;
+  missingNumber: boolean;
+  fractions: boolean;
+  fractionDenominatorMode: 'same_only' | 'different_only' | 'mixed';
+  allowDecimals: boolean;
+  wordProblems: boolean;
 };
 
 type MathLearningConfig = {
@@ -578,12 +609,13 @@ type MathLearningConfig = {
   squareRoot: SquareRootConfig;
   rounding: RoundingConfig;
   orderOfOperations: OrderOfOperationsConfig;
+  equivalentExpressions: EquivalentExpressionsConfig;
   equationUnknown: EquationUnknownConfig;
 
   /** Shipped — Phase 1 geometry. */
   geometry: GeometryConfig;
 
-  /** Shipped base — expanded subtypes planned (§25). */
+  /** Shipped — see §25. */
   comparison: ComparisonConfig;
 
   /** Shipped — see §26 */
@@ -591,6 +623,12 @@ type MathLearningConfig = {
 
   /** Shipped — see §28 */
   fractionVisual: FractionVisualConfig;
+
+  /** Shipped — see §28.6 */
+  shapeRecognition: ShapeRecognitionConfig;
+
+  /** Shipped — see §39 */
+  numberSense: NumberSenseConfig;
 
   /** Shipped (partial) — see §31 */
   clock: ClockConfig;
@@ -621,28 +659,29 @@ type MathLearningConfig = {
   maxFinalResult: 10 | 20 | 100 | 1000 | 'unlimited';
   timerEnabled: boolean;
   timerSecondsPerQuestion: number;
-  timedDurationMinutes: number;
+  timedDurationMinutes: 0.25 | 0.5 | 1 | 2 | 3 | 5 | 10;
+  /** Legacy mirror retained for persisted plans. */
   timedSubtractSecondsOnWrong: boolean;
+  timedWrongPenaltySeconds: number;
+  timedCorrectBonusSeconds: number;
 };
 
 /** Shipped — see §8.7 */
 type GeometryConfig = {
   enabled: boolean;
-  perimeter: { enabled: boolean; shapes: { square; rectangle; triangle; circle } };
-  area: { enabled: boolean; shapes: { square; rectangle; triangle; circle; rhombus; trapezoid } };
-  volume: { enabled: boolean; shapes: { cube; cuboid; pyramid; cone; cylinder } };
+  perimeter: { enabled: boolean; shapes: { square; rectangle; triangle; circle; rhombus; kite; parallelogram; trapezoid } };
+  area: { enabled: boolean; shapes: { square; rectangle; triangle; circle; rhombus; kite; parallelogram; trapezoid } };
+  volume: { enabled: boolean; shapes: { cube; cuboid; pyramid; triangular_pyramid; cone; cylinder; triangular_prism } };
   questionKinds: { formula: boolean; calculate: boolean };
 };
 
-/** Shipped base — expanded subtypes planned (§25) */
+/** Shipped — see §25 */
 type ComparisonConfig = {
   enabled: boolean;
   /** Shipped */
   relational: boolean;
   ordering: boolean;
-  /** Auto-derived from enabled operations — not a user toggle */
   expressionCompare: boolean;
-  /** Planned — explicit toggles */
   fractionVsDecimal: boolean;
   percentVsFraction: boolean;
   fractionVsFraction: boolean;
@@ -658,6 +697,15 @@ type EquationTwoUnknownsConfig = {
 /** Shipped — see §28 */
 type FractionVisualConfig = {
   enabled: boolean;
+};
+
+/** Shipped — see §28.6 */
+type ShapeRecognitionConfig = {
+  enabled: boolean;
+  shapeQuestions: boolean;
+  colorQuestions: boolean;
+  colorAndShapeQuestions: boolean;
+  shapes: Record<'circle' | 'square' | 'rectangle' | 'triangle' | 'star' | 'oval', boolean>;
 };
 
 /** Shipped (partial) — see §31 */
@@ -676,6 +724,20 @@ type PatternsConfig = {
   geometricSequence: boolean;
   shapePattern: boolean;
   numberPattern: boolean;
+  coloredShapePattern: boolean;
+};
+
+/** Shipped — visual counting/quantity comparison may be surfaced with Shapes in the UI. */
+type NumberSenseConfig = {
+  enabled: boolean;
+  /** Retained for migration but not generated. */
+  numberRecognition: boolean;
+  countObjects: boolean;
+  beforeAfter: boolean;
+  missingNumber: boolean;
+  compareQuantities: boolean;
+  oddEven: boolean;
+  maxNumber: 5 | 10 | 20 | 100;
 };
 
 /** Shipped — see §38 */
@@ -1150,11 +1212,12 @@ Great job!
 
 In timed mode:
 
-1. User has a **total session clock** (minutes 1–10, configurable).
+1. User has a **total session clock** with presets from **15 seconds to 10 minutes**.
 2. Questions are generated one after another until time runs out.
-3. Optional penalty: subtract 15 seconds on each wrong answer (configurable toggle).
-4. Per-question timer from practice/quiz does not apply; timed mode uses the session clock only.
-5. Result screen shows score and per-question breakdown (like quiz).
+3. A configurable wrong-answer penalty subtracts **0–15 seconds**; `0` disables it.
+4. A configurable correct-answer bonus adds **0–5 seconds**; `0` disables it.
+5. Per-question timer from practice/quiz does not apply; timed mode uses the session clock only.
+6. Result screen shows score and per-question breakdown (like quiz), including timed-run duration data.
 
 Timed mode does not use a fixed question count setting.
 
@@ -1187,7 +1250,7 @@ Default recommendation:
 The app supports two answer entry modes (configurable on the learning plan):
 
 - **Multiple choice** — 2, 3, 4, or 6 answer choices (default for younger users)
-- **Keyboard** — user types numeric answers, fractions (`3/4`), division remainders (`3 R 2`), equation expressions after `x=`, or calculus/log symbolic expressions where supported
+- **Keyboard** — user types numeric answers, fractions (`3/4`), or equation expressions after `x=` where supported; question types with awkward or symbolic formats fall back to multiple choice
 
 Optional **Confirm answer** toggle (multiple choice only):
 
@@ -1218,22 +1281,25 @@ Recommended defaults:
 When keyboard mode is selected:
 
 - Whole-number arithmetic accepts numeric input.
-- Fraction questions accept `numerator/denominator`.
+- Arithmetic fraction questions and visual fraction-recognition questions accept `numerator/denominator`, a reducible equivalent (for example `8/10` for `4/5`), or an equivalent decimal.
 - Equation-unknown questions accept expression after `x=` (e.g. `4`, `20:5`).
+- Equations with two unknowns accept numeric keyboard answers for the requested value.
 - Geometry **integer** calculate questions accept numeric input.
+- Number-sense questions with numeric answers (count objects, before/after, and missing number) accept numeric input.
 
 **Keyboard is not offered when:**
 
 - Division remainders are enabled (quotient R remainder format is awkward on keyboard).
 - Geometry **formula** questions (always multiple choice).
 - Geometry **π-form** calculate questions (circle, cone, cylinder — always multiple choice, e.g. `10π`).
-- Comparison, equivalent expressions, fraction visuals, shapes, clock, patterns, trigonometry, **logarithms**, **linear and quadratic equations**, **limits**, and **calculus** questions (always multiple choice in v1).
+- Comparison, equivalent expressions, shapes, clock, patterns, trigonometry, **logarithms**, **linear and quadratic equations**, **limits**, and **calculus** questions (always multiple choice in v1).
+- Number-sense label questions (odd/even and compare quantities) remain multiple choice.
 
 Settings shows a note when geometry is enabled and keyboard is selected: formula and π questions still use answer choices.
 
-### 15.3 Comparison, visual topics, advanced equations, limits, calculus, and logarithms
+### 15.3 Multiple-choice-only topics
 
-Comparison questions (§25), visual fraction identification (§28), clock/time (§31), patterns (§32), trigonometry (§38), **logarithms (§41)**, **linear and quadratic equations (§43)**, **limits (§44)**, and **calculus (§34)** are **multiple choice only** in all modes.
+Comparison questions (§25), shape recognition (§28.6), clock/time (§31), patterns (§32), trigonometry (§38), **logarithms (§41)**, **linear and quadratic equations (§43)**, **limits (§44)**, and **calculus (§34)** are **multiple choice only** in all modes. Visual fraction identification (§28) follows the global answer-entry preference and supports fraction keyboard entry.
 
 Example with 2 answers:
 
@@ -1524,6 +1590,8 @@ Use a Next button.
 
 A Next button gives the learner time to understand the feedback.
 
+The full visible area of the primary session button—including its left and right sides, not only the centered label—must be tappable. The touch target should remain forgiving inside scrollable practice and quiz layouts.
+
 ---
 
 ## 19. Scoring Requirements
@@ -1583,7 +1651,7 @@ On app start:
 - If onboarding is completed for the active profile, app goes to the home screen.
 - If onboarding is not completed, app starts profile setup.
 
-**Progress screen (shipped):** Recent sessions, streak and stats by operation (including Geometry, Logarithms, Calculus), and **gentle adaptation** hints on the home screen when recent misses cluster on one enabled operation.
+**Progress screen (shipped):** Streak card at top; **Sessions** list with mode filter (All / Practice / Quiz / Timed run), filtered average score, and expandable session rows; **By topic** accuracy at the bottom (filtered by the selected mode, hidden when there is no data). Timed-run rows show start duration, penalty/bonus settings, total survived time, and correct/wrong counts when expanded. Up to **50** recent sessions are stored and shown per profile. Streak and gentle **adaptation** hints remain on the home screen when recent misses cluster on one enabled operation.
 
 ---
 
@@ -1643,11 +1711,24 @@ Main actions:
 
 Purpose:
 
-- Switch, edit, add, or remove profiles.
+- Hub for profile, session, topic, share, and about actions for the active profile.
+- Switch, edit, add, or remove profiles (Profile details).
 - Edit personal info (profile name, learner name, age).
-- Configure operations, ranges, geometry, mode, question count, answer entry, timers, and caps.
+- Configure operations, ranges, geometry, mode, question count, answer entry, timers, and caps (Session settings and Topics sub-screens).
+- Export or import session and topic settings as a JSON file (Share settings — §62).
 
-Main action:
+Suggested hub actions:
+
+```text
+Settings
+  Profile details
+  Session settings
+  Topics
+  Share settings        → Export settings | Import settings
+  About
+```
+
+Main action on sub-screens:
 
 - Save / Start session (practice, quiz, or timed per selected mode)
 
@@ -1685,7 +1766,22 @@ Purpose:
 
 Purpose:
 
-- Recent session list, streak and operation stats, gentle adaptation suggestions.
+- Show learning streak, recent sessions (with mode filter and expandable detail rows), and topic accuracy for the active profile.
+
+Layout (top → bottom):
+
+1. **Streak** card (consecutive practice days)
+2. **Sessions** — filter chips (All / Practice / Quiz / Timed run), optional filtered average, accordion list of recent sessions (collapsed by default; chevron to expand)
+3. **By topic** — operation accuracy bars for the filtered sessions (section hidden when no stats exist)
+
+Session row details when expanded:
+
+- **Practice / Quiz:** total questions, correct count, wrong count
+- **Timed run:** configured start duration, wrong-answer penalty, correct-answer bonus, total survived time, correct count, wrong count
+
+Empty states are mode-specific (e.g. “Finish a timed run…” when Timed filter is selected).
+
+See §36 for timed-run detail requirements.
 
 ### 21.11 Result screen
 
@@ -1700,6 +1796,20 @@ Main actions:
 - Practice again
 - Change learning plan / Settings
 - Go home
+
+### 21.13 Share settings screen (shipped)
+
+Purpose:
+
+- Export the active profile’s **session and topic settings** to a JSON file, or import settings from a file exported by The Real Math App.
+
+Flow:
+
+```text
+Settings → Share settings → Export settings | Import settings
+```
+
+Import may **create a new profile** (default) or **replace settings** on the active profile (with confirmation). See §62.
 
 ### 21.12 Learn (shipped)
 
@@ -1726,14 +1836,16 @@ The current shipped product includes:
 - Recommended learning plan by age; full learning plan customization per profile
 - Operations: addition, subtraction, multiplication, division, squaring, square roots, rounding, order of operations, equations with one unknown (`x`) and two unknowns (`x`, `y`), **linear and quadratic equations**, **limits**, and **equivalent expressions**
 - Per-operation toggles: standard calculation, missing number, word problems, fractions (with denominator mode), regrouping (add/sub), division remainders, **decimals (1 decimal place)**
+- Multiplication-table selection with a configurable second-factor pool (`selected only`, `1–10`, or `1–20`) and optional randomized factor order
+- Addition-specific maximum result setting, with legacy global-cap migration retained for older saved profiles
 - **Comparison:** relational, ordering, expression compare, fraction/percent/measurement subtypes
 - **Shapes:** identify shape, color, or both; continue shape and colored-shape cycles using the selected shape pool
-- **Numbers:** before/after, missing number, odd/even; visual counting and quantity comparison configured under Shapes
+- **Numbers:** before/after, missing number, odd/even; numeric keyboard entry where applicable; visual counting and quantity comparison configured under Shapes
 - **Clock / time:** analog read and elapsed time
 - **Patterns & sequences:** arithmetic, geometric, and number patterns; visual shape patterns live under Shapes
 - **Settings workflow:** collapsible enabled sections, header save action, unsaved-changes navigation confirmation, and focused Learn → Try settings
 - **Learn** reference library with **23 topics** (easiest → hardest), formula tables, and **Try in practice** for every topic
-- **Fraction recognition:** visual bar models (MC identification)
+- **Fraction recognition:** visual bar and circle models; multiple choice or typed fraction/decimal according to the global answer-entry preference
 - **Logarithms:** product, quotient, and power rules; numeric log (bases 2, 3, 5, 10) and ln values (§41)
 - **Differentiation & Integration:** symbolic MC — power rule, constants, simple sums, natural log, sin/cos, quotient rule (differentiation) / simplify fractions (integration) (§34)
 - **Linear & Quadratic Equations:** multi-step linear, variables on both sides, parentheses, and factorable quadratic questions (§43)
@@ -1741,15 +1853,17 @@ The current shipped product includes:
 - **Trigonometry v1:** right-triangle diagrams; pick formula, name sides, find angle; MC only — no numeric calculation (§38)
 - **Privacy policy** in-app screen (Home)
 - **Compact question card** layout for short prompts with visuals below (clock, shapes, fractions, patterns, trigonometry)
-- **Geometry Phase 1:** perimeter, area, volume; formula + calculate; π-form multiple choice for circle/cone/cylinder
+- **Geometry Phase 1:** perimeter and area for square, rectangle, triangle, circle, rhombus, kite, parallelogram, and trapezoid; volume for cube, cuboid, square/triangular pyramids, cone, cylinder, and triangular prism; formula + calculate; π-form multiple choice for circle/cone/cylinder
 - Session modes: **practice**, **quiz**, **timed**
 - Answer entry: multiple choice (**2, 3, 4, 6** choices) or **keyboard** (with overrides for geometry formula/π, division remainders, and MC-only topics)
 - **Confirm before submit** for multiple choice (optional toggle)
-- Configurable question count, per-question timer, timed session duration, timed wrong-answer penalty
+- Configurable question count, per-question timer, timed session duration, timed wrong-answer penalty, and timed correct-answer bonus
 - Maximum final result cap (excluding rounding and order of operations)
 - **Gentle adaptation** hints on home (focused practice suggestion from recent misses)
-- Progress: session history, streak/stats by operation (including Geometry, Comparison, Trigonometry, Logarithms, Linear & Quadratic Equations, Limits, and Calculus), gentle adaptation card
+- Progress: streak card; session history with mode filter and expandable rows; topic accuracy by operation (§36); up to **50** stored sessions per profile; gentle adaptation card on home
+- **Share settings:** export/import session and topic settings as JSON; no learner name, age, or progress in the file (§62)
 - Local persistence (Zustand + AsyncStorage); legacy single-profile migration
+- Build/update stamping and an in-app About screen (app version, last package/update date, update message); current runtime baseline is Expo SDK 57
 - **Learn Try in practice:** open-ended single-question loop; optional save-to-profile; does **not** write session history
 
 **Known partial / not generated:**
@@ -1804,12 +1918,17 @@ See **§29 Implementation status** for a detailed shipped vs planned table. High
 - In-app privacy policy
 - Compact question card for visual prompts (including trigonometry diagrams)
 - Gentle adaptation card on home (focused practice via `?focus=` parameter)
+- Visual fraction keyboard entry, including equivalent fractions and decimal values
+- Configurable timed-run wrong-answer penalty and correct-answer bonus
+- Expo SDK 57 runtime upgrade and build/update stamp display
 
 ### 24.3 Later
 
+For potential curriculum topics, the first implementation should prefer text, existing math notation, reusable shape components, and compact tables. Features that require a new general-purpose renderer—interactive graph plotting, generated angle diagrams, protractors, map artwork, chart drawing, or free-form matrix entry—are deferred unless separately scoped.
+
 - Dedicated decimals & percentages module (beyond op-level toggles)
 - Money word problems
-- Equivalent / compare / fraction-of-a-number (non-visual)
+- Equivalent-fraction and fraction-of-a-number questions (nonvisual), plus any comparison formats beyond the shipped §25 subtypes
 - Badges and rewards
 - Parent dashboard
 - Cloud sync and multiple devices
@@ -1817,10 +1936,25 @@ See **§29 Implementation status** for a detailed shipped vs planned table. High
 - Stronger adaptive difficulty
 - Visual word problems with objects or pictures
 - Learn section quality pass (§35)
-- Richer timed-run stats on Progress (§36)
 - Tappable session history → question review (§37)
-- Circle fraction models; digital clock read; imperial measurement; pattern keyboard entry
+- Digital clock read; imperial measurement; pattern keyboard entry
 - Trigonometry numeric calculation (evaluate ratios, solve for missing sides or angles — beyond §38 v1)
+- Ratios and proportions, including whole-number resource-duration word problems (§45)
+- Least Common Multiple and Greatest Common Divisor (§46)
+- Decade-based number reasoning with parity, successor, and predecessor (§47)
+- Matrices: addition, subtraction, and matrix multiplication (§48)
+- Place value and number decomposition / expanded form, such as `82 = 80 + 2` (§49)
+- Factors, multiples, primes, and divisibility (§50)
+- Percentages (§51)
+- Integer extensions beyond the shipped negative arithmetic (§52)
+- Powers and exponents (§53)
+- Text-first angle reasoning (§54)
+- Coordinate reasoning without a plotted graph in v1 (§55)
+- Measurement and unit conversion extensions (§56)
+- Statistics split into focused subcategories (§57)
+- Probability split into focused subcategories (§58)
+- Sequences and functions beyond the shipped pattern generators (§59)
+- Roman numerals (§60)
 
 ---
 
@@ -1995,7 +2129,7 @@ Teach and assess **understanding of fractions as parts of a whole**, complementi
 ### 28.2 Visual types
 
 - **Circle / bar model** divided into equal parts; one or more parts shaded.
-- Question: “What fraction is shaded?” → MC options (e.g. `1/3`, `1/4`, `2/3`).
+- Question: “What fraction is shaded?” → answer choices or keyboard entry (e.g. `1/3`, `1/4`, `2/3`).
 - Optional inverse: “Shade 1/4 of the shape” — **out of scope for v1** (interaction-heavy); ship MC identification first.
 
 ### 28.3 Settings
@@ -2011,7 +2145,11 @@ Teach and assess **understanding of fractions as parts of a whole**, complementi
 
 ### 28.5 Answer entry
 
-Multiple choice only (see §15.3).
+Follow the global answer-entry preference:
+
+- **Multiple choice:** show the configured 2, 3, 4, or 6 fraction options.
+- **Keyboard:** use the shared fraction input and accept exact fractions, reducible equivalents, and equivalent decimals (for example `4/5`, `8/10`, or `0.8`).
+- Use the visual model's shaded numerator and denominator as the canonical value for scoring.
 
 ---
 
@@ -2023,7 +2161,7 @@ Multiple choice only (see §15.3).
 | Internationalization | **Shipped** | English + Macedonian; first-run language gate; mk Learn overrides (§42) |
 | Onboarding | **Shipped** | Profile setup screen; age 1–150; optional recommended plans use 4–12 brackets |
 | Session modes | **Shipped** | Practice, quiz, timed run |
-| Answer entry | **Shipped** | MC 2/3/4/6 or keyboard; geometry formula / π forced MC; calculus/logs/trig/advanced-equations/limits MC only |
+| Answer entry | **Shipped** | MC 2/3/4/6 or keyboard; visual fractions support typed equivalent fractions/decimals; geometry formula / π forced MC; calculus/logs/trig/advanced-equations/limits MC only |
 | Confirm before submit | **Shipped** | Optional MC toggle; Confirm then feedback/submit |
 | Per-operation toggles | **Shipped** | Standard, missing number, word problems, fractions, regrouping (add/sub), decimals |
 | Special ops | **Shipped** | Squaring, square roots, rounding, order of ops, equations with one unknown (`x`) |
@@ -2033,8 +2171,8 @@ Multiple choice only (see §15.3).
 | Comparison (fraction/percent/measurement) | **Shipped** | §25.5–§25.8 |
 | Learn / tutorials | **Shipped** | §27 — 23 topics matching top-level Settings sections; Try in practice on all |
 | Learn Try in practice | **Shipped (partial)** | Open-ended loop; no session history / result screen |
-| Visual fraction recognition | **Shipped** | §28 |
-| Geometry Phase 1 | **Shipped** | Perimeter / area / volume; formula + calculate; dims 1–10; π-form MC |
+| Visual fraction recognition | **Shipped** | §28 — bar/circle models; MC or fraction keyboard entry |
+| Geometry Phase 1 | **Shipped** | Expanded planar/solid shape set; formula + calculate; dims 1–10; π-form MC |
 | Shapes | **Shipped** | §28.6 — shape/color recognition and visual patterns |
 | Numbers / early number sense | **Shipped (partial)** | §39 — before/after, missing, odd/even; `numberRecognition` not generated |
 | Decimals toggle (add/sub/mul/div) | **Shipped** | §8.1–§8.4 — **1 decimal place** only |
@@ -2049,9 +2187,28 @@ Multiple choice only (see §15.3).
 | Privacy policy (in-app) | **Shipped** | Home → Privacy policy |
 | Compact question card | **Shipped** | Short prompts + visual below |
 | Gentle adaptation | **Shipped** | Home card → focused practice when recent misses cluster |
-| Progress | **Shipped** | Session history, streak/stats by operation, adaptation hints |
+| Progress | **Shipped** | Streak; sessions with mode filter + expandable rows; topic accuracy (§36); 50-session history limit |
+| Share settings export/import | **Shipped** | §62 — JSON file; session/topic settings only; import to new profile or replace active settings |
 | Persistence | **Shipped** | Zustand + AsyncStorage; legacy single-profile migration |
+| Timed adjustments | **Shipped** | Configurable seconds subtracted for wrong answers and added for correct answers |
+| Build/update information | **Shipped** | Build/update stamp shown in-app; Expo SDK 57 baseline |
 | Equation-unknown mode (`off`/`mixed`/`only`) | **Partial** | Type only; no UI or runtime use |
+| Ratios and proportions | **Potential** | §45 — standard questions plus whole-number resource-duration word problems |
+| LCM and GCD | **Potential** | §46 — dedicated number-theory topic |
+| Decade-based number reasoning | **Potential** | §47 — largest/smallest odd/even, successor, and predecessor compositions |
+| Matrices | **Potential** | §48 — matrix addition, subtraction, and conformable matrix multiplication |
+| Place value / number decomposition | **Potential** | §49 — digit value, forms, comparison, complements, composition, and decomposition |
+| Factors, primes, and divisibility | **Potential** | §50 — factors/multiples, prime/composite, rules, factorization, missing factors |
+| Percentages | **Potential** | §51 — conversions, percentage of a number, change, discounts/tax/tips |
+| Integer extensions | **Potential (partial foundation shipped)** | §52 — negative arithmetic and signed stories exist; add absolute value, number-line reasoning, ordering, elevation |
+| Powers and exponents | **Potential (partial foundation shipped)** | §53 — squares exist; add general powers, missing parts, rules, powers of 10, scientific notation |
+| Angles | **Potential** | §54 — numeric/text-first questions; custom diagram generation deferred |
+| Coordinate geometry | **Potential** | §55 — coordinate tuples and transformations; plotted graph interaction deferred |
+| Measurement and conversion | **Potential (partial foundation shipped)** | §56 — metric comparison exists; add conversions and word problems |
+| Statistics | **Potential** | §57 — datasets and compact tables first; chart drawing deferred |
+| Probability | **Potential** | §58 — text/symbol-based events first; no custom spinner/card artwork required |
+| Sequences and functions | **Potential (partial foundation shipped)** | §59 — arithmetic/geometric/number patterns exist; add nth term, tables, linear functions |
+| Roman numerals | **Potential** | §60 — text-only conversion, comparison, and clock-related questions |
 | Badges, parent dashboard, cloud sync | **Later** | §24.3 |
 
 ---
@@ -2081,6 +2238,12 @@ Multiple choice only (see §15.3).
 19. **English + Macedonian UI — shipped (§42).**
 20. **Linear & Quadratic Equations v1 — shipped (§43).**
 21. **Limits v1 — shipped (§44).**
+22. **Visual fraction keyboard entry — shipped (§28).**
+23. **Timed correct-answer bonus and configurable wrong-answer penalty — shipped.**
+24. **Expanded geometry shape set — shipped (§8.7).**
+25. **Expo SDK 57 and build/update information — shipped.**
+26. **Progress screen redesign — shipped (§36):** streak on top; session mode filter; expandable session rows; timed-run detail lines; topic accuracy section.
+27. **Share settings export/import — shipped (§62).**
 
 **Still open:**
 
@@ -2099,6 +2262,12 @@ Multiple choice only (see §15.3).
 13. ~~Integration MC: is `+ C` always required?~~ **Resolved:** yes, where applicable.
 14. ~~Calculus settings: separate cards vs combined?~~ **Resolved:** separate Differentiation and Integration cards.
 15. Logarithm: add separate base toggles (2/3/5/10) vs single “Find log value” toggle?
+16. Ratios: should direct and inverse proportion be separate settings toggles, or introduced together after standard ratios?
+17. LCM/GCD: one combined Number Theory card or two independent top-level topics?
+18. Decade terminology: use “first ten / second ten” in English or the less ambiguous range labels (`1–10`, `11–20`, etc.) while retaining the school terminology in Macedonian?
+19. Matrices: should v1 remain 2×2 only, or include compatible rectangular products such as 2×3 multiplied by 3×2?
+20. Number decomposition: should v1 cover only tens and ones, or include hundreds from the first release?
+21. Potential-topic rendering: keep first releases text/table/symbol based as specified in §§50–60, and defer custom graph plotting and angle-diagram generation?
 
 ---
 
@@ -2352,17 +2521,36 @@ Suggested per-topic checklist:
 
 ---
 
-## 36. Later: Timed Run Stats in Recent Performance
+## 36. Progress Screen UX and Timed Run Session Details (shipped)
 
-Today, timed sessions in **Recent performance** show the same summary as quiz/practice: mode badge, date, and **score percentage** only.
+### 36.1 Layout
 
-**Future improvements:**
+The Progress screen uses a vertical layout:
 
-- Show timed-specific metrics: questions answered, configured session duration, optional questions per minute
-- Update empty-state copy to mention timed runs (currently references practice/quiz only)
-- Consider separate visual treatment for timed rows vs fixed-count quiz rows
+1. **Streak** — consecutive days with at least one completed session
+2. **Sessions** — mode filter (All / Practice / Quiz / Timed run), optional filtered average for the visible window, accordion list of recent sessions
+3. **By topic** — per-operation accuracy for sessions matching the active filter; hidden when there is no data for that filter
 
-**Not implemented in current release.**
+Up to **50** sessions are persisted per profile and eligible for display.
+
+### 36.2 Session list rows
+
+- Rows are **collapsed by default**; a chevron toggles expand/collapse (no separate “tap for details” hint text).
+- Collapsed row shows: date (Today / Yesterday / short date), mode badge, score percentage.
+- **Practice / Quiz expanded:** total questions, correct answers, wrong answers.
+- **Timed run expanded:** configured start duration, wrong-answer penalty seconds, correct-answer bonus seconds, total survived time, correct answers, wrong answers.
+- Timed-run metadata is stored on the session history entry at finish time.
+
+### 36.3 Empty states
+
+- Filter-specific copy when a mode has no sessions yet (practice-only, quiz-only, timed-only).
+- Topic accuracy section is omitted entirely when the filtered history has no operation stats.
+
+### 36.4 Not in scope (later)
+
+- Questions-per-minute or other derived timed metrics
+- Separate visual row styling for timed vs quiz (beyond expanded detail lines)
+- Persisted question-level review from history rows (see §37)
 
 ---
 
@@ -2400,7 +2588,7 @@ Visual **count shapes** and **more, fewer, or same** toggles are owned by **Shap
 
 The former **Recognize numbers / Select the number …** subtype is retired and must not be generated, including from legacy profile data.
 
-The general upper limit uses the shared discrete slider UI with stops at **5, 10, 20, and 100**. Tick labels must be centered under their corresponding slider stops.
+The general upper limit uses the shared discrete slider UI with stops at **5, 10, 20, and 100**. The selected range is stated above the slider, so redundant numeric tick labels are not shown below it.
 
 ### 39.3 Generation rules
 
@@ -2442,6 +2630,7 @@ The general upper limit uses the shared discrete slider UI with stops at **5, 10
   - Leave without saving
   - Cancel (return to Settings)
 - Back navigation must work normally when there are no unsaved changes.
+- On Android, after Save the app defers header updates and back navigation briefly so react-native-screens does not crash when options change during the same transition.
 
 ### 40.3 Learn → Try in practice
 
@@ -2592,7 +2781,481 @@ Learn explains all four generated subtypes—direct substitution, factor-and-can
 
 ---
 
-## 33. Summary
+## 45. Ratios & Proportions (potential)
+
+### 45.1 Purpose
+
+Teach ratios as comparisons between quantities and extend them into proportional reasoning. This should be a dedicated configurable topic, off by default until implemented, with a Learn tutorial and focused Try flow.
+
+### 45.2 Proposed question types
+
+- **Read or write a ratio:** “There are 6 red and 4 blue balls. What is the ratio of red to blue?”
+- **Simplify a ratio:** `12:18 = ?` → `2:3`.
+- **Equivalent ratios:** `3:5 = 12:?` or select the ratio equivalent to `4:6`.
+- **Find a missing term in a proportion:** `a:b = c:?` using whole-number solutions.
+- **Unit-rate questions:** find the amount for one unit before scaling to another whole-number quantity.
+- **Direct proportion word problems:** both quantities increase or decrease by the same scale factor.
+- **Inverse proportion / shared-resource duration word problems:** the total resource is fixed, so increasing consumers shortens the remaining duration.
+- **Scale recipes:** increase or decrease ingredient quantities by an integer scale factor.
+- **Maps and scale drawings:** use written scales and numeric distances; a custom map drawing is not required in v1.
+- **Speed, distance, and time:** solve one missing value using whole-number inputs and results in v1.
+- **Unit rates and best value:** compare price per item, distance per unit time, or another exact whole-number/terminating-decimal unit rate.
+
+### 45.3 Resource-duration word problems
+
+Include problems such as:
+
+> A farmer has 20 cows and enough food for 10 days. After 5 days, 5 more cows arrive. For how many more days will the remaining food last?
+
+Required solution model:
+
+```text
+Initial food = 20 × 10 = 200 cow-days
+Food used in 5 days = 20 × 5 = 100 cow-days
+Food remaining = 200 − 100 = 100 cow-days
+New herd size = 20 + 5 = 25 cows
+Remaining duration = 100 ÷ 25 = 4 days
+```
+
+The requested answer is the duration **after** the new cows arrive, so the correct answer is `4 days`, not the total elapsed duration.
+
+Generation must use whole numbers throughout:
+
+1. Choose initial animals `A > 0`, initial duration `D > 1`, elapsed days `E` where `0 < E < D`, and arriving animals `B > 0`.
+2. Compute remaining resource units as `A × (D − E)`.
+3. Accept the generated question only when `A × (D − E)` is exactly divisible by `A + B`.
+4. Keep all displayed values, intermediate quantities, and the final answer positive whole numbers.
+5. Use varied contexts—animals and food, workers and supplies, machines and fuel—but never rely on fractional days or rounding in the first version.
+
+### 45.4 Answer entry and distractors
+
+- Support multiple choice and numeric keyboard entry.
+- Accept the numeric duration without requiring the unit word.
+- Distractors should represent understandable mistakes: ignoring the elapsed days, ignoring the added consumers, adding elapsed days to the requested remaining duration, or applying direct instead of inverse proportion.
+- The wording must explicitly distinguish “how many more days” from “how many days in total.”
+
+### 45.5 Settings, Learn, and progress
+
+Proposed settings: master toggle plus standard ratios, equivalent/simplify, missing proportion term, unit rate/best value, recipes/scales, speed-distance-time, direct-proportion word problems, and inverse-proportion resource problems. Attempts should roll up under **Ratios & proportions**. English and Macedonian prompts, units, explanations, and Learn examples are required before release.
+
+---
+
+## 46. Least Common Multiple and Greatest Common Divisor (potential)
+
+### 46.1 Purpose
+
+Add a number-theory topic covering **Least Common Multiple (LCM)** and **Greatest Common Divisor (GCD)**. Macedonian localization should use the standard school terms **најмал заеднички содржател (НЗС)** and **најголем заеднички делител (НЗД)**.
+
+### 46.2 Proposed question types
+
+- Find `LCM(a, b)` for two positive whole numbers.
+- Find `GCD(a, b)` for two positive whole numbers.
+- Select common multiples or common divisors from answer choices.
+- Find a missing number when the LCM or GCD is given.
+- Apply LCM to repeating-event problems, such as when two schedules next coincide.
+- Apply GCD to equal-grouping or largest-equal-piece problems with no remainder.
+
+### 46.3 Generation and difficulty
+
+- Start with two values in `2–20`; later difficulty may include three values or larger bounds.
+- Generate nontrivial pairs often enough that the answer is not usually `1` for GCD or simply the product for LCM.
+- Compute answers exactly using the Euclidean algorithm for GCD and `LCM(a,b) = |a × b| / GCD(a,b)`.
+- Keep all generated inputs and answers as positive whole numbers.
+- Avoid duplicate questions caused only by swapping input order unless order is pedagogically relevant.
+
+### 46.4 Answer entry, Learn, and progress
+
+Support both multiple choice and numeric keyboard entry. Learn should cover listing multiples/divisors, prime factorization, the Euclidean method at an age-appropriate level, and when LCM versus GCD is useful. Proposed progress labels are **Least common multiple** and **Greatest common divisor**, either separately or under one **LCM & GCD** topic depending on the product decision in §30.
+
+---
+
+## 47. Decade-Based Number Reasoning (potential)
+
+### 47.1 Purpose and terminology
+
+Extend Numbers / early number sense with multi-step questions that combine a decade range, smallest/largest value, parity, and successor/predecessor reasoning.
+
+For unambiguous generation, this BRD defines school “tens” as:
+
+| School term | Inclusive range |
+|---|---:|
+| 1st ten | 1–10 |
+| 2nd ten | 11–20 |
+| 3rd ten | 21–30 |
+| 4th ten | 31–40 |
+| nth ten | `(n−1)×10 + 1` through `n×10` |
+
+English prompts should prefer an explicit range when “nth ten” may sound unnatural or ambiguous. Macedonian may use the familiar curriculum wording (`прва десетка`, `втора десетка`, etc.) and must use **следбеник** for successor and **претходник** for predecessor.
+
+### 47.2 Proposed question types and examples
+
+- Largest even number from the 4th ten (`31–40`) → `40`.
+- Smallest odd number from the 3rd ten (`21–30`) → `21`.
+- Successor of the largest number from the 2nd ten (`11–20`) → `21`.
+- Predecessor of the smallest number from the 4th ten (`31–40`) → `30`.
+- Successor or predecessor of the largest/smallest odd or even number in a selected ten.
+- Reverse form: identify the ten containing a given number, including boundary values.
+
+### 47.3 Generation rules
+
+1. Resolve the inclusive decade range first.
+2. Filter it by parity when the prompt requests odd or even.
+3. Select the smallest or largest matching number.
+4. Apply successor (`+1`) or predecessor (`−1`) only after selection when requested.
+5. The final result may fall just outside the named ten; this is intentional and should be explained in Learn content.
+6. Generate only prompts with one unambiguous answer, and validate the computed answer independently from the displayed wording.
+
+### 47.4 Settings, answer entry, Learn, and progress
+
+Add this as a potential subtype under **Numbers**, not as a new arithmetic operation. Proposed controls are decade range, largest/smallest, odd/even, and successor/predecessor combinations, with simpler one-step forms introduced before composed forms. Support multiple choice and numeric keyboard entry. Learn should visually show each ten as an inclusive number strip and explain boundary crossings such as the successor of `20` being `21`. Attempts should roll up under **Numbers** unless future analytics justify a separate label.
+
+---
+
+## 48. Matrices (potential)
+
+### 48.1 Purpose
+
+Introduce matrices as rectangular arrays of numbers and teach the distinction between element-wise addition/subtraction and row-by-column matrix multiplication. This should be a dedicated configurable topic, off by default until implemented, aimed at older or self-directed learners.
+
+### 48.2 Proposed question types
+
+- Identify a matrix's dimensions (`rows × columns`).
+- Find a requested matrix element such as `a₂₁`.
+- **Matrix addition:** add corresponding entries of two matrices with identical dimensions.
+- **Matrix subtraction:** subtract corresponding entries of two matrices with identical dimensions.
+- **Matrix multiplication:** multiply conformable matrices using row-by-column dot products.
+- Determine whether an operation is possible from the operand dimensions.
+
+Scalar multiplication, determinants, inverses, transposes, and systems represented as matrices may be later extensions; they are not required for the first matrix release.
+
+### 48.3 Generation rules
+
+- Begin with `2×2` matrices and small whole-number entries, initially `0–9`.
+- Addition and subtraction operands must have the same dimensions, and answers are computed element by element.
+- Subtraction may initially generate nonnegative result entries; a later difficulty setting may allow negative entries.
+- For multiplication, if `A` is `m×n` and `B` is `n×p`, generate an `m×p` answer. The inner dimensions must match.
+- Matrix multiplication must use row-by-column dot products and must never be scored as element-wise multiplication.
+- A later difficulty level may include conformable rectangular products such as `2×3 · 3×2` and negative entries.
+- Keep displayed matrices compact enough to fit the mobile question card without clipping.
+
+Example:
+
+```text
+| 1  2 |   | 5  6 |   |  6   8 |
+| 3  4 | + | 7  8 | = | 10  12 |
+
+| 1  2 |   | 5  6 |   | 19  22 |
+| 3  4 | × | 7  8 | = | 43  50 |
+```
+
+### 48.4 Answer entry and distractors
+
+- Use multiple choice for the first version because a matrix requires a structured grid rather than the existing single-value keyboard field.
+- Render each answer as a properly aligned matrix, not a flattened comma-separated string.
+- Addition/subtraction distractors should include one-entry arithmetic mistakes, reversed subtraction, and row/column swaps.
+- Multiplication distractors should include element-wise multiplication, incorrect row-column pairing, and one dot-product arithmetic mistake.
+- A future matrix-grid editor may enable keyboard entry after it has clear cell focus, navigation, validation, and accessibility behavior.
+
+### 48.5 Settings, Learn, and progress
+
+Proposed settings: master toggle; addition, subtraction, and multiplication toggles; matrix-size/difficulty presets; and an optional negative-entry toggle. Learn should explain rows, columns, dimensions, corresponding entries, conformability, and row-by-column multiplication with worked visuals. Focused Try should be available. Attempts should roll up under **Matrices**, with English and Macedonian terminology localized before release.
+
+---
+
+## 49. Place Value & Number Decomposition (potential)
+
+### 49.1 Purpose and terminology
+
+Teach place value by composing and decomposing a whole number into hundreds, tens, and ones. For example, `82 = 80 + 2` means that 82 contains 8 tens and 2 ones. This is **number decomposition** or **expanded form**, not division.
+
+Macedonian localization should use age-appropriate terminology such as **разложување на број** and explain **десетки** and **единици** explicitly.
+
+### 49.2 Proposed question types
+
+- **Decompose a number:** `82 = ?` → `80 + 2`.
+- **Complete the expanded form:** `82 = 80 + ?` → `2`.
+- **Find the tens part:** `47 = ? + 7` → `40`.
+- **Compose a number:** `60 + 5 = ?` → `65`.
+- **Name place-value digits:** “How many tens and ones are in 93?” → 9 tens and 3 ones.
+- **Value of a digit:** “What is the value of 5 in 4,582?” → `500`.
+- **Standard, expanded, and word form:** convert between `4,582`, `4,000 + 500 + 80 + 2`, and its localized written form.
+- **Compare by place value:** choose `<`, `>`, or `=` after comparing the highest differing place.
+- **Complements:** find the amount needed to reach `10`, `100`, or `1,000`.
+- **Three-digit expansion at higher difficulty:** `347 = 300 + 40 + 7`.
+- Include zero-place cases without adding misleading terms: `504 = 500 + 4`; Learn may also show `500 + 0 + 4` to explain the zero tens digit.
+
+### 49.3 Generation rules
+
+1. Start with two-digit whole numbers from `10–99`.
+2. For a number `n`, compute `tens = floor(n / 10) × 10` and `ones = n mod 10`.
+3. Generate the displayed equation and correct answer from those computed place-value parts.
+4. When hundreds are enabled, compute each place independently and preserve internal zero digits correctly.
+5. Do not describe expanded form as division, and do not use `/` or `÷` notation.
+6. Avoid ambiguous blank placement; each question must make clear whether the learner should enter the whole number, tens part, ones part, or complete expression.
+
+### 49.4 Answer entry and distractors
+
+- Numeric blanks such as `82 = 80 + ?` and `60 + 5 = ?` support keyboard entry.
+- Full expanded expressions such as `80 + 2` should initially use multiple choice unless the equation-expression keyboard is deliberately extended to this topic.
+- Distractors should reflect common place-value mistakes: `8 + 2`, `800 + 2`, reversed digits (`28`), wrong tens (`70 + 2`), or treating the digits as separate unrelated values.
+- Do not accept mathematically equal but pedagogically unhelpful expressions such as `81 + 1` when the question specifically asks for expanded place-value form.
+
+### 49.5 Settings, Learn, and progress
+
+Add this as a potential subtype under **Numbers**, with separate toggles or difficulty levels for tens/ones, hundreds/thousands, decomposition, composition, digit value, standard/expanded/word form, comparison, complements, and missing-place questions. Learn should use a compact place-value table and grouped existing visual objects before moving to symbolic expanded form. No custom illustration is required. Attempts should roll up under **Numbers** unless future analytics justify a separate **Place value** label.
+
+---
+
+## 50. Factors, Multiples, Primes & Divisibility (potential)
+
+### 50.1 Existing foundation
+
+Multiplication tables and multiplication missing-number questions are shipped, so a prompt such as `6 × ? = 42` can already occur. The potential topic should reuse that arithmetic engine while adding explicit factor language, factor sets, multiples, primes, divisibility, and a dedicated Learn progression.
+
+### 50.2 Scope
+
+Add a dedicated prerequisite topic for LCM/GCD and fraction simplification:
+
+- Prime versus composite; explicitly teach that `1` is neither.
+- Find all factors, factor pairs, or the next multiples of a positive whole number.
+- Determine whether one number is a factor or multiple of another.
+- Divisibility rules for `2`, `3`, `5`, `9`, and `10` in v1.
+- Prime factorization, first as repeated factors and later with exponent notation.
+- Missing-factor questions such as `6 × ? = 42`.
+
+### 50.3 Implementation constraints
+
+Use integers and text/choice layouts only; no factor-tree drawing tool is required. Generate factor lists from exact divisors, generate primes with a deterministic primality check, and verify prime-factor products reconstruct the original number. Numeric blanks support keyboard entry; prime/composite and factor-list questions use multiple choice. Proposed settings are subtype toggles plus maximum number (`20`, `50`, `100`, `1,000`). Attempts roll up under **Factors & primes**.
+
+---
+
+## 51. Percentages (potential; comparison foundation shipped)
+
+### 51.1 Existing foundation
+
+Percent-versus-fraction comparison already exists under Comparison. A dedicated percentage practice source, settings card, Learn topic, and progress label are not implemented.
+
+### 51.2 Proposed scope
+
+- Convert between common fractions, terminating decimals, and percentages.
+- Find a percentage of a number with exact whole-number or terminating-decimal answers.
+- Find the original amount or missing percentage in simple cases.
+- Percentage increase and decrease.
+- Discounts, tax, and tips using clearly stated rates and rounding rules.
+
+Use text and the existing stacked-fraction renderer; no charts are required. V1 should favor common rates (`1%`, `5%`, `10%`, `20%`, `25%`, `50%`, `75%`) and currency values that produce exact answers. Numeric/fraction questions support keyboard entry; conversion forms containing `%` may initially use multiple choice. Attempts roll up under **Percentages**.
+
+---
+
+## 52. Integer Extensions (potential; negative arithmetic foundation shipped)
+
+### 52.1 Existing foundation
+
+The four basic operations already support negative operands/results when enabled. Signed word problems already include temperature, elevator floors, score changes, penalties, and average change. These must not be duplicated as a separate generator solely to create an Integers label.
+
+### 52.2 Missing scope
+
+- Absolute value, including simple equations such as `|x| = 5` at higher difficulty.
+- Number-line movement expressed textually, for example “Start at −3 and move 5 steps right.”
+- Order and compare negative integers.
+- Opposite numbers and additive inverses.
+- Elevation/sea-level and debt/balance word problems.
+
+V1 uses signed-number text and arrow/step language; a custom number-line drawing is optional and deferred. Numeric answers use the existing signed keyboard. These may be grouped into a future **Integers** card or added as toggles around the existing negative-number setting.
+
+---
+
+## 53. Powers & Exponents (potential; squares foundation shipped)
+
+### 53.1 Existing foundation
+
+Squaring, square roots, and optional square terms in order-of-operations questions are shipped. General exponent practice and scientific notation are not.
+
+### 53.2 Proposed scope
+
+- Evaluate `aⁿ` using small integer bases and nonnegative exponents.
+- Find a missing base or exponent where the answer is unique.
+- Product, quotient, and power-of-a-power rules with integer exponents in v1.
+- Powers of `10`, including place-value shifts.
+- Convert between ordinary and scientific notation.
+
+Use Unicode superscripts or the existing structured math text—no drawing is required. Generate questions backwards when solving for a missing base/exponent to guarantee exact answers. Start with positive exponents; zero and negative exponents are later difficulty levels. Attempts roll up under **Powers & exponents**.
+
+---
+
+## 54. Angles (potential; text-first v1)
+
+### 54.1 Proposed scope
+
+- Classify a stated measure as acute, right, obtuse, straight, reflex, or full turn.
+- Find a missing angle on a straight line using `x + a = 180°`.
+- Find a missing angle around a point using a sum of `360°`.
+- Complementary (`90°`) and supplementary (`180°`) angle pairs.
+- Triangle angle sums using three stated measures or a compact symbolic expression.
+
+V1 must be solvable from text and equations, for example “What type of angle is 120°?” or `65° + x = 180°`. Do not require generated angle arcs, protractors, or draggable diagrams. Reusable static illustrations may appear only in Learn. Numeric blanks support keyboard entry; classification uses multiple choice. Attempts roll up under **Angles**.
+
+---
+
+## 55. Coordinate Geometry (potential; no plotted graph in v1)
+
+### 55.1 Proposed scope
+
+- Read an explicitly written ordered pair and identify its `x`- or `y`-coordinate.
+- Identify a quadrant from the signs of `(x, y)`.
+- Reflect a point across the x-axis, y-axis, or origin.
+- Translate a point by a stated horizontal/vertical displacement.
+- Find horizontal or vertical distance between aligned points.
+- Find a midpoint when both midpoint coordinates are integers.
+
+V1 uses coordinate tuples and text only. Interactive plotting, axes, grids, freehand graphs, and arbitrary line drawing are deferred. Answers containing ordered pairs should initially be multiple choice unless a validated two-field coordinate input is added. Attempts roll up under **Coordinate geometry**.
+
+---
+
+## 56. Measurement & Unit Conversion (potential extension)
+
+### 56.1 Existing foundation
+
+Metric measurement comparison using `<`, `>`, or `=` exists under Comparison. General conversion questions, multi-step measurement stories, and imperial units are not implemented.
+
+### 56.2 Proposed scope
+
+- Length: `mm`, `cm`, `m`, `km`.
+- Mass: `g`, `kg`.
+- Capacity: `mL`, `L`.
+- Area units with squared conversion factors at higher difficulty.
+- Time conversions among minutes, hours, and days.
+- Exact metric conversions and multi-step text word problems.
+- Imperial units as a later opt-in extension.
+
+Use text and unit abbreviations only; rulers, scales, containers, and maps do not need custom drawings. Generate from exact conversion factors and state whether decimal answers are allowed. Numeric keyboard answers omit the unit only when the prompt and input label make the expected unit explicit. Attempts roll up under **Measurement**.
+
+---
+
+## 57. Statistics (potential; separate top-level topic)
+
+Statistics must be separate from Probability and split into focused subcategories:
+
+- **Read data:** values, totals, highest/lowest, and differences from a compact table.
+- **Frequency tables:** counts and simple cumulative totals; plain table layout only.
+- **Mean:** calculate an average or find one missing value from a stated mean.
+- **Median:** sort a short dataset and handle odd/even item counts.
+- **Mode:** one mode, no mode, or two modes.
+- **Range:** largest minus smallest and missing endpoints.
+- **Compare datasets:** compare center or spread using stated values.
+
+V1 uses short numeric lists and standard app table/card components. Bar, line, pie, pictogram, and interactive chart drawing are deferred. Generators must keep means and missing values exact whole numbers initially. Numeric results support keyboard entry; “no mode” and comparison conclusions use multiple choice. Attempts roll up under **Statistics**.
+
+---
+
+## 58. Probability (potential; separate top-level topic)
+
+Probability must be separate from Statistics and split into focused subcategories:
+
+- Vocabulary: impossible, unlikely, equally likely, likely, certain.
+- Simple probability as `favorable outcomes / total outcomes`.
+- Compare or order probabilities expressed as fractions, decimals, or percentages.
+- Complementary probability using `P(not A) = 1 − P(A)`.
+- Small sample spaces for one or two coins/dice.
+- Experimental versus theoretical probability.
+- Expected frequency with exact whole-number results.
+
+V1 uses text, Unicode coin/die symbols where reliable, or the app's existing colored shapes. It must not require custom cards, spinners, animation, or chart drawing. Combined events, replacement rules, and conditional probability are later difficulty levels. Fraction/numeric answers can reuse existing keyboard parsing; vocabulary stays multiple choice. Attempts roll up under **Probability**.
+
+---
+
+## 59. Sequences & Functions Extensions (potential; pattern foundation shipped)
+
+### 59.1 Existing foundation
+
+Arithmetic, geometric, skip-counting, alternating-number, and visual shape patterns are shipped under Patterns.
+
+### 59.2 Missing scope
+
+- Find the nth term of a simple arithmetic sequence.
+- Complete compact input/output tables.
+- Recognize a linear rule from numeric pairs.
+- Evaluate functions such as `f(x) = 2x + 3` for a given `x`.
+- Find a missing input or output when the linear rule is given.
+
+V1 uses sequence text, formulas, and small two-column tables. Coordinate graphs and plotted function lines are deferred. Numeric results support keyboard entry. These may extend the existing Patterns card, while explicit function notation can roll up under a later **Functions** label.
+
+---
+
+## 60. Roman Numerals (potential)
+
+### 60.1 Proposed scope
+
+- Convert Roman numerals to ordinary whole numbers and back.
+- Compare two Roman numerals.
+- Complete a short Roman-numeral sequence.
+- Read familiar clock-hour values without requiring a new clock drawing.
+
+Start with `I`, `V`, and `X` (`1–20`), then add `L`, `C`, `D`, and `M` up to `3,999`. Enforce canonical subtractive forms such as `IV`, `IX`, `XL`, `XC`, `CD`, and `CM`; do not generate nonstandard forms such as `IIII`. Use text-only rendering. Numeric conversions support keyboard entry; Roman-text answers use multiple choice until the keyboard sanitizer supports the required letters. Attempts roll up under **Roman numerals**.
+
+---
+
+## 62. Share Settings Export/Import (shipped)
+
+### 62.1 Purpose
+
+Allow users to **back up, copy, or move** session and topic settings between devices or profiles without exporting learner identity or progress.
+
+Typical uses:
+
+- Share a teacher-prepared plan with a parent (settings only)
+- Duplicate topic configuration into a second profile on the same device
+- Restore session/topic settings after reinstalling the app (profile must be recreated on import)
+
+### 62.2 Settings navigation
+
+```text
+Settings hub → Share settings → Export settings | Import settings
+```
+
+The hub shows a single **Share settings** entry; export and import actions live on the dedicated share screen.
+
+### 62.3 Export
+
+- Exports the active profile’s `learningConfig` (`MathLearningConfig`) plus metadata.
+- Opens the system share sheet with a JSON file (e.g. `therealmath-grade-4-plan.json`).
+- **Does not include:** profile name, learner name, age, session history, streak, or adaptation state.
+
+Export payload (version **1**):
+
+| Field | Description |
+|---|---|
+| `kind` | `therealmath-learning-plan` |
+| `version` | `1` |
+| `exportedAt` | ISO timestamp |
+| `appVersion` | App version at export time (optional) |
+| `label` | Optional human label (usually the profile name used at export) |
+| `learningConfig` | Full validated learning plan object |
+
+### 62.4 Import
+
+1. User picks a `.json` file (document picker).
+2. App validates file size (max **256 KB**), JSON shape, `kind`, `version`, and `learningConfig` using the same validators as in-app saves.
+3. User enters a **profile name** for this device (prefilled from export `label` when present).
+4. User chooses destination:
+   - **Create new profile** (default) — learner name defaults to localized **“friend”**; age left blank; new profile becomes active.
+   - **Replace settings in current profile** — overwrites only `learningConfig` on the active profile after confirmation; profile name, learner name, age, and progress are unchanged.
+
+Import errors show a localized message (invalid JSON, wrong file type, unsupported version, invalid settings, file too large, read failure).
+
+### 62.5 Security and privacy
+
+- Treat imports as untrusted input: parse JSON only; reject oversize files; require known `kind` and `version`; run existing `validateLearningConfig`.
+- No executable content, URLs, or profile PII in the export format.
+- Export is user-initiated; import never runs automatically.
+
+### 62.6 Localization
+
+English and Macedonian strings for hub entry, share screen, import flow, error messages, and replace-settings confirmation.
+
+---
+
+## 61. Summary
 
 The app provides a simple, friendly math learning experience for **learners of all ages**, with optional age-based recommended plans and flexible profiles for multiple learners on one device.
 
@@ -2604,6 +3267,6 @@ Language → Profile setup (name + age) → Recommended learning plan → Home �
 
 The learning plan is flexible but not overwhelming: each operation (plus geometry, comparison, logarithms, linear/quadratic equations, limits, calculus, and other topic cards) is configurable separately, with per-operation toggles for question styles. Multiple-choice answers are the default; keyboard mode is available where appropriate. Optional **Confirm answer** for multiple choice. Practice gives immediate feedback; quiz and timed modes summarize at the end.
 
-**Shipped today:** arithmetic, decimals toggle (1 place), fractions on operation cards, regrouping, word problems, equations with `x` and `xy`, **linear and quadratic equations**, **limits**, equivalent expressions, geometry, comparison, Shapes with color and pattern questions, Numbers / early number sense, clock/time, numeric patterns, trigonometry v1, **logarithms**, calculus (power/constant/sum/ln/trig/quotient), focused Learn/Try configuration (23 topics), multi-profile, progress tracking, gentle adaptation, privacy policy, unsaved-settings protection, compact visual layouts, **English + Macedonian** UI.
+**Shipped today:** arithmetic, decimals toggle (1 place), fractions on operation cards, regrouping, word problems, equations with `x` and `xy`, **linear and quadratic equations**, **limits**, equivalent expressions, expanded geometry, comparison, Shapes with color and pattern questions, Numbers / early number sense, clock/time, numeric patterns, visual fractions with multiple-choice or keyboard entry, trigonometry v1, **logarithms**, calculus (power/constant/sum/ln/trig/quotient), focused Learn/Try configuration (23 topics), configurable timed penalties and bonuses, multi-profile, progress screen with streak, session filter, expandable rows, and topic accuracy (§36), **share settings export/import** (§62), gentle adaptation, build/update information (About screen), privacy policy, unsaved-settings protection, compact visual layouts, **English + Macedonian** UI, and an Expo SDK 57 runtime baseline.
 
-**Later:** dedicated decimal/percent module, money word problems, Learn quality pass (§35), richer timed stats (§36), history question drill-down (§37), gamification, cloud sync, parent dashboard.
+**Later / potential:** dedicated percentages (§51), money word problems, ratios and proportions (§45), LCM/GCD (§46), decade-based number reasoning (§47), matrices (§48), place value / number decomposition (§49), factors/primes/divisibility (§50), integer extensions (§52), powers/exponents (§53), text-first angles (§54), coordinate reasoning without graph drawing (§55), measurement conversions (§56), statistics (§57), probability (§58), sequence/function extensions (§59), Roman numerals (§60), Learn quality pass (§35), history question drill-down (§37), gamification, cloud sync, and parent dashboard.

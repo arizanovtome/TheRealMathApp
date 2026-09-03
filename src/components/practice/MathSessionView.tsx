@@ -1,4 +1,4 @@
-import { useHeaderHeight } from "@react-navigation/elements";
+import { useHeaderHeight } from "expo-router/react-navigation";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -260,7 +260,10 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
     if (isGeometryQuestion(current)) {
       return parseNumberAnswer(answerInputText);
     }
-    if (isArithmeticQuestion(current) && isFractionQuestion(current)) {
+    if (
+      (isArithmeticQuestion(current) && isFractionQuestion(current)) ||
+      isFractionVisualQuestion(current)
+    ) {
       const parsed = parseFractionAnswer(answerInputText);
       return parsed ? formatFraction(parsed) : null;
     }
@@ -313,7 +316,8 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
     const parsed = parseKeyboardAnswer();
     if (parsed === null) {
       setInputError(
-        isArithmeticQuestion(current) && isFractionQuestion(current)
+        (isArithmeticQuestion(current) && isFractionQuestion(current)) ||
+        isFractionVisualQuestion(current)
           ? t("common:fractionHint")
           : t("common:numberHint"),
       );
@@ -387,7 +391,8 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
           const parsed = parseKeyboardAnswer();
           if (parsed === null) {
             setInputError(
-              isArithmeticQuestion(current) && isFractionQuestion(current)
+              (isArithmeticQuestion(current) && isFractionQuestion(current)) ||
+              isFractionVisualQuestion(current)
                 ? t("common:fractionHint")
                 : t("common:numberHint"),
             );
@@ -438,7 +443,8 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
     showKeyboardInput && !inputLocked
       ? isEquationUnknownQuestion(current)
         ? t("common:equationPlaceholder")
-        : isArithmeticQuestion(current) && isFractionQuestion(current)
+        : (isArithmeticQuestion(current) && isFractionQuestion(current)) ||
+            isFractionVisualQuestion(current)
           ? t("common:fractionPlaceholder")
           : t("common:yourAnswer")
       : "";
@@ -509,7 +515,7 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
       <ScrollView
         ref={scrollRef}
         style={styles.scroll}
-        keyboardShouldPersistTaps="handled"
+        keyboardShouldPersistTaps="always"
         keyboardDismissMode="none"
         removeClippedSubviews={false}
         contentContainerStyle={scrollContentStyle}
@@ -733,27 +739,7 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
               </AnswerOptionButton>
             ))}
           </View>
-        ) : (
-          <View
-            style={
-              shouldStackAnswerOptions(current)
-                ? styles.optionsStacked
-                : styles.options
-            }
-          >
-            {current.answerOptions.map((opt) => (
-              <AnswerOptionButton
-                key={String(opt)}
-                label={`x=${opt}`}
-                value={opt}
-                disabled={optionDisabled}
-                selected={selected === opt}
-                onPress={handleSelect}
-                stacked={shouldStackAnswerOptions(current)}
-              />
-            ))}
-          </View>
-        )}
+        ) : null}
 
         <AppButton
           label={primaryActionLabel}

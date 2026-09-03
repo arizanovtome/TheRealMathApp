@@ -74,6 +74,6 @@ export function tryGenerateFractionVisualQuestion(
     questionText: i18n.t('questions:whatFractionShaded'),
     correctAnswer,
     answerOptions,
-    requiresMultipleChoice: true,
+    requiresMultipleChoice: false,
   };
 }

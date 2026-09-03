@@ -1,4 +1,4 @@
-import { useHeaderHeight } from "@react-navigation/elements";
+import { useHeaderHeight } from "expo-router/react-navigation";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -342,7 +342,10 @@ export function TimedMathSessionView() {
       finalizeAnswer(normalizeEquationAnswerInput(body));
       return;
     }
-    if (isArithmeticQuestion(current) && isFractionQuestion(current)) {
+    if (
+      (isArithmeticQuestion(current) && isFractionQuestion(current)) ||
+      isFractionVisualQuestion(current)
+    ) {
       const parsed = parseFractionAnswer(answerInputText);
       if (!parsed) {
         setInputError(t("common:fractionHint"));
@@ -432,13 +435,15 @@ export function TimedMathSessionView() {
     showKeyboardInput && !(showFeedback && showKeyboardInput)
       ? isEquationUnknownQuestion(current)
         ? t("common:equationPlaceholder")
-        : isArithmeticQuestion(current) && isFractionQuestion(current)
+        : (isArithmeticQuestion(current) && isFractionQuestion(current)) ||
+            isFractionVisualQuestion(current)
           ? t("common:fractionPlaceholder")
           : t("common:yourAnswer")
       : "";
 
   const parsedKeyboard =
-    isArithmeticQuestion(current) && isFractionQuestion(current)
+    (isArithmeticQuestion(current) && isFractionQuestion(current)) ||
+    isFractionVisualQuestion(current)
       ? isCompleteFractionAnswer(answerInputText)
       : parseNumberAnswer(answerInputText) !== null;
   const equationBodyNorm = normalizeEquationAnswerInput(
@@ -486,7 +491,7 @@ export function TimedMathSessionView() {
       <ScrollView
         ref={scrollRef}
         style={styles.scroll}
-        keyboardShouldPersistTaps="handled"
+        keyboardShouldPersistTaps="always"
         keyboardDismissMode="none"
         removeClippedSubviews={false}
         contentContainerStyle={scrollContentStyle}

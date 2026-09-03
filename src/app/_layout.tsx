@@ -10,6 +10,7 @@ import type { TFunction } from 'i18next';
 import { LanguageOnboarding } from '@/components/onboarding/LanguageOnboarding';
 import { LanguageQuickSwitch } from '@/components/settings/LanguageQuickSwitch';
 import { stackScreenTitle } from '@/constants/stackScreenTitles';
+import { isActiveSessionRoute } from '@/constants/sessionRoutes';
 import { initI18n, i18n } from '@/i18n';
 import { useAppTranslation } from '@/i18n/useAppTranslation';
 import { usePhonePortraitOrientation } from '@/hooks/usePhonePortraitOrientation';
@@ -31,7 +32,8 @@ function RootStack() {
         contentStyle: { backgroundColor: colors.background },
         title: stackScreenTitle(route.name, t as TFunction),
         headerBackButtonDisplayMode: 'minimal',
-        headerRight: () => <LanguageQuickSwitch compact />,
+        headerRight: () =>
+          isActiveSessionRoute(route.name) ? null : <LanguageQuickSwitch compact />,
         ...(route.name === 'result' || route.name === 'result/index'
           ? { gestureEnabled: false, fullScreenGestureEnabled: false }
           : { gestureEnabled: true, fullScreenGestureEnabled: true }),

@@ -41,7 +41,7 @@ export const QUESTION_KEYBOARD_INPUT = {
   geometry: 'per_question',
   comparison: 'multiple_choice_only',
   equivalent_expression: 'multiple_choice_only',
-  fraction_visual: 'multiple_choice_only',
+  fraction_visual: 'keyboard',
   shape_recognition: 'multiple_choice_only',
   clock: 'multiple_choice_only',
   pattern: 'multiple_choice_only',
@@ -60,6 +60,7 @@ export function supportsKeyboardInput(q: MathQuestion): boolean {
       return q.answerKind !== 'quotient_remainder';
     case 'equation_unknown':
     case 'equation_two_unknown':
+    case 'fraction_visual':
       return true;
     case 'geometry':
       return !q.requiresMultipleChoice;
@@ -67,7 +68,6 @@ export function supportsKeyboardInput(q: MathQuestion): boolean {
       return NUMBER_SENSE_KEYBOARD_INPUT[q.subtype] === 'keyboard';
     case 'comparison':
     case 'equivalent_expression':
-    case 'fraction_visual':
     case 'shape_recognition':
     case 'clock':
     case 'pattern':
@@ -90,6 +90,9 @@ export function keyboardAnswerIsReady(q: MathQuestion, raw: string): boolean {
     return normalizeEquationAnswerInput(body) !== '';
   }
   if (isArithmeticQuestion(q) && isFractionQuestion(q)) {
+    return isCompleteFractionAnswer(raw);
+  }
+  if (q.kind === 'fraction_visual') {
     return isCompleteFractionAnswer(raw);
   }
   return parseNumberAnswer(raw) !== null;

@@ -133,6 +133,24 @@ describe('questionAnswerInput', () => {
       ).toBe(true);
     });
 
+    it('allows keyboard for visual fraction questions', () => {
+      expect(
+        supportsKeyboardInput(
+          makeQuestion({
+            kind: 'fraction_visual',
+            id: 'fraction-visual-1',
+            operation: 'fraction_visual',
+            model: 'circle',
+            shaded: { numerator: 4, denominator: 5 },
+            questionText: 'What fraction is shaded?',
+            correctAnswer: '4/5',
+            answerOptions: ['2/5', '4/5', '1/2', '9/10'],
+            requiresMultipleChoice: false,
+          }),
+        ),
+      ).toBe(true);
+    });
+
     it('respects geometry requiresMultipleChoice flag', () => {
       expect(
         supportsKeyboardInput(
@@ -192,6 +210,23 @@ describe('questionAnswerInput', () => {
   });
 
   describe('keyboardAnswerIsReady', () => {
+    it('accepts a complete fraction for a visual fraction question', () => {
+      const question = makeQuestion({
+        kind: 'fraction_visual',
+        id: 'fraction-visual-ready',
+        operation: 'fraction_visual',
+        model: 'bar',
+        shaded: { numerator: 3, denominator: 4 },
+        questionText: 'What fraction is shaded?',
+        correctAnswer: '3/4',
+        answerOptions: ['1/4', '2/4', '3/4', '4/4'],
+        requiresMultipleChoice: false,
+      });
+
+      expect(keyboardAnswerIsReady(question, '3/')).toBe(false);
+      expect(keyboardAnswerIsReady(question, '3/4')).toBe(true);
+    });
+
     it('enables numeric number-sense questions when a valid answer is typed', () => {
       const question = makeQuestion({
         kind: 'number_sense',

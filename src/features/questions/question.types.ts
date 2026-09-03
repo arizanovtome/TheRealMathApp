@@ -120,7 +120,7 @@ export type FractionVisualMathQuestion = {
   questionText: string;
   correctAnswer: string;
   answerOptions: string[];
-  requiresMultipleChoice: true;
+  requiresMultipleChoice: boolean;
 };
 
 export type ClockMathQuestion = {

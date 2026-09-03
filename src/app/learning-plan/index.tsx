@@ -22,6 +22,7 @@ export default function SettingsHubScreen() {
       <AppButton label={t('settings:profileDetails')} variant="secondary" onPress={() => router.push(ROUTES.settingsProfile)} />
       <AppButton label={t('settings:sessionSettings')} variant="secondary" onPress={() => router.push(ROUTES.settingsSession)} />
       <AppButton label={t('settings:topics')} variant="secondary" onPress={() => router.push(ROUTES.settingsTopics)} />
+      <AppButton label={t('settings:sharePlanSection')} variant="secondary" onPress={() => router.push(ROUTES.settingsSharePlan)} />
       <AppButton label={t('settings:aboutTitle')} variant="secondary" onPress={() => router.push(ROUTES.about)} />
     </AppScreen>
   );

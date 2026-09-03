@@ -171,7 +171,11 @@ export function submittedAnswerIsCorrect(q: MathQuestion, answer: number | strin
   if (isNumberSenseQuestion(q)) {
     return String(answer).trim() === q.correctAnswer.trim();
   }
-  if (isComparisonQuestion(q) || isEquivalentExpressionQuestion(q) || isFractionVisualQuestion(q) || isShapeRecognitionQuestion(q) || isClockQuestion(q) || isPatternQuestion(q) || isCalculusQuestion(q) || isTrigonometryQuestion(q) || isLogarithmQuestion(q)) {
+  if (isFractionVisualQuestion(q)) {
+    if (typeof answer !== 'string') return false;
+    return fractionAnswerMatches(answer, q.shaded);
+  }
+  if (isComparisonQuestion(q) || isEquivalentExpressionQuestion(q) || isShapeRecognitionQuestion(q) || isClockQuestion(q) || isPatternQuestion(q) || isCalculusQuestion(q) || isTrigonometryQuestion(q) || isLogarithmQuestion(q)) {
     if (typeof answer !== 'string') return false;
     return (
       trigAnswersMatch(answer, q.correctAnswer) ||

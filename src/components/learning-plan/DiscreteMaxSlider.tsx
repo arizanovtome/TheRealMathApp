@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Slider from '@react-native-community/slider';
 
@@ -47,12 +46,6 @@ function nearestOption(
   return best;
 }
 
-function formatSliderTickLabel(n: number): string {
-  if (n === 1000) return '1k';
-  if (n === 1_000_000) return '1m';
-  return String(n);
-}
-
 function valueToSliderIndex(
   valueMax: number | AdditionAnswerMax,
   options: readonly number[],
@@ -92,16 +85,7 @@ export function DiscreteMaxSlider(props: DiscreteMaxSliderProps) {
   const allowUnlimited = props.allowUnlimited === true;
   const maxIndex = allowUnlimited ? options.length : options.length - 1;
   const propIndex = valueToSliderIndex(valueMax, options, allowUnlimited);
-  const [localIndex, setLocalIndex] = useState(propIndex);
-
-  useEffect(() => {
-    setLocalIndex(valueToSliderIndex(valueMax, options, allowUnlimited));
-  }, [valueMax, options, allowUnlimited]);
-
-  const currentValue = sliderIndexToValue(localIndex, options, allowUnlimited);
-  const tickValues: (number | 'unlimited')[] = allowUnlimited
-    ? [...options, 'unlimited']
-    : [...options];
+  const currentValue = sliderIndexToValue(propIndex, options, allowUnlimited);
   const summaryLabel =
     currentValue === 'unlimited'
       ? t('common:unlimited')
@@ -119,10 +103,9 @@ export function DiscreteMaxSlider(props: DiscreteMaxSliderProps) {
         minimumValue={0}
         maximumValue={maxIndex}
         step={1}
-        value={localIndex}
+        value={propIndex}
         onValueChange={(raw) => {
           const i = Math.min(maxIndex, Math.max(0, Math.round(raw)));
-          setLocalIndex(i);
           if (allowUnlimited) {
             const next = sliderIndexToValue(i, options, true) as AdditionAnswerMax;
             (onChange as (max: AdditionAnswerMax) => void)(next);
@@ -135,21 +118,6 @@ export function DiscreteMaxSlider(props: DiscreteMaxSliderProps) {
         maximumTrackTintColor={colors.border}
         thumbTintColor={colors.primary}
       />
-      <View style={styles.ticks}>
-        {tickValues.map((n, index) => (
-          <AppText
-            key={n}
-            variant="label"
-            muted
-            style={[
-              styles.tickLabel,
-              { left: `${(index / Math.max(1, tickValues.length - 1)) * 100}%` },
-            ]}
-            accessibilityLabel={n === 'unlimited' ? t('common:unlimited') : formatThousandsDots(n)}>
-            {n === 'unlimited' ? t('common:unlimited') : formatSliderTickLabel(n)}
-          </AppText>
-        ))}
-      </View>
     </View>
   );
 }
@@ -161,17 +129,5 @@ const styles = StyleSheet.create({
   slider: {
     width: '100%',
     height: 44,
-  },
-  ticks: {
-    height: 18,
-    marginHorizontal: 16,
-    position: 'relative',
-  },
-  tickLabel: {
-    position: 'absolute',
-    width: 64,
-    marginLeft: -32,
-    fontSize: 10,
-    textAlign: 'center',
   },
 });

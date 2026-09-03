@@ -10,16 +10,16 @@ import {
   formatTimedRunStartSettingsLabel,
   formatTimedRunTotalTimeLabel,
 } from '@/features/progress/sessionLabels';
+import { positiveFeedbackForCorrectCount } from '@/i18n/labels';
 import { useAppTranslation } from '@/i18n/useAppTranslation';
 import { useAppStore } from '@/store/useAppStore';
-import { selectActiveProfile, selectActiveSessionHistory } from '@/store/profileSelectors';
+import { selectActiveSessionHistory } from '@/store/profileSelectors';
 
 export const options = { headerBackVisible: false };
 
 export default function ResultScreen() {
   const { t } = useAppTranslation(['practice', 'common', 'settings', 'progress']);
   const router = useRouter();
-  const activeProfile = useAppStore(selectActiveProfile);
   const lastSessionResult = useAppStore((s) => s.lastSessionResult);
   const sessionHistory = useAppStore(selectActiveSessionHistory);
 
@@ -27,7 +27,6 @@ export default function ResultScreen() {
     return <Redirect href={ROUTES.home} />;
   }
 
-  const name = activeProfile?.name?.trim() || t('common:friend');
   const sessionMode = lastSessionResult.sessionMode ?? 'practice';
   const quizOutcomes = lastSessionResult.quizQuestionOutcomes;
   const showQuizBreakdown =
@@ -44,7 +43,13 @@ export default function ResultScreen() {
 
   return (
     <AppScreen scroll>
-      <AppText variant="title">{t('practice:greatJobName', { name })}</AppText>
+      <AppText variant="title">
+        {positiveFeedbackForCorrectCount(
+          lastSessionResult.correctAnswers,
+          lastSessionResult.totalQuestions,
+          t,
+        )}
+      </AppText>
       {sessionMode === 'timed' ? (
         <AppText variant="subtitle">
           {t('practice:timedAnswerSummary', {

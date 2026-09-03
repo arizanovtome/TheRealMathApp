@@ -12,6 +12,106 @@ import type { SupportedLocale } from '@/i18n/types';
 import { LOCALE_BCP47 } from '@/i18n/types';
 import { localDateKey, parseIsoToLocalDateKey, previousLocalDateKey } from '@/features/progress/sessionHistory';
 
+export function formatSessionQuestionBreakdownLines(
+  totalQuestions: number,
+  correctAnswers: number,
+  t: TFunction = i18n.t.bind(i18n),
+): string[] {
+  const wrongAnswers = Math.max(0, totalQuestions - correctAnswers);
+  return [
+    t('progress:sessionTotalQuestions', { count: totalQuestions }),
+    t('progress:sessionCorrectAnswers', { count: correctAnswers }),
+    t('progress:sessionWrongAnswers', { count: wrongAnswers }),
+  ];
+}
+
+export function formatSessionHistoryDetailLines(
+  entry: {
+    sessionMode: SessionModeResult;
+    totalQuestions: number;
+    correctAnswers: number;
+    timedRun?: TimedRunSummary;
+  },
+  t: TFunction = i18n.t.bind(i18n),
+): string[] {
+  const wrongAnswers = Math.max(0, entry.totalQuestions - entry.correctAnswers);
+  if (entry.sessionMode === 'timed' && entry.timedRun) {
+    return formatTimedRunHistoryDetailLines(
+      entry.timedRun,
+      entry.correctAnswers,
+      wrongAnswers,
+      t,
+    );
+  }
+  if (entry.sessionMode === 'timed') {
+    return [
+      ...formatSessionQuestionBreakdownLines(
+        entry.totalQuestions,
+        entry.correctAnswers,
+        t,
+      ),
+      t('progress:timedRunLegacySummary', {
+        correct: entry.correctAnswers,
+        wrong: wrongAnswers,
+      }),
+    ];
+  }
+  return formatSessionQuestionBreakdownLines(entry.totalQuestions, entry.correctAnswers, t);
+}
+
+export function formatTimedRunStartTimeLabel(
+  timedRun: TimedRunSummary,
+  t: TFunction = i18n.t.bind(i18n),
+): string {
+  return t('progress:timedRunStartTime', {
+    duration: formatTimedSecondsClock(timedRun.initialSeconds),
+  });
+}
+
+export function formatTimedRunPenaltySettingLabel(
+  timedRun: TimedRunSummary,
+  t: TFunction = i18n.t.bind(i18n),
+): string {
+  return t('progress:timedRunPenaltyValue', { seconds: timedRun.penaltySeconds });
+}
+
+export function formatTimedRunBonusSettingLabel(
+  timedRun: TimedRunSummary,
+  t: TFunction = i18n.t.bind(i18n),
+): string {
+  return t('progress:timedRunBonusValue', { seconds: timedRun.bonusSeconds });
+}
+
+export function formatTimedRunCorrectCountLabel(
+  count: number,
+  t: TFunction = i18n.t.bind(i18n),
+): string {
+  return t('progress:timedRunCorrectAnswers', { count });
+}
+
+export function formatTimedRunWrongCountLabel(
+  count: number,
+  t: TFunction = i18n.t.bind(i18n),
+): string {
+  return t('progress:timedRunWrongAnswers', { count });
+}
+
+export function formatTimedRunHistoryDetailLines(
+  timedRun: TimedRunSummary,
+  correctAnswers: number,
+  wrongAnswers: number,
+  t: TFunction = i18n.t.bind(i18n),
+): string[] {
+  return [
+    formatTimedRunStartTimeLabel(timedRun, t),
+    formatTimedRunPenaltySettingLabel(timedRun, t),
+    formatTimedRunBonusSettingLabel(timedRun, t),
+    formatTimedRunTotalTimeLabel(timedRun, t),
+    formatTimedRunCorrectCountLabel(correctAnswers, t),
+    formatTimedRunWrongCountLabel(wrongAnswers, t),
+  ];
+}
+
 export function formatTimedRunTotalTimeLabel(
   timedRun: TimedRunSummary,
   t: TFunction = i18n.t.bind(i18n),
