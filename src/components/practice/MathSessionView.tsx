@@ -34,6 +34,7 @@ import { ALL_MATH_OPERATIONS } from "@/features/learning-plan/learningPlan.types
 import {
   applyPracticeFocusOverride,
   validateLearningConfig,
+  hasAnyQuestionSource,
 } from "@/features/learning-plan/learningPlan.utils";
 import {
   positiveFeedbackForCorrectCount,
@@ -452,7 +453,11 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
   if (!effectiveConfig || questions.length === 0 || !current) {
     return (
       <View style={styles.center}>
-        <AppText variant="subtitle">{t("common:needValidSetup")}</AppText>
+        <AppText variant="subtitle">
+          {effectiveConfig && !hasAnyQuestionSource(effectiveConfig)
+            ? t("common:noActiveTopics")
+            : t("common:needValidSetup")}
+        </AppText>
         <AppButton
           label={t("common:openSettings")}
           onPress={() => router.replace(ROUTES.learningPlan)}

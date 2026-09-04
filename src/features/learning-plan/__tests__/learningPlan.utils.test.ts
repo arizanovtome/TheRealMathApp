@@ -330,6 +330,9 @@ describe("validateLearningConfig", () => {
     const result = validateLearningConfig(invalid);
     expect(result.valid).toBe(false);
     expect(result.errors.some((e) => e.includes("topic"))).toBe(true);
+    expect(
+      validateLearningConfig(invalid, { requireQuestionSource: false }).valid,
+    ).toBe(true);
   });
 
   it("does not require equation styles when parent operations are off", () => {

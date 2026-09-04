@@ -38,6 +38,7 @@ import { adjustedTimedRemainingSeconds } from "@/features/learning-plan/timedRun
 import {
     applyPracticeFocusOverride,
     validateLearningConfig,
+    hasAnyQuestionSource,
 } from "@/features/learning-plan/learningPlan.utils";
 import { positiveFeedbackForCorrectCount } from "@/features/questions/answerOptionsGenerator";
 import { normalizeEquationAnswerInput } from "@/features/questions/equationUnknown";
@@ -382,7 +383,11 @@ export function TimedMathSessionView() {
   if (!effectiveConfig || !validation?.valid || !current) {
     return (
       <View style={styles.center}>
-        <AppText variant="subtitle">{t("common:needValidSetup")}</AppText>
+        <AppText variant="subtitle">
+          {effectiveConfig && !hasAnyQuestionSource(effectiveConfig)
+            ? t("common:noActiveTopics")
+            : t("common:needValidSetup")}
+        </AppText>
         <AppButton
           label={t("common:openSettings")}
           onPress={() => router.replace(ROUTES.learningPlan)}

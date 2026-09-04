@@ -1,4 +1,8 @@
-import type { AnswerOptionsCount } from '@/features/learning-plan/learningPlan.types';
+import type {
+  AnswerOptionsCount,
+  QuestionStyle,
+} from '@/features/learning-plan/learningPlan.types';
+import type { OperandSnapshot } from '@/features/questions/questionStyles';
 import { randomIntInclusive } from '@/utils/random';
 
 /** Primary wrong-answer offsets (shuffled). Includes ±10 and ±1…±3. */
@@ -104,6 +108,150 @@ export function buildAnswerOptions(
 
   const options = [correctAnswer, ...wrong];
   return shuffleInPlace(options);
+}
+
+function magnitudeAwareWrongAnswers(correctAnswer: number): number[] {
+  const magnitude = Math.abs(correctAnswer);
+  if (magnitude < 10) {
+    return [correctAnswer - 1, correctAnswer + 2, correctAnswer - 3, correctAnswer + 4];
+  }
+  if (magnitude < 100) {
+    // Mixing units and both digits prevents a learner from checking only the ones digit.
+    return [
+      correctAnswer - 1,
+      correctAnswer + 11,
+      correctAnswer - 12,
+      correctAnswer + 20,
+      correctAnswer - 21,
+      correctAnswer + 2,
+    ];
+  }
+
+  const highestPlace = 10 ** Math.floor(Math.log10(magnitude));
+  const broadPlace = Math.max(100, highestPlace / 10);
+  const widerPlace = Math.max(1_000, highestPlace);
+  return [
+    correctAnswer - 1,
+    correctAnswer + broadPlace,
+    correctAnswer - widerPlace,
+    correctAnswer + broadPlace + 10,
+    correctAnswer - Math.max(100, broadPlace / 10),
+    correctAnswer + 11,
+  ];
+}
+
+function additionCarryMistakes(left: number, right: number, correctAnswer: number): number[] {
+  if (left < 0 || right < 0) return [];
+  const mistakes: number[] = [];
+  let a = Math.abs(left);
+  let b = Math.abs(right);
+  let carry = 0;
+  let place = 1;
+  while (a > 0 || b > 0 || carry > 0) {
+    const sum = (a % 10) + (b % 10) + carry;
+    if (sum >= 10) mistakes.push(correctAnswer - place * 10);
+    carry = Math.floor(sum / 10);
+    a = Math.floor(a / 10);
+    b = Math.floor(b / 10);
+    place *= 10;
+  }
+  return mistakes;
+}
+
+function subtractionBorrowMistakes(first: number, second: number, correctAnswer: number): number[] {
+  if (first < 0 || second < 0) return [];
+  const mistakes: number[] = [];
+  let a = Math.abs(first);
+  let b = Math.abs(second);
+  let place = 1;
+  while (b > 0) {
+    if (a % 10 < b % 10) mistakes.push(correctAnswer + place * 10);
+    a = Math.floor(a / 10);
+    b = Math.floor(b / 10);
+    place *= 10;
+  }
+  return mistakes;
+}
+
+/**
+ * Builds integer choices from likely arithmetic mistakes and answer-sized place values.
+ * The generic nearby-offset generator remains the final fallback for tight bounds.
+ */
+export function buildArithmeticAnswerOptions(
+  correctAnswer: number,
+  optionCount: AnswerOptionsCount,
+  allowNegativeDistractors: boolean,
+  bounds: AnswerDistractorBounds | undefined,
+  snapshot: OperandSnapshot | undefined,
+  questionStyle: QuestionStyle,
+  preferredWrongAnswers: readonly number[] = [],
+): number[] {
+  const misconceptionAnswers: number[] = [];
+
+  // A missing-number answer is an operand rather than the snapshot's result, so result-column
+  // mistakes would not describe the task the learner is solving.
+  if (questionStyle !== 'missing_number' && snapshot) {
+    switch (snapshot.operation) {
+      case 'addition':
+        misconceptionAnswers.push(
+          ...additionCarryMistakes(snapshot.left, snapshot.right, correctAnswer),
+        );
+        break;
+      case 'subtraction':
+        misconceptionAnswers.push(
+          ...subtractionBorrowMistakes(snapshot.first, snapshot.second, correctAnswer),
+        );
+        break;
+      case 'multiplication':
+        misconceptionAnswers.push(
+          snapshot.left * (snapshot.right - 1),
+          snapshot.left * (snapshot.right + 1),
+          snapshot.left + snapshot.right,
+        );
+        break;
+      case 'division':
+        misconceptionAnswers.push(
+          snapshot.quotient - 1,
+          snapshot.quotient + 1,
+          snapshot.dividend * snapshot.divisor,
+        );
+        break;
+      case 'square':
+        misconceptionAnswers.push(
+          (snapshot.base - 1) ** 2,
+          (snapshot.base + 1) ** 2,
+          snapshot.base * 2,
+        );
+        break;
+      case 'square_root':
+        misconceptionAnswers.push(snapshot.root - 1, snapshot.root + 1, snapshot.radicand / 2);
+        break;
+      default:
+        break;
+    }
+  }
+
+  // Interleave a close error with place-value errors. This avoids sets where one option is the
+  // only answer with a different prefix, while still retaining believable column mistakes.
+  const scaled = magnitudeAwareWrongAnswers(correctAnswer);
+  const balanced = [
+    misconceptionAnswers[0],
+    scaled[0],
+    scaled[1],
+    misconceptionAnswers[1],
+    scaled[2],
+    scaled[3],
+    ...misconceptionAnswers.slice(2),
+    ...scaled.slice(4),
+  ].filter((value): value is number => value !== undefined);
+
+  return buildAnswerOptions(
+    correctAnswer,
+    optionCount,
+    allowNegativeDistractors,
+    bounds,
+    [...preferredWrongAnswers, ...balanced],
+  );
 }
 
 /**

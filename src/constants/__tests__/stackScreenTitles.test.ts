@@ -7,6 +7,7 @@ describe('stackScreenTitle', () => {
   it('maps known routes to friendly titles', () => {
     expect(stackScreenTitle('learning-plan', t)).toBe('Settings');
     expect(stackScreenTitle('learning-plan/index', t)).toBe('Settings');
+    expect(stackScreenTitle('learning-plan/profile-form', t)).toBe('Profile details');
     expect(stackScreenTitle('onboarding/recommended-plan', t)).toBe('Your plan');
     expect(stackScreenTitle('practice', t)).toBe('Practice');
     expect(stackScreenTitle('practice/index', t)).toBe('Practice');
