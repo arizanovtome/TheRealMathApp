@@ -1,5 +1,5 @@
 {
-  "kind": "update",
-  "stampedAt": "2026-09-04T22:25:44.637Z",
-  "label": "Improve wrong answer generation"
+  "kind": "build",
+  "stampedAt": "2026-09-07T17:06:22.827Z",
+  "label": "Improve splash screen on Android"
 }
