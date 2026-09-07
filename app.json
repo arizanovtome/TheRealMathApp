@@ -13,7 +13,7 @@
       "buildNumber": "1.0.0"
     },
     "android": {
-      "versionCode": 100004,
+      "versionCode": 100005,
       "package": "com.tome.arizanov.TheRealMathApp",
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
@@ -38,6 +38,15 @@
           "backgroundColor": "#ffffff",
           "dark": {
             "backgroundColor": "#000000"
+          },
+          "android": {
+            "image": "./src/assets/splash-android-light.png",
+            "imageWidth": 220,
+            "backgroundColor": "#ffffff",
+            "dark": {
+              "image": "./src/assets/splash-android-dark.png",
+              "backgroundColor": "#000000"
+            }
           }
         }
       ],
