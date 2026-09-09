@@ -229,7 +229,7 @@
     "addCap": "Собирање: нема одговори во рамките на вашиот максимум. Обидете се со повисок лимит или помали опсези.",
     "unsupportedCap": "Зачуваната поставка за максимален одговор не е поддржана."
   },
-  "testerUpdateTitle": "Информации за тест верзија",
+  "testerUpdateTitle": "Детали за ажурирањето",
   "testerUpdateAppVersion": "Верзија на апликација: {{version}}",
   "testerUpdateRuntime": "Runtime верзија: {{version}}",
   "testerUpdateChannel": "Канал за ажурирања: {{channel}}",

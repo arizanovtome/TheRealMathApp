@@ -229,7 +229,7 @@
     "addCap": "Addition: no answers fit within your maximum answer. Try a higher answer limit or smaller number ranges.",
     "unsupportedCap": "The saved maximum answer setting is not supported."
   },
-  "testerUpdateTitle": "Tester build info",
+  "testerUpdateTitle": "Update details",
   "testerUpdateAppVersion": "App version: {{version}}",
   "testerUpdateRuntime": "Runtime version: {{version}}",
   "testerUpdateChannel": "Update channel: {{channel}}",

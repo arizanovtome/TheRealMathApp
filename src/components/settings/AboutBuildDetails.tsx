@@ -12,11 +12,6 @@ export function AboutBuildDetails() {
   const { t, locale } = useAppTranslation(['settings', 'common']);
   const info = buildTesterUpdateInfo();
 
-  const showRuntime =
-    info.runtimeVersion != null &&
-    info.appVersion != null &&
-    info.runtimeVersion !== info.appVersion;
-
   const stampedAt = info.buildStamp.stampedAt;
   const packageMessage =
     info.updateMessage ?? info.buildStamp.label ?? t('settings:testerUpdateNoMessage');
@@ -28,11 +23,6 @@ export function AboutBuildDetails() {
         <AppText variant="title" style={styles.version}>
           {info.appVersion ?? '—'}
         </AppText>
-        {showRuntime ? (
-          <AppText variant="body" muted style={styles.line}>
-            {t('settings:testerUpdateRuntime', { version: info.runtimeVersion })}
-          </AppText>
-        ) : null}
         {info.channel ? (
           <AppText variant="body" muted style={styles.line}>
             {t('settings:testerUpdateChannel', { channel: info.channel })}
@@ -57,7 +47,7 @@ export function AboutBuildDetails() {
         <AppText variant="label" muted style={styles.label}>
           {t('settings:testerUpdateMessageLabel')}
         </AppText>
-        <AppText variant="body" muted style={styles.message} selectable>
+        <AppText variant="body" style={styles.message} selectable>
           {packageMessage}
         </AppText>
         {info.isEmbeddedLaunch && !info.updateId && !info.isDevelopment ? (
@@ -85,6 +75,7 @@ const styles = StyleSheet.create({
   stampDate: {
     marginTop: spacing.xs,
     lineHeight: 24,
+    color: colors.primary,
   },
   hint: {
     marginTop: spacing.sm,
@@ -95,5 +86,6 @@ const styles = StyleSheet.create({
   },
   message: {
     lineHeight: 22,
+    color: colors.primary,
   },
 });

@@ -66,12 +66,20 @@ function parenthesesQuestion(
   const prompt = `${a} ${outerPlus ? '+' : '−'} (${b} ${innerPlus ? '+' : '−'} ${c})`;
   const correctSecondSign = outerPlus ? (innerPlus ? '+' : '−') : innerPlus ? '−' : '+';
   const correct = `${a} ${outerPlus ? '+' : '−'} ${b} ${correctSecondSign} ${c}`;
-  return makeQuestion(subtype, `${prompt} =`, correct, [
-    `${a} + ${b} + ${c}`,
-    `${a} + ${b} − ${c}`,
-    `${a} − ${b} + ${c}`,
-    `${a} − ${b} − ${c}`,
-  ], optionCount);
+  const correctValue = a + (outerPlus ? b : -b) + (correctSecondSign === '+' ? c : -c);
+  const distractors: string[] = [];
+  for (const secondSign of ['+', '−']) {
+    for (const thirdSign of ['+', '−']) {
+      const value = a + (secondSign === '+' ? b : -b) + (thirdSign === '+' ? c : -c);
+      if (value !== correctValue) distractors.push(`${a} ${secondSign} ${b} ${thirdSign} ${c}`);
+    }
+  }
+  // Changing the final term guarantees enough distinct, incorrect alternatives,
+  // even when equal operands make different sign combinations equivalent.
+  for (let offset = 1; offset < optionCount; offset++) {
+    distractors.push(`${a} ${outerPlus ? '+' : '−'} ${b} ${correctSecondSign} ${c + offset}`);
+  }
+  return makeQuestion(subtype, `${prompt} =`, correct, distractors, optionCount);
 }
 
 export function generateEquivalentExpressionQuestion(
@@ -81,11 +89,11 @@ export function generateEquivalentExpressionQuestion(
   switch (subtype) {
     case 'square_of_sum':
       return makeQuestion(subtype, '(a + b)² =', 'a² + 2ab + b²', [
-        'a² + b²', 'a² + ab + b²', 'a² − 2ab + b²', '(a + b)(a − b)',
+        'a² + b²', 'a² + ab + b²', 'a² − 2ab + b²', '(a + b)(a − b)', 'a² + 2ab − b²',
       ], optionCount);
     case 'square_of_difference':
       return makeQuestion(subtype, '(a − b)² =', 'a² − 2ab + b²', [
-        'a² − b²', 'a² + 2ab + b²', 'a² − 2ab − b²', '(a + b)(a − b)',
+        'a² − b²', 'a² + 2ab + b²', 'a² − 2ab − b²', '(a + b)(a − b)', 'a² − ab + b²',
       ], optionCount);
     case 'parentheses_after_addition':
     case 'parentheses_after_subtraction':
@@ -98,11 +106,12 @@ export function generateEquivalentExpressionQuestion(
         `${coefficient + 1}x + ${coefficient * constant}`,
         `${coefficient * constant}x`,
         `${coefficient}x − ${coefficient * constant}`,
+        `${coefficient}x + ${coefficient * constant + 1}`,
       ], optionCount);
     }
     case 'difference_of_squares':
       return makeQuestion(subtype, 'a² − b² =', '(a + b)(a − b)', [
-        '(a − b)²', '(a + b)²', '(a − b)(a − b)', 'a(a − b)',
+        '(a − b)²', '(a + b)²', '(a − b)(a − b)', 'a(a − b)', 'a(a + b)',
       ], optionCount);
     case 'factorization': {
       const k = randomIntInclusive(2, 9);
@@ -116,12 +125,11 @@ export function generateEquivalentExpressionQuestion(
       const correctAnswer = formatFactored(g, cx, c0);
       const distractors = [
         formatFactored(g, cx, c0 + 1),
-        c0 > 1 ? formatFactored(g, cx, c0 - 1) : formatFactored(g, cx, c0 + 2),
-        g > k ? formatFactored(k, m, n) : formatFactored(k, m, n + 1),
-        `${k}(${m}x − ${n})`,
-        `${m}(${k}x + ${n})`,
-        `${expandedCoeff}(x + ${n})`,
-      ].filter((d) => d !== correctAnswer);
+        formatFactored(g, cx, c0 + 2),
+        formatFactored(g, cx + 1, c0),
+        formatFactored(g + 1, cx, c0),
+        `${g}(${cx === 1 ? 'x' : `${cx}x`} − ${c0})`,
+      ];
       return makeQuestion(
         subtype,
         `${expandedCoeff}x + ${expandedConst} =`,

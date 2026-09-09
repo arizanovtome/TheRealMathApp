@@ -67,6 +67,9 @@ function buildTimeMcOptions(
     };
     pool.add(formatTime(candidate, hourFormat));
   }
+  for (let offset = 1; pool.size < count && offset < 12; offset++) {
+    pool.add(formatTime({ ...time, hour: (time.hour + offset) % 24 }, hourFormat));
+  }
   pool.delete(correctLabel);
   const distractors = [...pool];
   const options = [correctLabel];

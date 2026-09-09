@@ -1,5 +1,5 @@
 {
-  "kind": "build",
-  "stampedAt": "2026-09-07T17:06:22.827Z",
-  "label": "Improve splash screen on Android"
+  "kind": "update",
+  "stampedAt": "2026-09-09T06:04:23.564Z",
+  "label": "Fixed an issue where some questions showed fewer answer choices than selected in your settings."
 }

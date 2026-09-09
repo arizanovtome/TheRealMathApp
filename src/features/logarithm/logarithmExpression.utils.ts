@@ -52,13 +52,10 @@ export function buildLogMcOptions(
       options.push(candidate);
     }
   }
-  let fillerAttempts = 0;
-  while (options.length < count && fillerAttempts < 40) {
-    fillerAttempts += 1;
-    const candidate = `log ${randomIntInclusive(2, 9)} + log ${randomIntInclusive(2, 9)}`;
-    if (options.every((opt) => !logAnswersEquivalentForMc(opt, candidate))) {
-      options.push(candidate);
-    }
+  for (let value = 2; options.length < count; value++) {
+    const candidate = `log ${value}`;
+    if (options.every((opt) => !logAnswersEquivalentForMc(opt, candidate)
+      && !logAnswersEquivalentForMc(candidate, opt))) options.push(candidate);
   }
   return options.sort(() => (Math.random() > 0.5 ? 1 : -1));
 }
@@ -93,10 +90,8 @@ export function buildNumericMcOptions(correct: number, count: number): string[] 
     const s = String(n);
     if (!options.includes(s)) options.push(s);
   }
-  let filler = 0;
-  while (options.length < count && filler < 20) {
-    filler += 1;
-    const candidate = String(randomIntInclusive(0, Math.max(6, correct + 3)));
+  for (let value = 0; options.length < count; value++) {
+    const candidate = String(value);
     if (!options.includes(candidate)) options.push(candidate);
   }
   return options.sort(() => (Math.random() > 0.5 ? 1 : -1));

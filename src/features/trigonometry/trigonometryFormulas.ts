@@ -127,16 +127,24 @@ export function buildPickFormulaNumericDistractors(
 
   if (unknown === 'angle') {
     addFindAngleFormulaLabels(pool, values, knownAngleDegrees);
-    pool.delete(correct);
-    return [...pool];
-  }
-
-  for (const ratio of ALL_RATIOS) {
-    pool.add(formatNumericRatioLabel(ratio, values, unknown, false, knownAngleDegrees));
-    pool.add(formatNumericRatioLabel(ratio, values, unknown, true, knownAngleDegrees));
+  } else {
+    for (const ratio of ALL_RATIOS) {
+      pool.add(formatNumericRatioLabel(ratio, values, unknown, false, knownAngleDegrees));
+      pool.add(formatNumericRatioLabel(ratio, values, unknown, true, knownAngleDegrees));
+    }
   }
   pool.delete(correct);
-  return [...pool].filter((label) => !hasDoubleUnknownPlaceholder(label));
+  const distractors = [...pool].filter((label) =>
+    !hasDoubleUnknownPlaceholder(label) && !trigAnswersMatch(label, correct));
+  // Some diagrams leave only four usable ratios. Alter a known side value to
+  // supply additional incorrect choices without introducing extra unknowns.
+  const [prefix, fraction] = correct.split(' = ');
+  for (let offset = 1; offset <= 6 && distractors.length < 5; offset++) {
+    const changed = fraction.replace(/\d+/, (value) => String(Number(value) + offset));
+    const candidate = `${prefix} = ${changed}`;
+    if (!distractors.includes(candidate) && !trigAnswersMatch(candidate, correct)) distractors.push(candidate);
+  }
+  return distractors;
 }
 
 export function sideLabel(role: TrigSideRole): string {

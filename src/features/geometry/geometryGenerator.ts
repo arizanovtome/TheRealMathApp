@@ -471,6 +471,14 @@ function buildFormulaMcOptions(
     seenLabels.add(formula.label);
     pool.push(formula.label);
   }
+  // A measure can have fewer distinct formulas than the requested choice count.
+  for (let factor = 2; pool.length < optionCount - 1; factor++) {
+    const candidate = `${factor} × (${correct.label})`;
+    if (!formulasMatch(candidate, correct.label) && !seenLabels.has(candidate)) {
+      seenLabels.add(candidate);
+      pool.push(candidate);
+    }
+  }
   const shuffled = [...pool].sort(() => Math.random() - 0.5);
   const wrong = shuffled.slice(0, optionCount - 1);
   const options = [...wrong, correct.label];
