@@ -21,6 +21,7 @@ export function stackScreenTitle(routeName: string, t: TFunction): string {
     timed: t('navigation:timedRun'),
     'learning-plan': t('navigation:settings'),
     'learning-plan/profile': t('settings:profileDetails'),
+    'learning-plan/profile-form': t('settings:profileDetails'),
     'learning-plan/session': t('settings:sessionSettings'),
     'learning-plan/topics': t('settings:topics'),
     'learning-plan/topics/[category]': t('settings:topics'),

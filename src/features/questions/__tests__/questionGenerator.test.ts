@@ -637,7 +637,7 @@ describe("createSessionQuestions", () => {
     expect(hasNegativeByOperation("division")).toBe(true);
   });
 
-  it("keeps negative addition answer choices near the correct answer", () => {
+  it("mixes nearby and two-digit errors for signed addition choices", () => {
     const template = withoutGeometry(getRecommendedLearningPlan(10));
     const cfg: MathLearningConfig = {
       ...template,
@@ -672,9 +672,14 @@ describe("createSessionQuestions", () => {
       expect(q.kind).toBe("arithmetic");
       expect(q.operation).toBe("addition");
       expect(q.answerOptions).toContain(q.correctAnswer);
+      expect(
+        q.answerOptions.some(
+          (option) => Math.abs((option as number) - q.correctAnswer) >= 11,
+        ),
+      ).toBe(true);
       for (const option of q.answerOptions) {
         expect(typeof option).toBe("number");
-        expect(Math.abs((option as number) - q.correctAnswer)).toBeLessThanOrEqual(10);
+        expect(Math.abs((option as number) - q.correctAnswer)).toBeLessThanOrEqual(20);
       }
     }
   });

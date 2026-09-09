@@ -1,4 +1,5 @@
 import { DEFAULT_GEOMETRY_CONFIG } from '@/features/geometry/geometry.types';
+import { formatPiForm } from '@/features/geometry/geometryFormulas';
 import {
   buildCalculateQuestionText,
   tryGenerateGeometryQuestion,
@@ -85,6 +86,89 @@ describe('geometryGenerator', () => {
       ).toBe('Квадрат има страна 5 см. Кој е неговиот периметар?');
     } finally {
       await i18n.changeLanguage('en');
+    }
+  });
+
+  it('uses distinct rectangle sides and offers area/perimeter confusion distractors', () => {
+    for (const measure of ['perimeter', 'area'] as const) {
+      const config = {
+        ...geometryConfig({
+          questionKinds: { formula: false, calculate: true },
+          perimeter: {
+            enabled: measure === 'perimeter',
+            shapes: {
+              ...DEFAULT_GEOMETRY_CONFIG.perimeter.shapes,
+              rectangle: true,
+            },
+          },
+          area: {
+            enabled: measure === 'area',
+            shapes: {
+              ...DEFAULT_GEOMETRY_CONFIG.area.shapes,
+              rectangle: true,
+            },
+          },
+          volume: { enabled: false, shapes: DEFAULT_GEOMETRY_CONFIG.volume.shapes },
+        }),
+        answerEntryMode: 'multiple_choice' as const,
+      };
+
+      for (let i = 0; i < 30; i++) {
+        const q = tryGenerateGeometryQuestion(config)!;
+        const length = q.dimensions.length!;
+        const width = q.dimensions.width!;
+        expect(length).not.toBe(width);
+        const opposite = measure === 'perimeter'
+          ? length * width
+          : 2 * (length + width);
+        expect(opposite).not.toBe(q.correctAnswer);
+        expect(q.answerOptions).toContain(String(opposite));
+        expect(
+          q.answerOptions.some((option) => {
+            const value = Number(option);
+            return value !== opposite && Math.abs(value - opposite) <= 2;
+          }),
+        ).toBe(true);
+      }
+    }
+  });
+
+  it('offers the opposite measure for square and circle calculations when distinct', () => {
+    for (const shape of ['square', 'circle'] as const) {
+      for (const measure of ['perimeter', 'area'] as const) {
+        const config = {
+          ...geometryConfig({
+            questionKinds: { formula: false, calculate: true },
+            perimeter: {
+              enabled: measure === 'perimeter',
+              shapes: {
+                ...Object.fromEntries(
+                  Object.keys(DEFAULT_GEOMETRY_CONFIG.perimeter.shapes).map((key) => [key, false]),
+                ),
+                [shape]: true,
+              } as typeof DEFAULT_GEOMETRY_CONFIG.perimeter.shapes,
+            },
+            area: {
+              enabled: measure === 'area',
+              shapes: {
+                ...Object.fromEntries(
+                  Object.keys(DEFAULT_GEOMETRY_CONFIG.area.shapes).map((key) => [key, false]),
+                ),
+                [shape]: true,
+              } as typeof DEFAULT_GEOMETRY_CONFIG.area.shapes,
+            },
+            volume: { enabled: false, shapes: DEFAULT_GEOMETRY_CONFIG.volume.shapes },
+          }),
+          answerEntryMode: 'multiple_choice' as const,
+        };
+        const q = tryGenerateGeometryQuestion(config)!;
+        const sideOrRadius = shape === 'square' ? q.dimensions.side! : q.dimensions.radius!;
+        const opposite = shape === 'square'
+          ? String(measure === 'perimeter' ? sideOrRadius ** 2 : 4 * sideOrRadius)
+          : formatPiForm(measure === 'perimeter' ? sideOrRadius ** 2 : 2 * sideOrRadius);
+        expect(opposite).not.toBe(String(q.correctAnswer));
+        expect(q.answerOptions).toContain(opposite);
+      }
     }
   });
 

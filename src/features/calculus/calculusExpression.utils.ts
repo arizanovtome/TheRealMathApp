@@ -83,10 +83,13 @@ export function buildCalculusMcOptions(
   const available = [...pool];
   while (options.length < count && available.length > 0) {
     const idx = randomIntInclusive(0, available.length - 1);
-    options.push(available.splice(idx, 1)[0]!);
+    const candidate = available.splice(idx, 1)[0]!;
+    if (options.every((option) => !calculusAnswersMatch(option, candidate))) options.push(candidate);
   }
-  while (options.length < count) {
-    options.push(`${randomIntInclusive(1, 9)}x + C`);
+  // Vary the x term, not the integration constant (which would stay equivalent).
+  for (let coefficient = 1; options.length < count; coefficient++) {
+    const candidate = `${coefficient}x${correct.includes('C') ? ' + C' : ''}`;
+    if (options.every((option) => !calculusAnswersMatch(option, candidate))) options.push(candidate);
   }
   return options.sort(() => (Math.random() > 0.5 ? 1 : -1));
 }

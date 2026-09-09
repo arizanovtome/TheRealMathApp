@@ -37,6 +37,17 @@ function randDim(): number {
   return randomIntInclusive(DIM_MIN, DIM_MAX);
 }
 
+function pickRectangleDims(): { length: number; width: number } {
+  for (let i = 0; i < PICK_ATTEMPTS; i++) {
+    const length = randDim();
+    const width = randDim();
+    if (length !== width && length * width !== 2 * (length + width)) {
+      return { length, width };
+    }
+  }
+  return { length: 5, width: 10 };
+}
+
 function isValidTriangle(a: number, b: number, c: number): boolean {
   return a + b > c && a + c > b && b + c > a;
 }
@@ -118,6 +129,16 @@ function pickRadius(): number {
   return randDim();
 }
 
+function pickDistinctMeasureSquareSide(): number {
+  const side = randDim();
+  return side === 4 ? 5 : side;
+}
+
+function pickDistinctMeasureCircleRadius(): number {
+  const radius = pickRadius();
+  return radius === 2 ? 3 : radius;
+}
+
 type CalcResult =
   | { answerKind: 'number'; correctAnswer: number; dimensions: Record<string, number> }
   | { answerKind: 'pi_form'; correctAnswer: string; dimensions: Record<string, number> };
@@ -129,12 +150,11 @@ function computeCalculate(
   switch (measure) {
     case 'perimeter': {
       if (shape === 'square') {
-        const side = randDim();
+        const side = pickDistinctMeasureSquareSide();
         return { answerKind: 'number', correctAnswer: 4 * side, dimensions: { side } };
       }
       if (shape === 'rectangle') {
-        const length = randDim();
-        const width = randDim();
+        const { length, width } = pickRectangleDims();
         return {
           answerKind: 'number',
           correctAnswer: 2 * (length + width),
@@ -151,7 +171,7 @@ function computeCalculate(
         };
       }
       if (shape === 'circle') {
-        const radius = pickRadius();
+        const radius = pickDistinctMeasureCircleRadius();
         return {
           answerKind: 'pi_form',
           correctAnswer: formatPiForm(2 * radius),
@@ -195,12 +215,11 @@ function computeCalculate(
     }
     case 'area': {
       if (shape === 'square') {
-        const side = randDim();
+        const side = pickDistinctMeasureSquareSide();
         return { answerKind: 'number', correctAnswer: side * side, dimensions: { side } };
       }
       if (shape === 'rectangle') {
-        const length = randDim();
-        const width = randDim();
+        const { length, width } = pickRectangleDims();
         return {
           answerKind: 'number',
           correctAnswer: length * width,
@@ -216,7 +235,7 @@ function computeCalculate(
         };
       }
       if (shape === 'circle') {
-        const radius = pickRadius();
+        const radius = pickDistinctMeasureCircleRadius();
         return {
           answerKind: 'pi_form',
           correctAnswer: formatPiForm(radius * radius),
@@ -452,6 +471,14 @@ function buildFormulaMcOptions(
     seenLabels.add(formula.label);
     pool.push(formula.label);
   }
+  // A measure can have fewer distinct formulas than the requested choice count.
+  for (let factor = 2; pool.length < optionCount - 1; factor++) {
+    const candidate = `${factor} × (${correct.label})`;
+    if (!formulasMatch(candidate, correct.label) && !seenLabels.has(candidate)) {
+      seenLabels.add(candidate);
+      pool.push(candidate);
+    }
+  }
   const shuffled = [...pool].sort(() => Math.random() - 0.5);
   const wrong = shuffled.slice(0, optionCount - 1);
   const options = [...wrong, correct.label];
@@ -461,12 +488,16 @@ function buildFormulaMcOptions(
 function buildPiFormMcOptions(
   correct: string,
   optionCount: AnswerOptionsCount,
+  preferredWrongAnswers: readonly string[] = [],
 ): string[] {
   const coeff =
     correct === 'π'
       ? 1
       : Number.parseInt(correct.replace('π', ''), 10);
   const distractors = new Set<string>();
+  for (const preferred of preferredWrongAnswers) {
+    if (preferred !== correct) distractors.add(preferred);
+  }
   const offsets = [-3, -2, -1, 1, 2, 3, 4, 5];
   for (const off of offsets) {
     const c = coeff + off;
@@ -486,12 +517,56 @@ function buildPiFormMcOptions(
 function buildNumericMcOptions(
   correct: number,
   optionCount: AnswerOptionsCount,
+  preferredWrongAnswers: readonly number[] = [],
 ): string[] {
   const nums = buildAnswerOptions(correct, optionCount, false, {
     min: 0,
     max: 1000,
-  });
+  }, preferredWrongAnswers);
   return nums.map(String);
+}
+
+function oppositeMeasureNumericDistractors(
+  correct: number,
+  measure: GeometryMeasure,
+  shape: GeometryShape,
+  dimensions: Record<string, number>,
+  optionCount: AnswerOptionsCount,
+): number[] {
+  let opposite: number | undefined;
+  if (shape === 'square') {
+    const side = dimensions.side;
+    opposite = measure === 'perimeter' ? side * side : 4 * side;
+  }
+  if (shape === 'rectangle') {
+    const { length, width } = dimensions;
+    opposite = measure === 'perimeter' ? length * width : 2 * (length + width);
+  }
+  if (opposite === undefined) return [];
+  const companions = [-1, 1, -2, 2]
+    .map((offset) => opposite! + offset)
+    .filter((value) => value > 0 && value !== correct)
+    .sort(() => Math.random() - 0.5);
+  return [opposite, ...companions].slice(0, Math.floor(optionCount / 2));
+}
+
+function oppositeMeasurePiDistractors(
+  correct: string,
+  measure: GeometryMeasure,
+  shape: GeometryShape,
+  dimensions: Record<string, number>,
+  optionCount: AnswerOptionsCount,
+): string[] {
+  if (shape !== 'circle') return [];
+  const radius = dimensions.radius;
+  const coefficient = measure === 'perimeter' ? radius * radius : 2 * radius;
+  const companions = [-1, 1, -2, 2]
+    .map((offset) => coefficient + offset)
+    .filter((value) => value > 0)
+    .sort(() => Math.random() - 0.5)
+    .map(formatPiForm)
+    .filter((value) => value !== correct);
+  return [formatPiForm(coefficient), ...companions].slice(0, Math.floor(optionCount / 2));
 }
 
 function finalizeGeometryQuestion(
@@ -556,11 +631,25 @@ function generateFromSource(
       answerOptions = buildPiFormMcOptions(
         calc.correctAnswer,
         config.answerOptionsCount,
+        oppositeMeasurePiDistractors(
+          calc.correctAnswer,
+          measure,
+          shape,
+          calc.dimensions,
+          config.answerOptionsCount,
+        ),
       );
     } else {
       answerOptions = buildNumericMcOptions(
         calc.correctAnswer,
         config.answerOptionsCount,
+        oppositeMeasureNumericDistractors(
+          calc.correctAnswer,
+          measure,
+          shape,
+          calc.dimensions,
+          config.answerOptionsCount,
+        ),
       );
     }
   }

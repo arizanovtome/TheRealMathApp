@@ -80,7 +80,7 @@ export function parseLearningPlanImport(
   }
 
   const config = ensureLearningConfigShape(record.learningConfig as MathLearningConfig);
-  const validation = validateLearningConfig(config);
+  const validation = validateLearningConfig(config, { requireQuestionSource: false });
   if (!validation.valid) {
     return { ok: false, error: 'invalid_config' };
   }

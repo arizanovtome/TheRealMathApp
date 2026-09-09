@@ -5,6 +5,7 @@ export const ROUTES = {
   onboardingRecommendedPlan: '/onboarding/recommended-plan',
   learningPlan: '/learning-plan',
   settingsProfile: '/learning-plan/profile',
+  settingsProfileForm: '/learning-plan/profile-form',
   settingsSession: '/learning-plan/session',
   settingsTopics: '/learning-plan/topics',
   settingsSharePlan: '/learning-plan/share',

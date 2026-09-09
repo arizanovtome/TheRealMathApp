@@ -1,16 +1,12 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import Slider from '@react-native-community/slider';
 
-import { AppText } from '@/components/common/AppText';
+import { SettingsSlider } from '@/components/learning-plan/SettingsSlider';
 import {
   TIMED_DURATION_MINUTES_OPTIONS,
   type TimedDurationMinutes,
 } from '@/features/learning-plan/learningPlan.types';
 import { formatTimedDurationCompact } from '@/features/learning-plan/timedRun.utils';
 import { useAppTranslation } from '@/i18n/useAppTranslation';
-import { colors } from '@/theme/colors';
-import { spacing } from '@/theme/spacing';
 
 export type DiscreteMinuteSliderProps = {
   valueMinutes: TimedDurationMinutes;
@@ -50,57 +46,24 @@ export function DiscreteMinuteSlider({
   const valueLabel = formatTimedDurationCompact(currentMinutes);
 
   return (
-    <View style={styles.wrap}>
-      <View style={styles.row}>
-        <AppText variant="label">{t('settings:totalTimeLabel')}</AppText>
-        <AppText
-          variant="subtitle"
-          style={styles.value}
-          accessibilityLabel={`${accessibilityLabel}: ${valueLabel}`}
-        >
-          {valueLabel}
-        </AppText>
-      </View>
-      <Slider
-        style={styles.slider}
-        accessibilityLabel={accessibilityLabel}
-        accessibilityValue={{ text: valueLabel }}
-        disabled={disabled}
-        minimumValue={0}
-        maximumValue={TIMED_DURATION_MINUTES_OPTIONS.length - 1}
-        step={1}
-        value={localIndex}
-        onValueChange={(raw) => {
-          const i = Math.min(
-            TIMED_DURATION_MINUTES_OPTIONS.length - 1,
-            Math.max(0, Math.round(raw)),
-          );
-          setLocalIndex(i);
-          onChange(TIMED_DURATION_MINUTES_OPTIONS[i]!);
-        }}
-        minimumTrackTintColor={colors.primary}
-        maximumTrackTintColor={colors.border}
-        thumbTintColor={colors.primary}
-      />
-    </View>
+    <SettingsSlider
+      label={t('settings:totalTimeLabel')}
+      valueLabel={valueLabel}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityValueText={valueLabel}
+      disabled={disabled}
+      minimumValue={0}
+      maximumValue={TIMED_DURATION_MINUTES_OPTIONS.length - 1}
+      step={1}
+      value={localIndex}
+      onValueChange={(raw) => {
+        const i = Math.min(
+          TIMED_DURATION_MINUTES_OPTIONS.length - 1,
+          Math.max(0, Math.round(raw)),
+        );
+        setLocalIndex(i);
+        onChange(TIMED_DURATION_MINUTES_OPTIONS[i]!);
+      }}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: {
-    gap: spacing.xs,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.md,
-  },
-  value: {
-    color: colors.primary,
-  },
-  slider: {
-    width: '100%',
-    height: 44,
-  },
-});

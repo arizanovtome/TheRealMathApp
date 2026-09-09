@@ -44,7 +44,7 @@ export function AppScreen({
           <ScrollView
             {...restScrollProps}
             contentContainerStyle={[styles.scrollContent, scrollContentStyle]}
-            keyboardShouldPersistTaps={restScrollProps.keyboardShouldPersistTaps ?? 'always'}
+            keyboardShouldPersistTaps={restScrollProps.keyboardShouldPersistTaps ?? 'handled'}
           >
             {children}
           </ScrollView>

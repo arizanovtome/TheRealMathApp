@@ -40,7 +40,7 @@ import type {
 import { i18n } from '@/i18n';
 import { roundingUnitLabel } from '@/i18n/labels';
 import {
-  buildAnswerOptions,
+  buildArithmeticAnswerOptions,
   buildDecimalAnswerOptions,
   buildOrderOfOperationsAnswerOptions,
   buildSteppedAnswerOptions,
@@ -939,11 +939,13 @@ function finalizeArithmeticQuestion(
               bounds,
               signedOperationDistractors(base),
             )
-        : buildAnswerOptions(
+        : buildArithmeticAnswerOptions(
             base.correctAnswer,
             config.answerOptionsCount,
             allowNeg,
             bounds,
+            base.operandSnapshot,
+            base.questionStyle,
             signedOperationDistractors(base),
           );
   return {

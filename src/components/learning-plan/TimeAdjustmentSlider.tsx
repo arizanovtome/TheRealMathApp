@@ -1,9 +1,4 @@
-import Slider from '@react-native-community/slider';
-import { StyleSheet, View } from 'react-native';
-
-import { AppText } from '@/components/common/AppText';
-import { colors } from '@/theme/colors';
-import { spacing } from '@/theme/spacing';
+import { SettingsSlider } from '@/components/learning-plan/SettingsSlider';
 
 type TimeAdjustmentSliderProps = {
   accessibilityLabel: string;
@@ -24,47 +19,16 @@ export function TimeAdjustmentSlider({
   const valueLabel = `${seconds}s`;
 
   return (
-    <View style={styles.wrap}>
-      <View style={styles.row}>
-        <AppText variant="label" style={styles.label} numberOfLines={2}>
-          {label}
-        </AppText>
-        <AppText variant="subtitle" style={styles.value}>
-          {valueLabel}
-        </AppText>
-      </View>
-      <Slider
-        accessibilityLabel={accessibilityLabel}
-        accessibilityValue={{ text: valueLabel }}
-        minimumValue={0}
-        maximumValue={maximumValue}
-        step={1}
-        value={seconds}
-        minimumTrackTintColor={colors.primary}
-        maximumTrackTintColor={colors.border}
-        thumbTintColor={colors.primary}
-        onValueChange={(next) => onChange(Math.round(next))}
-      />
-    </View>
+    <SettingsSlider
+      label={label}
+      valueLabel={valueLabel}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityValueText={valueLabel}
+      minimumValue={0}
+      maximumValue={maximumValue}
+      step={1}
+      value={seconds}
+      onValueChange={(next) => onChange(Math.round(next))}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: {
-    gap: spacing.xs,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.md,
-  },
-  label: {
-    flex: 1,
-    minWidth: 0,
-  },
-  value: {
-    color: colors.primary,
-    flexShrink: 0,
-  },
-});

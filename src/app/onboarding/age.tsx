@@ -24,6 +24,7 @@ export default function OnboardingAgeScreen() {
   const params = useLocalSearchParams<{ name?: string; profileName?: string; mode?: string }>();
   const profiles = useAppStore((s) => s.profiles);
   const addProfile = useAppStore((s) => s.addProfile);
+  const completeOnboarding = useAppStore((s) => s.completeOnboarding);
   const [age, setAge] = useState<number | null>(null);
   const [mathKnowledgeLevel, setMathKnowledgeLevel] = useState(DEFAULT_MATH_KNOWLEDGE_LEVEL);
   const [mathKnowledgeTouched, setMathKnowledgeTouched] = useState(false);
@@ -65,10 +66,17 @@ export default function OnboardingAgeScreen() {
       learningConfig: plan,
     });
     addProfile(profile);
+
+    // The recommended plan is already stored on the new profile. For the first profile,
+    // finish onboarding here so a stale plan cannot later overwrite changes made in Settings.
+    if (!isAddMode) {
+      completeOnboarding();
+      router.replace(ROUTES.home);
+      return;
+    }
+
     router.push(
-      isAddMode
-        ? `${ROUTES.onboardingRecommendedPlan}?mode=add`
-        : ROUTES.onboardingRecommendedPlan,
+      `${ROUTES.onboardingRecommendedPlan}?mode=add`,
     );
   };
 
@@ -109,7 +117,9 @@ export default function OnboardingAgeScreen() {
       <AppButton
         label={t('common:continue')}
         onPress={handleContinue}
-        accessibilityHint={t('onboarding:continueToPlan')}
+        accessibilityHint={
+          isAddMode ? t('onboarding:continueToPlan') : t('onboarding:hintSaveHome')
+        }
       />
       <AppButton label={t('common:back')} variant="secondary" onPress={() => router.back()} />
     </AppScreen>

@@ -1,6 +1,7 @@
 import type { AnswerOptionsCount } from '@/features/learning-plan/learningPlan.types';
 import {
   buildAnswerOptions,
+  buildArithmeticAnswerOptions,
   buildDecimalAnswerOptions,
   buildFixedAnswerOptions,
   buildSteppedAnswerOptions,
@@ -50,6 +51,55 @@ describe('answerOptionsGenerator helpers', () => {
       expect(options).toHaveLength(4);
       expect(options).toContain(-24.18);
       expect(new Set(options).size).toBe(4);
+    });
+  });
+
+  describe('buildArithmeticAnswerOptions', () => {
+    it('changes meaningful higher places for large non-regrouping addition', () => {
+      const correct = 968199;
+      const options = buildArithmeticAnswerOptions(
+        correct,
+        4,
+        false,
+        undefined,
+        { operation: 'addition', left: 525092, right: 443107, result: correct },
+        'standard',
+      );
+
+      expect(options).toHaveLength(4);
+      expect(options).toContain(correct);
+      expect(options.some((value) => Math.abs(value - correct) >= 100)).toBe(true);
+    });
+
+    it('does not use plus or minus ten for small addition without regrouping', () => {
+      const correct = 68;
+      const options = buildArithmeticAnswerOptions(
+        correct,
+        4,
+        false,
+        undefined,
+        { operation: 'addition', left: 35, right: 33, result: correct },
+        'standard',
+      );
+
+      expect(options).not.toContain(correct - 10);
+      expect(options).not.toContain(correct + 10);
+      expect(options.some((value) => Math.abs(value - correct) >= 11)).toBe(true);
+    });
+
+    it('mixes a missed carry with errors that change both digits', () => {
+      const correct = 72;
+      const options = buildArithmeticAnswerOptions(
+        correct,
+        4,
+        false,
+        undefined,
+        { operation: 'addition', left: 35, right: 37, result: correct },
+        'standard',
+      );
+
+      expect(options).toContain(62);
+      expect(options.some((value) => Math.abs(value - correct) >= 11)).toBe(true);
     });
   });
 

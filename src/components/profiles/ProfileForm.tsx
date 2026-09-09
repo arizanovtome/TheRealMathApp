@@ -34,6 +34,7 @@ type ProfileFormProps = {
   onSave: () => void;
   onCancel: () => void;
   saveDisabled?: boolean;
+  showTitle?: boolean;
 };
 
 export function profileFormInitialValues(overrides?: Partial<ProfileFormValues>): ProfileFormValues {
@@ -58,6 +59,7 @@ export function ProfileForm({
   onSave,
   onCancel,
   saveDisabled = false,
+  showTitle = true,
 }: ProfileFormProps) {
   const { t } = useAppTranslation(['settings', 'onboarding', 'common']);
 
@@ -66,9 +68,11 @@ export function ProfileForm({
 
   return (
     <Card>
-      <AppText variant="subtitle">
-        {mode === 'add' ? t('settings:addProfileFormTitle') : t('settings:editProfileFormTitle')}
-      </AppText>
+      {showTitle ? (
+        <AppText variant="subtitle">
+          {mode === 'add' ? t('settings:addProfileFormTitle') : t('settings:editProfileFormTitle')}
+        </AppText>
+      ) : null}
 
       <View style={styles.fields}>
         <View style={styles.field}>

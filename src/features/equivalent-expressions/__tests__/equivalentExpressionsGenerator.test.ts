@@ -6,6 +6,8 @@ import {
 import type { EquivalentExpressionSubtype } from '../equivalentExpressions.types';
 import { applyPracticeFocusOverride } from '@/features/learning-plan/learningPlan.utils';
 import { getRecommendedLearningPlan } from '@/features/learning-plan/recommendedLearningPlan';
+import { ANSWER_OPTIONS_COUNT_OPTIONS } from '@/features/learning-plan/learningPlan.types';
+import * as random from '@/utils/random';
 import { gcd } from '@/features/questions/fractions';
 import { createSessionQuestions } from '@/features/questions/questionGenerator';
 import { submittedAnswerIsCorrect } from '@/features/questions/questionScoring';
@@ -44,6 +46,62 @@ describe('equivalent expressions generator', () => {
     for (const subtype of ALL_SUBTYPES) {
       const question = tryGenerateEquivalentExpressionQuestion(fourChoices, subtype);
       expect(question!.answerOptions).toHaveLength(4);
+    }
+  });
+
+  afterEach(() => jest.restoreAllMocks());
+
+  it.each(ANSWER_OPTIONS_COUNT_OPTIONS)('provides exactly %i unique choices for every subtype', (count) => {
+    jest.spyOn(random, 'randomIntInclusive').mockImplementation((min) => min);
+    for (const subtype of ALL_SUBTYPES) {
+      const question = tryGenerateEquivalentExpressionQuestion({ ...config, answerOptionsCount: count }, subtype)!;
+      expect(question.answerOptions).toHaveLength(count);
+      expect(new Set(question.answerOptions).size).toBe(count);
+      expect(question.answerOptions.filter((option) => option === question.correctAnswer)).toHaveLength(1);
+    }
+  });
+
+  it('provides six choices with only one equivalent answer for every parentheses operand/sign combination', () => {
+    const rng = jest.spyOn(random, 'randomIntInclusive').mockImplementation((min) => min);
+    const valueOf = (expression: string) => {
+      const match = /^(\d+) ([+−]) (\d+) ([+−]) (\d+)$/.exec(expression)!;
+      return Number(match[1]) + (match[2] === '+' ? 1 : -1) * Number(match[3])
+        + (match[4] === '+' ? 1 : -1) * Number(match[5]);
+    };
+    for (const subtype of ['parentheses_after_addition', 'parentheses_after_subtraction'] as const) {
+      for (let b = 2; b <= 20; b++) {
+        for (let c = 2; c <= 20; c++) {
+          for (const sign of [0, 1]) {
+            rng.mockReturnValueOnce(20).mockReturnValueOnce(b).mockReturnValueOnce(c).mockReturnValueOnce(sign);
+            const question = generateEquivalentExpressionQuestion(subtype, 6);
+            expect(question.answerOptions).toHaveLength(6);
+            expect(new Set(question.answerOptions).size).toBe(6);
+            expect(question.answerOptions.filter((option) => valueOf(option) === valueOf(question.correctAnswer)))
+              .toEqual([question.correctAnswer]);
+          }
+        }
+      }
+    }
+  });
+
+  it('provides six unique choices and only one equivalent factorization for every generated coefficient', () => {
+    const rng = jest.spyOn(random, 'randomIntInclusive').mockImplementation((min) => min);
+    for (let k = 2; k <= 9; k++) {
+      for (let m = 1; m <= 9; m++) {
+        for (let n = 2; n <= 9; n++) {
+          rng.mockReturnValueOnce(k).mockReturnValueOnce(m).mockReturnValueOnce(n);
+          const question = generateEquivalentExpressionQuestion('factorization', 6);
+          expect(question.answerOptions).toHaveLength(6);
+          expect(new Set(question.answerOptions).size).toBe(6);
+          const equivalent = question.answerOptions.filter((option) => {
+            const match = /^(\d+)\((\d*)x ([+−]) (\d+)\)$/.exec(option)!;
+            const factor = Number(match[1]);
+            return factor * Number(match[2] || 1) === k * m
+              && factor * (match[3] === '+' ? 1 : -1) * Number(match[4]) === k * n;
+          });
+          expect(equivalent).toEqual([question.correctAnswer]);
+        }
+      }
     }
   });
 
@@ -141,9 +199,10 @@ describe('equivalent expressions generator', () => {
   });
 
   it('generates full sessions when it is the only enabled operation', () => {
-    const focused = applyPracticeFocusOverride(config, 'equivalent_expressions', { force: true });
+    const focused = applyPracticeFocusOverride({ ...config, answerOptionsCount: 6 }, 'equivalent_expressions', { force: true });
     const questions = createSessionQuestions(focused, 20);
     expect(questions).toHaveLength(20);
+    expect(questions.every((question) => question.answerOptions.length === 6)).toBe(true);
     expect(questions.every((question) => question.kind === 'equivalent_expression')).toBe(true);
   });
 });

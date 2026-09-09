@@ -741,6 +741,7 @@ function normalizeEquationUnknownConfig(raw: unknown): EquationUnknownConfig {
 
 export function validateLearningConfig(
   raw: MathLearningConfig,
+  options: { requireQuestionSource?: boolean } = {},
 ): LearningConfigValidationResult {
   const config = ensureLearningConfigShape(raw);
   const t = i18n.t.bind(i18n);
@@ -977,7 +978,11 @@ export function validateLearningConfig(
     errors.push(t('settings:validation.unsupportedCap'));
   }
 
-  if (errors.length === 0 && !hasAnyQuestionSource(config)) {
+  if (
+    options.requireQuestionSource !== false &&
+    errors.length === 0 &&
+    !hasAnyQuestionSource(config)
+  ) {
     errors.push(t('settings:validation.chooseOperation'));
   }
 

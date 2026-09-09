@@ -164,7 +164,7 @@ export function ProfileScopedSettingsScreen({
           setDirty(isDirty);
           setDraftCanSave(
             isDirty &&
-              validateLearningConfig(config).valid &&
+              validateLearningConfig(config, { requireQuestionSource: false }).valid &&
               personal.name.trim().length > 0 &&
               personal.profileName.trim().length > 0,
           );

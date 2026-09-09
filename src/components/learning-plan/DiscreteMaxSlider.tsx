@@ -1,14 +1,9 @@
-import { StyleSheet, View } from 'react-native';
-import Slider from '@react-native-community/slider';
-
-import { AppText } from '@/components/common/AppText';
+import { SettingsSlider } from '@/components/learning-plan/SettingsSlider';
 import {
   ADDITION_SUBTRACTION_MAX_OPTIONS,
   type AdditionAnswerMax,
 } from '@/constants/ranges';
 import { useAppTranslation } from '@/i18n/useAppTranslation';
-import { colors } from '@/theme/colors';
-import { spacing } from '@/theme/spacing';
 import { formatThousandsDots } from '@/utils/numbers';
 
 type DiscreteMaxSliderBaseProps = {
@@ -92,42 +87,27 @@ export function DiscreteMaxSlider(props: DiscreteMaxSliderProps) {
       : formatThousandsDots(currentValue);
 
   return (
-    <View style={styles.wrap}>
-      <AppText variant="label" accessibilityLabel={accessibilityLabel}>
-        {t('common:rangeFrom1To', { lineLabel: resolvedLineLabel, value: summaryLabel })}
-      </AppText>
-      <Slider
-        style={styles.slider}
-        accessibilityLabel={accessibilityLabel}
-        disabled={disabled}
-        minimumValue={0}
-        maximumValue={maxIndex}
-        step={1}
-        value={propIndex}
-        onValueChange={(raw) => {
-          const i = Math.min(maxIndex, Math.max(0, Math.round(raw)));
-          if (allowUnlimited) {
-            const next = sliderIndexToValue(i, options, true) as AdditionAnswerMax;
-            (onChange as (max: AdditionAnswerMax) => void)(next);
-          } else {
-            const next = sliderIndexToValue(i, options, false) as number;
-            (onChange as (max: number) => void)(next);
-          }
-        }}
-        minimumTrackTintColor={colors.primary}
-        maximumTrackTintColor={colors.border}
-        thumbTintColor={colors.primary}
-      />
-    </View>
+    <SettingsSlider
+      label={t('common:rangeFrom1To', {
+        lineLabel: resolvedLineLabel,
+        value: summaryLabel,
+      })}
+      accessibilityLabel={accessibilityLabel}
+      disabled={disabled}
+      minimumValue={0}
+      maximumValue={maxIndex}
+      step={1}
+      value={propIndex}
+      onValueChange={(raw) => {
+        const i = Math.min(maxIndex, Math.max(0, Math.round(raw)));
+        if (allowUnlimited) {
+          const next = sliderIndexToValue(i, options, true) as AdditionAnswerMax;
+          (onChange as (max: AdditionAnswerMax) => void)(next);
+        } else {
+          const next = sliderIndexToValue(i, options, false) as number;
+          (onChange as (max: number) => void)(next);
+        }
+      }}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: {
-    gap: spacing.sm,
-  },
-  slider: {
-    width: '100%',
-    height: 44,
-  },
-});

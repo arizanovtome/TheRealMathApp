@@ -34,5 +34,16 @@ if (kind === 'update' && label) {
   finalEasArgs.push('--message', label);
 }
 
-const easResult = spawnSync(finalEasArgs[0], finalEasArgs.slice(1), { stdio: 'inherit' });
+const quoteWindowsArg = (value) =>
+  /[\s"&|<>^]/.test(value) ? `"${value.replaceAll('"', '\\"')}"` : value;
+const easResult = process.platform === 'win32'
+  ? spawnSync(finalEasArgs.map(quoteWindowsArg).join(' '), {
+      stdio: 'inherit',
+      // Global npm CLIs are .cmd shims on Windows and need the command shell.
+      shell: true,
+    })
+  : spawnSync(finalEasArgs[0], finalEasArgs.slice(1), { stdio: 'inherit' });
+if (easResult.error) {
+  console.error(`Could not start EAS CLI: ${easResult.error.message}`);
+}
 process.exit(easResult.status ?? 1);

@@ -91,6 +91,7 @@
   "couldNotLoadPractice": "We could not load practice for this topic.",
   "checkSettingsTryAgain": "Check your settings and try again.",
   "needValidSetup": "We need a valid math setup first.",
+  "noActiveTopics": "Enable at least one topic in Settings before starting a session.",
   "wrongAnswersSubtract": "Wrong answers subtract {{n}} seconds.",
   "correctAnswersAdd": "Correct answers add {{n}} seconds.",
   "timedAdjustmentsSummary": "Correct answers add {{bonus}} seconds. Wrong answers subtract {{penalty}} seconds.",

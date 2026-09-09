@@ -66,7 +66,6 @@ import type {
   ChildProfile,
   ChildProfilePersonal,
 } from "@/features/onboarding/onboarding.types";
-import { generatePreviewQuestion } from "@/features/questions/questionGenerator";
 import { colors } from "@/theme/colors";
 import { radii, spacing } from "@/theme/spacing";
 import { useScrollToFocusedInput } from "@/utils/keyboardScroll";
@@ -86,18 +85,6 @@ type LearningPlanEditorProps = {
   hideSaveButton?: boolean;
   scrollRef?: RefObject<ScrollView | null>;
 };
-
-function hasEnabledFractionPractice(config: MathLearningConfig): boolean {
-  const ops = [
-    config.addition,
-    config.subtraction,
-    config.multiplication,
-    config.division,
-    config.square,
-    config.squareRoot,
-  ];
-  return ops.some((op) => op.enabled && op.fractions);
-}
 
 const FRACTION_MODE_LABEL_KEYS: Record<FractionDenominatorMode, string> = {
   same_only: "settings:sameDenominator",
@@ -154,7 +141,10 @@ export function LearningPlanEditor({
   const [profileName, setProfileName] = useState(profile.profileName);
   const [name, setName] = useState(profile.name);
   const [age, setAge] = useState<number | null>(profile.age);
-  const validation = useMemo(() => validateLearningConfig(config), [config]);
+  const validation = useMemo(
+    () => validateLearningConfig(config, { requireQuestionSource: false }),
+    [config],
+  );
   const profileValid = name.trim().length > 0 && profileName.trim().length > 0;
   const personal = useMemo<ChildProfilePersonal>(
     () => ({
@@ -189,19 +179,6 @@ export function LearningPlanEditor({
   useEffect(() => {
     onDraftChange?.(config, personal, dirty);
   }, [config, dirty, onDraftChange, personal]);
-
-  const exampleText = useMemo(() => {
-    if (!validation.valid || hasEnabledFractionPractice(config)) return null;
-    try {
-      const q = generatePreviewQuestion(config);
-      if (!q) return null;
-      return t("settings:examplePreview", {
-        questionPreview: q.questionText.replace("?", "").trim(),
-      });
-    } catch {
-      return null;
-    }
-  }, [config, t, validation.valid]);
 
   const setQuestionCount = (n: number) =>
     setConfig((c) => ({ ...c, questionsCount: n }));
@@ -345,12 +322,6 @@ export function LearningPlanEditor({
             {t("settings:learningPlanAdditionSubtractionHelp")}
           </AppText>
         ) : null}
-        {exampleText ? (
-          <AppText variant="body" muted accessibilityLabel={exampleText}>
-            {exampleText}
-          </AppText>
-        ) : null}
-
         <ShapeRecognitionSettingsCard
           shapeRecognition={config.shapeRecognition}
           onChange={(shapeRecognition) => setConfig((c) => ({ ...c, shapeRecognition }))}

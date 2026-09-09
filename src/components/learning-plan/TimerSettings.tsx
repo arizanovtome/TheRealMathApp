@@ -1,8 +1,8 @@
-import Slider from '@react-native-community/slider';
 import { StyleSheet, Switch, View } from 'react-native';
 
 import { AppText } from '@/components/common/AppText';
 import { Card } from '@/components/common/Card';
+import { SettingsSlider } from '@/components/learning-plan/SettingsSlider';
 import {
   TIMER_SECONDS_DEFAULT,
   TIMER_SECONDS_MAX,
@@ -48,15 +48,12 @@ export function TimerSettings({
             {t('settings:timerEnabled', { seconds })}{' '}
             {t('settings:questionTimerNotOnTimedRun')}
           </AppText>
-          <Slider
+          <SettingsSlider
             accessibilityLabel={t('settings:questionTimer')}
             minimumValue={TIMER_SECONDS_MIN}
             maximumValue={TIMER_SECONDS_MAX}
             step={TIMER_SECONDS_STEP}
             value={seconds}
-            minimumTrackTintColor={colors.primary}
-            maximumTrackTintColor={colors.border}
-            thumbTintColor={colors.primary}
             onValueChange={(v) => onSecondsChange(clampTimerSeconds(v))}
           />
           <AppText variant="label" muted>
