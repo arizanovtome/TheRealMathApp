@@ -51,7 +51,7 @@ export function placeLearnExamples(topic: LearnTutorial, locale: SupportedLocale
   const orderedSections = sectionOrder
     ? sectionOrder.map((index) => topic.sections[index]).filter((section) => section !== undefined)
     : topic.sections;
-  const sections = orderedSections.map((section) => ({ ...section, examples: undefined }));
+  const sections: LearnTutorial['sections'] = orderedSections.map((section) => ({ ...section, examples: undefined }));
   const placements = (locale === 'mk' ? MK_EXAMPLE_SECTIONS : EN_EXAMPLE_SECTIONS)[topic.id];
 
   topic.examples?.forEach((example, exampleIndex) => {

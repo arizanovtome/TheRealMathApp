@@ -37,7 +37,9 @@ export function LearningPlanShareActions() {
         result.reason === 'share_unavailable'
           ? t('settings:exportPlanErrorShareUnavailable')
           : t('settings:exportPlanErrorFailed');
-      Alert.alert(t('settings:exportPlanErrorTitle'), message);
+      Alert.alert(t('settings:exportPlanErrorTitle'), `${message}${result.details ? `\n\n${result.details}` : ''}`);
+    } catch (error) {
+      Alert.alert(t('settings:exportPlanErrorTitle'), `${t('settings:exportPlanErrorFailed')}\n${String(error)}`);
     } finally {
       setExporting(false);
     }
@@ -47,12 +49,14 @@ export function LearningPlanShareActions() {
     <>
       <AppButton
         label={t('settings:exportPlan')}
+        icon="share-outline"
         variant="secondary"
         onPress={() => void handleExport()}
         disabled={!activeProfile || exporting}
       />
       <AppButton
         label={t('settings:importPlan')}
+        icon="download-outline"
         variant="secondary"
         onPress={() => router.push(ROUTES.settingsImportPlan)}
       />

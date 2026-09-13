@@ -1,10 +1,10 @@
 # Business Requirements Document: The Real Math
 
-**Last updated:** 9 September 2026
+**Last updated:** 10 September 2026
 
 **Current implementation baseline:** Expo SDK 57
 
-**Review basis:** Mobile source code checked on 9 September 2026. “Shipped” below means implemented in this repository, not independently verified in an installed store build. Existing future curriculum proposals remain proposals; this review does not promote them to committed scope. See §63 for review findings and source references.
+**Review basis:** Mobile source code checked on 9 September 2026, with pending button, onboarding, answer-entry and sharing changes incorporated on 10 September 2026. “Shipped” below means implemented in this repository, not independently verified in an installed store build. Existing future curriculum proposals remain proposals; this review does not promote them to committed scope. See §63 for review findings and source references.
 
 ## 1. Document Purpose
 
@@ -125,8 +125,8 @@ The recommended first-time user flow is:
 1. User opens the app.
 2. App prompts **language selection** on first launch (English or Macedonian).
 3. App collects profile label and learner name, then optional age and math confidence on a separate screen.
-4. App creates and saves the recommended plan from age/confidence (§6.2); the first profile opens Home.
-5. User can either start learning immediately or customize the plan.
+4. App creates and saves the recommended plan from age/confidence (§6.2), completes first-time onboarding, and shows the profile-ready message (§6.5).
+5. User chooses Continue to Home or Review settings to customize the plan.
 6. User starts practice, quiz, or a timed run from the home screen (or **Try in practice** from Learn).
 7. App presents math questions from the active profile’s enabled sources.
 8. User answers via multiple choice or keyboard (depending on settings and question type); optional **Confirm** step for multiple choice.
@@ -145,7 +145,7 @@ After language selection, collect **profile label** and **learner name/nickname*
 
 Continue opens a separate screen for **optional age** and **optional math knowledge/confidence**. Age is initially blank. Confidence offers levels **1–5**; the visible initial selection is 3, but it is stored as unset unless changed.
 
-Saving the first profile stores its recommended plan, completes onboarding and opens Home. The onboarding add-profile route uses the name/age steps and then opens the recommended-plan screen. Settings also provides a combined add/edit profile form.
+Saving the first profile stores its recommended plan, completes onboarding and shows the profile-ready message (§6.5). The onboarding add-profile route uses the same name/age steps and message. Settings also provides a combined add/edit profile form; newly created profiles receive the same message, while edits do not.
 
 ### 6.2 Age and math confidence
 
@@ -171,7 +171,17 @@ A nickname is accepted; a legal name is not required.
 
 ### 6.4 Recommended plan as default
 
-Save the recommended plan with the profile so practice can begin without manual configuration. First-profile onboarding opens Home directly. Where the recommended-plan screen is shown, it offers Start learning and Customize. Later settings edits must not be overwritten by a stale onboarding recommendation.
+Save the recommended plan with the profile so practice can begin without manual configuration. Profile creation now leads to the profile-ready message rather than the separate recommended-plan screen. Later settings edits must not be overwritten by a stale onboarding recommendation.
+
+### 6.5 Profile-ready message and settings review
+
+After creating a profile through onboarding or the Settings add-profile form, show a native modal titled **Your profile is ready!** explaining that starting **session settings and topics** have been selected and can be reviewed or changed in Settings. Mention **Session settings** before **Topics**, matching the hub order. Localize the message and actions in English and Macedonian.
+
+- **Continue:** onboarding returns to Home; the Settings form completes its pending return/navigation action.
+- **Review settings:** open the Settings hub for the new active profile, with Home as the previous screen. Back must return Home, not reopen completed profile setup.
+- Highlight Session settings and Topics together with three brief gold pulses on this review entry. Ordinary Settings visits and returning from a sub-screen must not replay the highlight. With reduced motion enabled, use a steady four-second highlight instead. Highlights must not intercept button taps.
+- Show the message on creation, not profile edits, profile switches or ordinary app launches. Settings-file imports retain their separate import flow (§62).
+- Repeated save/continue taps must not create duplicate profiles while this message is open.
 
 ---
 
@@ -853,6 +863,24 @@ Topic cards own their controls; there is no global question-style card. Geometry
 
 The Topics hub groups settings into **Foundations**, **Operations**, **Advanced topics**, and **Calculus**. These are navigation groups for the existing 23 curriculum topics, not additional topics. Learn retains its full ordered topic list rather than this grouped settings navigation.
 
+### 11.1 Button icons and alignment
+
+- Shared action buttons (`AppButton`) require a named Ionicons icon and retain a visible text label. Decorative icons must not duplicate the button label for screen readers.
+- `textPosition` supports **left**, **center**, and **right**, defaulting to left. Align the icon and label together; `iconPosition` independently places the icon immediately to the **left** or **right** of the text, defaulting to left. Long labels may wrap without displacing the icon outside the button.
+- Menu and Results actions use icons before left-aligned labels. Session actions and onboarding navigation use centered content with the icon after the label. Profile-form Add/Save and Cancel center their icon and label together with the icon first.
+- Keep button colors, disabled/loading behavior and the full-width touch target consistent across alignments. Icons do not replace choice labels in topic or confidence selectors.
+
+Distinct icons identify navigation destinations:
+
+| Area | Icon choices |
+|---|---|
+| Home | Practice: barbell; Quiz: calculator; Timed run: timer; Learn: book; Recent performance: chart; Settings: gear |
+| Topic groups | Foundations: layers; Operations: calculator; Advanced topics: puzzle piece; Calculus: graph |
+| Results | Retry: replay; Settings: gear; Go home: home |
+| Profile actions | Add profile: person-plus; Save: disk; Cancel: circled X |
+
+Practice-tip and Try in practice buttons reuse the barbell icon. Other shared actions, including file selection, import/export and saving settings, also supply an appropriate icon.
+
 ---
 
 ## 12. Range Selection Requirements
@@ -1003,6 +1031,8 @@ When keyboard mode is selected:
 - Equations with two unknowns accept numeric keyboard answers for the requested value.
 - Geometry **integer** calculate questions accept numeric input.
 - Number-sense questions with numeric answers (count objects, before/after, and missing number) accept numeric input.
+
+**Check answer availability:** a complete valid typed value must enable the on-screen action immediately, including in Learn → Try. Tapping it while the keyboard is open must submit without requiring the keyboard's Done/checkmark first. Empty or incomplete values remain disabled; a valid but incorrect answer must still be submittable for feedback. Practice/Quiz and Learn → Try use the shared question-aware readiness rules. Regression example: entering `39` for `37, 38, ?, 40` enables Check answer.
 
 **Keyboard is not offered when:**
 
@@ -1378,11 +1408,11 @@ Collect profile label and learner name/nickname together. Continue opens the sep
 
 ### 21.3 Onboarding: Age and confidence screen
 
-Collect optional age (1–150) and optional math confidence (1–5). Save the profile and recommended plan using §6.2. First launch completes onboarding and opens Home; the onboarding add-mode route opens the recommended-plan screen.
+Collect optional age (1–150) and optional math confidence (1–5). Save the profile and recommended plan using §6.2, then show the profile-ready message (§6.5). First launch also completes onboarding. Continue opens Home; Review settings opens Settings with Home behind it.
 
 ### 21.4 Recommended plan screen
 
-Where used by the add-profile onboarding route, show the prepared plan and offer Start learning or Customize. This is not a mandatory first-launch step.
+The separate recommended-plan screen remains in the repository but is no longer the destination of the current profile-creation flow. The profile-ready message (§6.5) provides the normal Continue and Review settings choices.
 
 ### 21.5 Settings / learning plan screen
 
@@ -1392,7 +1422,7 @@ Purpose:
 - Switch, edit, add, or remove profiles (Profile details).
 - Edit personal info (profile name, learner name, optional age and confidence).
 - Configure operations, ranges, geometry, mode, question count, answer entry, timers, and caps (Session settings and Topics sub-screens).
-- Export or import session and topic settings as a JSON file (Share settings — §62).
+- Export session and topic settings as a settings archive; import current settings archives (Share settings — §62).
 
 Suggested hub actions:
 
@@ -1836,7 +1866,7 @@ Follow the global answer-entry preference:
 |---|---|---|
 | Multi-profile | **Shipped** | Profile name + learner name + optional age/confidence; switch / edit / add / remove in Settings |
 | Internationalization | **Shipped** | English + Macedonian; first-run language gate; mk Learn overrides (§42) |
-| Onboarding | **Shipped** | Label/name then optional age 1–150 and confidence 1–5; first profile opens Home (§6) |
+| Onboarding | **Shipped** | Label/name then optional age 1–150 and confidence 1–5; profile-ready message offers Continue or Review settings, with highlighted setup controls (§6) |
 | Session modes | **Shipped** | Practice, quiz, timed run |
 | Answer entry | **Shipped** | MC 2/3/4/6 or keyboard; visual fractions support typed equivalent fractions/decimals; geometry formula / π forced MC; calculus/logs/trig/advanced-equations/limits MC only |
 | Confirm before submit | **Shipped** | Optional MC toggle; Confirm then feedback/submit |
@@ -2900,7 +2930,7 @@ The hub shows a single **Share settings** entry; export and import actions live 
 ### 62.3 Export
 
 - Exports the active profile’s `learningConfig` (`MathLearningConfig`) plus metadata.
-- Opens the system share sheet with a JSON file (e.g. `therealmath-grade-4-plan.json`).
+- Opens the system share sheet with a UTF-8 `.json` attachment (e.g. `therealmath-grade-4-plan.json`), using `application/json` and the iOS `public.json` type. The payload format remains version 1.
 - **Includes:** the profile label in the payload and generated filename. This user-entered label may contain identifying text.
 - **Does not include:** the separate learner-name field, age, math confidence, session history, streak, or adaptation state.
 
@@ -2917,14 +2947,14 @@ Export payload (version **1**):
 
 ### 62.4 Import
 
-1. User picks a `.json` file (document picker).
+1. User picks a current settings archive. Older plain-text and JSON exports are not supported.
 2. App validates file size (max **256 KB**), JSON shape, `kind`, `version`, and `learningConfig` using the same validators as in-app saves.
 3. User enters a **profile name** for this device (prefilled from export `label` when present).
 4. User chooses destination:
    - **Create new profile** (default) — learner name defaults to localized **“friend”**; age left blank; new profile becomes active.
    - **Replace settings in current profile** — overwrites only `learningConfig` on the active profile after confirmation; profile name, learner name, age, and progress are unchanged.
 
-Import errors show a localized message (invalid JSON, wrong file type, unsupported version, invalid settings, file too large, read failure).
+Import errors show a localized message (invalid settings data, wrong file type, unsupported version, invalid settings, file too large, read failure). Invalid JSON is presented as “The file does not contain valid settings data.” rather than exposing the serialization format in the user-facing error.
 
 Import normalizes older settings and permits a configuration with all question sources disabled. Starting a session still requires at least one valid enabled source. Import is a settings transfer, not a full profile/progress backup, and does not transfer the device-wide language preference.
 
@@ -2967,6 +2997,20 @@ No implemented top-level topic needs to be removed from the current feature inve
 
 This was a documentation/source comparison, not an emulator, accessibility certification, or store-release verification. No mobile behavior was changed.
 
+### 63.4 Pending-change alignment — 10 September 2026
+
+This follow-up incorporates the current working-tree behavior without implying a published release:
+
+| Area | Updated requirements | Implementation evidence |
+|---|---|---|
+| Shared buttons | Required Ionicons, independent text/icon positioning, centered profile actions and distinct topic-group icons (§11.1) | [AppButton](../src/components/common/AppButton.tsx), [profile form](../src/components/profiles/ProfileForm.tsx), [Topics hub](../src/app/learning-plan/topics/index.tsx) |
+| Profile completion | Localized message for newly created profiles, Continue/Review settings actions and Home-backed review navigation (§6.5) | [Profile-ready message](../src/features/onboarding/showProfileReady.ts), [onboarding completion](../src/app/onboarding/age.tsx), [Settings profile form](../src/app/learning-plan/profile-form.tsx) |
+| Settings guidance | One-time gold pulses for Session settings and Topics, with reduced-motion fallback (§6.5) | [Settings hub](../src/app/learning-plan/index.tsx) |
+| Answer entry | Enable Check answer for complete numeric number-sense input in Learn → Try (§15.2); remove unreachable duplicate answer-option branches | [Learn practice](../src/components/practice/LearnPracticeSessionView.tsx), [Timed practice](../src/components/practice/TimedMathSessionView.tsx), [answer-input regression tests](../src/features/questions/__tests__/questionAnswerInput.test.ts) |
+| Settings sharing | Settings archives and plain-language invalid-data message (§62) | [Sharing service](../src/features/learning-plan/learningPlanShare.service.ts), [English strings](../src/i18n/locales/en/settings.json), [Macedonian strings](../src/i18n/locales/mk/settings.json) |
+
+Validation remains scoped: relevant profile and answer-input tests passed during implementation, while full-project TypeScript checks still report unrelated errors. This documentation update does not assert an error-free project build or fresh device verification.
+
 ---
 
 ## 61. Summary
@@ -2976,7 +3020,7 @@ The app provides a simple, friendly math learning experience for **learners of a
 First-time flow:
 
 ```text
-Language → Profile label + learner name → Optional age + confidence → Save recommended plan → Home → Practice / Quiz / Timed / Learn / Settings / Progress
+Language → Profile label + learner name → Optional age + confidence → Save recommended plan → Profile-ready message → Continue to Home / Review settings
 ```
 
 The learning plan is flexible but not overwhelming: each operation (plus geometry, comparison, logarithms, linear/quadratic equations, limits, calculus, and other topic cards) is configurable separately, with per-operation toggles for question styles. Multiple-choice answers are the default; keyboard mode is available where appropriate. Optional **Confirm answer** for multiple choice. Practice gives immediate feedback; Quiz withholds correctness until the end; Timed gives brief feedback with time adjustments and a final summary. Learn → Try is separate open-ended practice without recorded progress.

@@ -210,6 +210,26 @@ describe('questionAnswerInput', () => {
   });
 
   describe('keyboardAnswerIsReady', () => {
+    it('enables a missing-number answer without submitting from the keyboard', () => {
+      const question = makeQuestion({
+        kind: 'number_sense',
+        id: 'missing-39',
+        operation: 'number_sense',
+        subtype: 'missingNumber',
+        questionText: 'Which number is missing? 37, 38, ?, 40',
+        correctAnswer: '39',
+        answerOptions: ['38', '39', '40', '41'],
+        requiresMultipleChoice: false,
+      });
+
+      expect(keyboardAnswerIsReady(question, '')).toBe(false);
+      expect(keyboardAnswerIsReady(question, '-')).toBe(false);
+      expect(keyboardAnswerIsReady(question, '39')).toBe(true);
+      // A complete wrong answer must also be enabled so it can receive feedback.
+      expect(keyboardAnswerIsReady(question, '0')).toBe(true);
+      expect(keyboardAnswerIsReady(question, '')).toBe(false);
+    });
+
     it('accepts a complete fraction for a visual fraction question', () => {
       const question = makeQuestion({
         kind: 'fraction_visual',

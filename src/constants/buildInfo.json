@@ -1,5 +1,5 @@
 {
-  "kind": "update",
-  "stampedAt": "2026-09-09T06:04:23.564Z",
-  "label": "Fixed an issue where some questions showed fewer answer choices than selected in your settings."
+  "kind": "build",
+  "stampedAt": "2026-09-13T18:33:35.865Z",
+  "label": "First production release"
 }

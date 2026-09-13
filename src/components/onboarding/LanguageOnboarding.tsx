@@ -49,6 +49,9 @@ export function LanguageOnboarding() {
 
       <AppButton
         label={tPicked('common:continue')}
+        icon="arrow-forward"
+        textPosition="center"
+        iconPosition="right"
         onPress={handleContinue}
         disabled={applying}
         accessibilityHint={tPicked('onboarding:continueToProfile')}

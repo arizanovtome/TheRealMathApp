@@ -76,11 +76,13 @@ export default function LearnPracticeScreen() {
           />
           <AppButton
             label={t('settings:startWithoutSaving')}
+            icon="play-outline"
             variant="secondary"
             onPress={() => setStarted(true)}
           />
           <AppButton
             label={t('settings:saveToProfileAndStart')}
+            icon="save-outline"
             onPress={() => {
               updateProfile(activeProfile.id, {
                 learningConfig: mergeFocusedOperationIntoProfile(

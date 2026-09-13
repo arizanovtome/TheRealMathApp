@@ -1,3 +1,5 @@
+import { Ionicons } from '@expo/vector-icons';
+import type { ComponentProps } from 'react';
 import type { GestureResponderEvent } from 'react-native';
 import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from 'react-native';
 
@@ -7,6 +9,9 @@ import { radii, spacing } from '@/theme/spacing';
 
 type AppButtonProps = {
   label: string;
+  icon: ComponentProps<typeof Ionicons>['name'];
+  iconPosition?: 'left' | 'right';
+  textPosition?: 'left' | 'center';
   onPress: (event: GestureResponderEvent) => void;
   variant?: 'primary' | 'secondary';
   disabled?: boolean;
@@ -16,6 +21,9 @@ type AppButtonProps = {
 
 export function AppButton({
   label,
+  icon,
+  iconPosition = 'left',
+  textPosition = 'left',
   onPress,
   variant = 'primary',
   disabled,
@@ -36,15 +44,43 @@ export function AppButton({
           isPrimary ? styles.primary : styles.secondary,
           (disabled || loading) && styles.disabled,
         ]}>
-        <View collapsable={false} style={styles.content}>
+        <View collapsable={false} style={[
+          styles.content,
+          styles.iconContent,
+          textPosition === 'center' && styles.centeredContent,
+        ]}>
           {loading ? (
             <ActivityIndicator color={isPrimary ? colors.buttonPrimaryText : colors.primary} />
           ) : (
-            <AppText
-              variant="subtitle"
-              style={[styles.label, isPrimary ? styles.labelPrimary : styles.labelSecondary]}>
-              {label}
-            </AppText>
+            <>
+              {icon && iconPosition === 'left' ? (
+                <Ionicons
+                  name={icon}
+                  size={24}
+                  color={isPrimary ? colors.buttonPrimaryText : colors.primary}
+                  accessible={false}
+                  importantForAccessibility="no"
+                />
+              ) : null}
+              <AppText
+                variant="subtitle"
+                style={[
+                  styles.label,
+                  { textAlign: textPosition },
+                  isPrimary ? styles.labelPrimary : styles.labelSecondary,
+                ]}>
+                {label}
+              </AppText>
+              {icon && iconPosition === 'right' ? (
+                <Ionicons
+                  name={icon}
+                  size={24}
+                  color={isPrimary ? colors.buttonPrimaryText : colors.primary}
+                  accessible={false}
+                  importantForAccessibility="no"
+                />
+              ) : null}
+            </>
           )}
         </View>
       </TouchableOpacity>
@@ -69,6 +105,14 @@ const styles = StyleSheet.create({
   primary: {
     backgroundColor: colors.buttonPrimary,
   },
+  iconContent: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    gap: spacing.md,
+  },
+  centeredContent: {
+    justifyContent: 'center',
+  },
   secondary: {
     backgroundColor: 'transparent',
     borderWidth: 2,
@@ -78,7 +122,7 @@ const styles = StyleSheet.create({
     opacity: 0.55,
   },
   label: {
-    textAlign: 'center',
+    flexShrink: 1,
   },
   labelPrimary: {
     color: colors.buttonPrimaryText,

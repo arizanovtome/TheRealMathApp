@@ -397,7 +397,10 @@ const PLAN_10_12: MathLearningConfig = {
     enabled: true,
     perimeter: {
       enabled: true,
-      shapes: { square: true, rectangle: true, triangle: false, circle: false },
+      shapes: {
+        square: true, rectangle: true, triangle: false, circle: false,
+        rhombus: false, kite: false, parallelogram: false, trapezoid: false,
+      },
     },
     area: {
       enabled: true,
@@ -408,6 +411,8 @@ const PLAN_10_12: MathLearningConfig = {
         circle: false,
         rhombus: false,
         trapezoid: false,
+        kite: false,
+        parallelogram: false,
       },
     },
     volume: {
@@ -418,6 +423,8 @@ const PLAN_10_12: MathLearningConfig = {
         pyramid: false,
         cone: false,
         cylinder: false,
+        triangular_prism: false,
+        triangular_pyramid: false,
       },
     },
     questionKinds: { formula: true, calculate: true },

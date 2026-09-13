@@ -127,7 +127,7 @@ function buildSideLabels(diagram: TrigonometryDiagram): TrigDiagramSideLabel[] {
     const isUnknown = unknown === role;
     const isNamedSideQuiz = diagram.highlightedSide !== undefined && diagram.knownValues === undefined;
 
-    if (isUnknown && unknown !== 'angle') {
+    if (isUnknown) {
       labels.push({
         role,
         text: '?',

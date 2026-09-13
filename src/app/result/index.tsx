@@ -90,14 +90,27 @@ export default function ResultScreen() {
 
       {showQuizBreakdown ? <QuizResultBreakdown outcomes={quizOutcomes} /> : null}
 
-      <AppButton label={retryLabel} onPress={() => router.replace(retryRoute)} />
+      <AppButton
+        label={retryLabel}
+        icon="refresh-outline"
+        iconPosition="left"
+        onPress={() => router.replace(retryRoute)}
+      />
       <AppButton
         label={t('settings:title')}
+        icon="settings-outline"
+        iconPosition="left"
         variant="secondary"
         onPress={() => router.replace(ROUTES.learningPlan)}
         accessibilityHint={t('practice:hintOpenSettings')}
       />
-      <AppButton label={t('common:goHome')} variant="secondary" onPress={() => router.replace(ROUTES.home)} />
+      <AppButton
+        label={t('common:goHome')}
+        icon="home-outline"
+        iconPosition="left"
+        variant="secondary"
+        onPress={() => router.replace(ROUTES.home)}
+      />
     </AppScreen>
   );
 }

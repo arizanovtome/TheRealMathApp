@@ -72,6 +72,7 @@ export default function RecommendedPlanScreen() {
 
       <AppButton
         label={isAddMode ? t('onboarding:saveAndHome') : t('onboarding:startLearning')}
+        icon={isAddMode ? 'home-outline' : 'play-outline'}
         onPress={handleStart}
         accessibilityHint={
           isAddMode ? t('onboarding:hintSaveHome') : t('onboarding:hintStartLearning')
@@ -79,6 +80,7 @@ export default function RecommendedPlanScreen() {
       />
       <AppButton
         label={t('common:customize')}
+        icon="options-outline"
         variant="secondary"
         onPress={handleCustomize}
         accessibilityHint={t('onboarding:hintCustomize')}

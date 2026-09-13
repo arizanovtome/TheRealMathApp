@@ -35,6 +35,7 @@ export function GentleAdaptationCard({ suggestion }: GentleAdaptationCardProps) 
       <View style={styles.actions}>
         <AppButton
           label={t('home:practiceOperation', { operation: label })}
+          icon="barbell-outline"
           onPress={() =>
             router.push({
               pathname: ROUTES.practice,

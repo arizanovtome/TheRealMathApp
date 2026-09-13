@@ -169,7 +169,7 @@ export function LearnTutorialView({ tutorial, onTryInPractice }: LearnTutorialVi
       ) : null}
 
       {onTryInPractice ? (
-        <AppButton label={t('tryInPractice')} onPress={onTryInPractice} variant="secondary" />
+        <AppButton label={t('tryInPractice')} icon="barbell-outline" onPress={onTryInPractice} variant="secondary" />
       ) : null}
     </View>
   );

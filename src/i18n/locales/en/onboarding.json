@@ -1,4 +1,8 @@
 {
+  "profileReadyTitle": "Your profile is ready!",
+  "profileReadyBody": "We've selected some starting session settings and topics for this profile. You can review and change them anytime in Settings, under Session settings and Topics.",
+  "reviewSettings": "Review settings",
+  "hintCreateProfile": "Creates this profile and explains how to review its settings",
   "newProfileTitle": "Set up a new profile",
   "welcome": "Welcome!",
   "profilesHelp": "Profiles save different learning plans. Switch between them in Settings.",

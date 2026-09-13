@@ -440,6 +440,7 @@ describe("validateLearningConfig", () => {
     const invalid: MathLearningConfig = {
       ...basePlan,
       multiplication: {
+        ...basePlan.multiplication,
         enabled: true,
         factors: [],
         secondFactorSource: "selection_only",
@@ -458,6 +459,7 @@ describe("validateLearningConfig", () => {
     const valid: MathLearningConfig = {
       ...basePlan,
       addition: {
+        ...basePlan.addition,
         enabled: true,
         leftMin: 1,
         leftMax: 100,
@@ -481,6 +483,7 @@ describe("validateLearningConfig", () => {
     const invalid: MathLearningConfig = {
       ...basePlan,
       addition: {
+        ...basePlan.addition,
         enabled: true,
         leftMin: 50,
         leftMax: 60,

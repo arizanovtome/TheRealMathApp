@@ -37,12 +37,12 @@ describe('questionScoring', () => {
     const arithmetic = (answerOptions: number[]): MathQuestion => ({
       kind: 'arithmetic',
       id: 'arith-layout',
+      answerKind: 'number',
       operation: 'addition',
       questionStyle: 'standard',
       questionText: '1 + 2',
       correctAnswer: answerOptions[0]!,
       answerOptions,
-      requiresMultipleChoice: true,
     });
 
     expect(shouldStackAnswerOptions(arithmetic([1, 2, 3, 4]))).toBe(false);

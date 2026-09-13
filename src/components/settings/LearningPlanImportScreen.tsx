@@ -6,6 +6,8 @@ import { AppButton } from '@/components/common/AppButton';
 import { AppScreen } from '@/components/common/AppScreen';
 import { AppText } from '@/components/common/AppText';
 import { Card } from '@/components/common/Card';
+import { LearningPlanImportPreview } from '@/components/settings/LearningPlanImportPreview';
+import type { LearningPlanImportResult } from '@/features/learning-plan/learningPlanExport.types';
 import { PROFILE_NAME_MAX_LENGTH } from '@/constants/inputLimits';
 import { ROUTES } from '@/constants/routes';
 import type { MathLearningConfig } from '@/features/learning-plan/learningPlan.types';
@@ -70,9 +72,18 @@ export function LearningPlanImportScreen() {
   const effectiveProfileName = profileName.trim() || defaultProfileName;
   const canImport = picked != null && effectiveProfileName.length > 0;
 
+  const acceptPlan = useCallback((parsed: LearningPlanImportResult, fileName: string) => {
+    setPicked(null);
+    if (!parsed.ok) { setError(importErrorMessage(parsed.error, t)); return; }
+    setError(null);
+    setPicked({ fileName, label: parsed.label, config: parsed.config });
+    setProfileName((current) => current.trim() ? current : parsed.label ?? defaultProfileName);
+  }, [defaultProfileName, t]);
+
   const chooseFile = useCallback(async () => {
     setError(null);
     setBusy(true);
+    setPicked(null);
     try {
       const result = await pickAndParseLearningPlanFile();
       if (!result.ok) {
@@ -81,19 +92,13 @@ export function LearningPlanImportScreen() {
         }
         return;
       }
-      setPicked({
-        fileName: result.fileName,
-        label: result.parsed.label,
-        config: result.parsed.config,
-      });
-      setProfileName((current) => {
-        if (current.trim().length > 0) return current;
-        return result.parsed.label ?? defaultProfileName;
-      });
+      acceptPlan(result.parsed, result.fileName);
+    } catch (error) {
+      setError(`${t('settings:importPlanErrorReadFailed')}\n${String(error)}`);
     } finally {
       setBusy(false);
     }
-  }, [defaultProfileName, t]);
+  }, [acceptPlan, t]);
 
   const applyImport = useCallback(() => {
     if (!picked || !canImport) return;
@@ -157,6 +162,7 @@ export function LearningPlanImportScreen() {
       <Card>
         <AppButton
           label={picked ? t('settings:importPlanChooseAnother') : t('settings:importPlanChooseFile')}
+          icon="folder-open-outline"
           variant="secondary"
           onPress={() => void chooseFile()}
           disabled={busy}
@@ -175,6 +181,7 @@ export function LearningPlanImportScreen() {
 
       {picked ? (
         <Card>
+          <LearningPlanImportPreview config={picked.config} />
           <AppText variant="subtitle">{t('settings:importPlanDestinationTitle')}</AppText>
           <AppText variant="body" muted>
             {t('settings:importPlanProfileNameHint')}
@@ -220,7 +227,9 @@ export function LearningPlanImportScreen() {
           </View>
 
           <AppButton
-            label={t('settings:importPlanConfirm')}
+            label={t('settings:importPlanConfirm')} icon="checkmark"
+            textPosition="center"
+            iconPosition="right"
             onPress={applyImport}
             disabled={!canImport || busy}
           />

@@ -1,25 +1,28 @@
-import { useHeaderHeight } from 'expo-router/react-navigation';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { useHeaderHeight } from "expo-router/react-navigation";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useMemo, useRef, useState } from "react";
+import { ScrollView, StyleSheet, TextInput, View } from "react-native";
 
-import { AppButton } from '@/components/common/AppButton';
-import { AppScreen } from '@/components/common/AppScreen';
-import { AppText } from '@/components/common/AppText';
-import { ROUTES } from '@/constants/routes';
+import { AppButton } from "@/components/common/AppButton";
+import { AppScreen } from "@/components/common/AppScreen";
+import { AppText } from "@/components/common/AppText";
+import { ROUTES } from "@/constants/routes";
 import {
   LEARNER_NAME_MAX_LENGTH,
   PROFILE_NAME_MAX_LENGTH,
-} from '@/constants/inputLimits';
-import { nextDefaultProfileName } from '@/features/onboarding/profile.utils';
-import { useAppTranslation } from '@/i18n/useAppTranslation';
-import { useAppStore } from '@/store/useAppStore';
-import { colors } from '@/theme/colors';
-import { radii, spacing } from '@/theme/spacing';
-import { useKeyboardInset, useScrollToFocusedInput } from '@/utils/keyboardScroll';
+} from "@/constants/inputLimits";
+import { nextDefaultProfileName } from "@/features/onboarding/profile.utils";
+import { useAppTranslation } from "@/i18n/useAppTranslation";
+import { useAppStore } from "@/store/useAppStore";
+import { colors } from "@/theme/colors";
+import { radii, spacing } from "@/theme/spacing";
+import {
+  useKeyboardInset,
+  useScrollToFocusedInput,
+} from "@/utils/keyboardScroll";
 
 export default function OnboardingNameScreen() {
-  const { t } = useAppTranslation(['onboarding', 'common']);
+  const { t } = useAppTranslation(["onboarding", "common"]);
   const router = useRouter();
   const headerHeight = useHeaderHeight();
   const keyboardInset = useKeyboardInset();
@@ -32,8 +35,8 @@ export default function OnboardingNameScreen() {
     [profiles],
   );
   const [profileName, setProfileName] = useState(defaultProfileName);
-  const [name, setName] = useState('');
-  const isAddMode = params.mode === 'add';
+  const [name, setName] = useState("");
+  const isAddMode = params.mode === "add";
 
   const canContinue = name.trim().length > 0 && profileName.trim().length > 0;
 
@@ -41,7 +44,7 @@ export default function OnboardingNameScreen() {
     const trimmedName = name.trim();
     const trimmedProfileName = profileName.trim();
     if (!trimmedName || !trimmedProfileName) return;
-    const mode = params.mode === 'add' ? 'add' : 'initial';
+    const mode = params.mode === "add" ? "add" : "initial";
     const query = new URLSearchParams({
       name: trimmedName,
       profileName: trimmedProfileName,
@@ -56,24 +59,27 @@ export default function OnboardingNameScreen() {
       keyboardVerticalOffset={headerHeight}
       scrollProps={{
         ref: scrollRef,
-        keyboardDismissMode: 'none',
+        keyboardDismissMode: "none",
         contentContainerStyle: {
           paddingBottom: spacing.xl + keyboardInset,
         },
-      }}>
+      }}
+    >
       <AppText variant="title">
-        {isAddMode ? t('onboarding:newProfileTitle') : t('onboarding:welcome')}
+        {isAddMode ? t("onboarding:newProfileTitle") : t("onboarding:welcome")}
       </AppText>
       <AppText variant="body" muted>
-        {isAddMode ? t('onboarding:profilesHelp') : t('onboarding:firstProfileHelp')}
+        {isAddMode
+          ? t("onboarding:profilesHelp")
+          : t("onboarding:firstProfileHelp")}
       </AppText>
 
       <View style={styles.fields}>
         <View style={styles.field}>
-          <AppText variant="label">{t('onboarding:profileName')}</AppText>
+          <AppText variant="label">{t("onboarding:profileName")}</AppText>
           <TextInput
-            accessibilityLabel={t('onboarding:profileName')}
-            placeholder={t('onboarding:profileNamePlaceholder')}
+            accessibilityLabel={t("onboarding:profileName")}
+            placeholder={t("onboarding:profileNamePlaceholder")}
             placeholderTextColor={colors.textMuted}
             value={profileName}
             onChangeText={setProfileName}
@@ -86,10 +92,10 @@ export default function OnboardingNameScreen() {
         </View>
 
         <View style={styles.field}>
-          <AppText variant="label">{t('onboarding:nameOrNickname')}</AppText>
+          <AppText variant="label">{t("onboarding:nameOrNickname")}</AppText>
           <TextInput
-            accessibilityLabel={t('onboarding:nameOrNickname')}
-            placeholder={t('onboarding:namePlaceholder')}
+            accessibilityLabel={t("onboarding:nameOrNickname")}
+            placeholder={t("onboarding:namePlaceholder")}
             placeholderTextColor={colors.textMuted}
             value={name}
             onChangeText={setName}
@@ -104,10 +110,13 @@ export default function OnboardingNameScreen() {
       </View>
 
       <AppButton
-        label={t('common:continue')}
+        label={t("common:continue")}
+        icon="arrow-forward"
+        textPosition="center"
+        iconPosition="right"
         onPress={handleContinue}
         disabled={!canContinue}
-        accessibilityHint={t('onboarding:continueToAge')}
+        accessibilityHint={t("onboarding:continueToAge")}
       />
     </AppScreen>
   );

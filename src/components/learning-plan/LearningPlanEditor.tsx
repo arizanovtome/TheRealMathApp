@@ -1580,6 +1580,7 @@ export function LearningPlanEditor({
 
       {!hideSaveButton ? <AppButton
         label={t("common:saveSettings")}
+        icon="save-outline"
         onPress={() =>
           onSave(config, {
             id: profile.id,

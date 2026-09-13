@@ -14,13 +14,15 @@ import {
   nextDefaultProfileName,
 } from '@/features/onboarding/profile.utils';
 import { useAppTranslation } from '@/i18n/useAppTranslation';
+import { showProfileReady } from '@/features/onboarding/showProfileReady';
+import type { ProfileCompletionNavigation } from '@/features/onboarding/profileNavigation.types';
 import { useAppStore } from '@/store/useAppStore';
 import { deferNavigationAction } from '@/utils/deferNavigation';
 
 export default function ProfileFormScreen() {
-  const { t } = useAppTranslation(['settings', 'common']);
+  const { t } = useAppTranslation(['settings', 'common', 'onboarding']);
   const router = useRouter();
-  const navigation = useNavigation();
+  const navigation = useNavigation<ProfileCompletionNavigation>();
   const params = useLocalSearchParams<{ mode?: string; profileId?: string }>();
   const profiles = useAppStore((state) => state.profiles);
   const addProfile = useAppStore((state) => state.addProfile);
@@ -44,19 +46,20 @@ export default function ProfileFormScreen() {
   const [mathKnowledgeChanged, setMathKnowledgeChanged] = useState(false);
   const [allowNavigation, setAllowNavigation] = useState(false);
   const pendingNavigationRef = useRef<(() => void) | null>(null);
-  const initialValuesRef = useRef({
+  const savedRef = useRef(false);
+  const [initialValues] = useState(() => ({
     profileName: mode === 'edit' && editedProfile
       ? editedProfile.profileName
       : nextDefaultProfileName(profiles),
     name: editedProfile?.name ?? '',
     age: editedProfile?.age ?? null,
     mathKnowledgeLevel: editedProfile?.mathKnowledgeLevel ?? DEFAULT_MATH_KNOWLEDGE_LEVEL,
-  });
+  }));
   const dirty =
-    profileName !== initialValuesRef.current.profileName ||
-    name !== initialValuesRef.current.name ||
-    age !== initialValuesRef.current.age ||
-    mathKnowledgeLevel !== initialValuesRef.current.mathKnowledgeLevel;
+    profileName !== initialValues.profileName ||
+    name !== initialValues.name ||
+    age !== initialValues.age ||
+    mathKnowledgeLevel !== initialValues.mathKnowledgeLevel;
 
   const persistProfile = useCallback((): boolean => {
     const trimmedProfileName = profileName.trim();
@@ -102,11 +105,23 @@ export default function ProfileFormScreen() {
 
   const saveAndNavigate = useCallback(
     (action: () => void) => {
+      if (savedRef.current) return;
       if (!persistProfile()) return;
-      pendingNavigationRef.current = action;
-      setAllowNavigation(true);
+      savedRef.current = true;
+      const navigate = (nextAction: () => void) => {
+        pendingNavigationRef.current = nextAction;
+        setAllowNavigation(true);
+      };
+      if (mode === 'add') {
+        showProfileReady(t, () => navigate(action), () => navigate(() => navigation.reset({
+          index: 1,
+          routes: [{ name: 'index' }, { name: 'learning-plan/index', params: { highlightSetup: 'true' } }],
+        })));
+      } else {
+        navigate(action);
+      }
     },
-    [persistProfile],
+    [mode, navigation, persistProfile, t],
   );
 
   usePreventRemove(dirty && !allowNavigation, ({ data }) => {
