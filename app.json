@@ -13,7 +13,7 @@
       "buildNumber": "1.0.0"
     },
     "android": {
-      "versionCode": 100007,
+      "versionCode": 100008,
       "package": "com.tome.arizanov.TheRealMathApp",
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {

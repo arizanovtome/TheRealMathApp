@@ -3,10 +3,56 @@ import {
   mergeFocusedOperationIntoProfile,
   parseLearnPracticeTargetParam,
 } from '@/features/learn/learnPractice.utils';
-import { getEnabledOperations } from '@/features/learning-plan/learningPlan.utils';
+import { getEnabledOperations, getEquationTwoUnknownOperatorPool, validateLearningConfig } from '@/features/learning-plan/learningPlan.utils';
 import { getRecommendedLearningPlan } from '@/features/learning-plan/recommendedLearningPlan';
+import { createSessionQuestions } from '@/features/questions/questionGenerator';
 
 describe('applyLearnPracticeFocus', () => {
+  it.each([6, 10, 14, 18])('generates only systems in systems practice at age %s', (age) => {
+    const defaults = getRecommendedLearningPlan(age);
+    const saved = {
+      ...defaults,
+      addition: { ...defaults.addition, enabled: false },
+      subtraction: { ...defaults.subtraction, enabled: false },
+      multiplication: { ...defaults.multiplication, enabled: false },
+      division: { ...defaults.division, enabled: false },
+    };
+    const focused = applyLearnPracticeFocus(
+      saved,
+      { kind: 'equation_two_unknowns' },
+      age,
+    );
+    expect(validateLearningConfig(focused)).toEqual({ valid: true, errors: [] });
+    expect(getEnabledOperations(focused)).toEqual([]);
+    expect(getEquationTwoUnknownOperatorPool(focused)).toEqual([
+      'addition', 'subtraction', 'multiplication', 'division',
+    ]);
+    for (const operation of getEquationTwoUnknownOperatorPool(focused)) {
+      const onlyOperation = {
+        ...focused,
+        equationTwoUnknowns: {
+          enabled: true,
+          operators: {
+            addition: operation === 'addition',
+            subtraction: operation === 'subtraction',
+            multiplication: operation === 'multiplication',
+            division: operation === 'division',
+          },
+        },
+      };
+      expect(validateLearningConfig(onlyOperation).valid).toBe(true);
+      expect(createSessionQuestions(onlyOperation, 1)[0]).toMatchObject({
+        kind: 'equation_two_unknown', operation,
+      });
+    }
+    const questions = createSessionQuestions(focused, 30);
+    expect(questions).toHaveLength(30);
+    for (const question of questions) {
+      expect(question.kind).toBe('equation_two_unknown');
+      expect(question.questionText.split('\n')).toHaveLength(3);
+    }
+  });
+
   it('forces a single operation even when disabled in saved settings', () => {
     const saved = {
       ...getRecommendedLearningPlan(8),

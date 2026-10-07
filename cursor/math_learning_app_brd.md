@@ -1,6 +1,6 @@
 # Business Requirements Document: The Real Math
 
-**Last updated:** 10 September 2026
+**Last updated:** 7 October 2026
 
 **Current implementation baseline:** Expo SDK 57
 
@@ -68,6 +68,8 @@ The main learning operations are:
 **Shipped:** comparison (all subtypes in §25), equations with **two** unknowns (`x` and `y`), **linear and quadratic equations** (§43), **limits** (§44), **Learn** reference library (23 topics), visual fraction recognition with keyboard entry, shape recognition, clock/time, patterns, **decimal toggles** on basic operations (1 decimal place), trigonometry v1 (§38), **logarithms** (§41), calculus with power/constant/sum, natural log, trig, and quotient/simplify-fraction rules (§34), expanded 2D/3D geometry, configurable timed penalties and bonuses, build/update information, privacy policy screen, compact question cards for visual prompts, **confirm before submit** for multiple choice, **English + Macedonian** UI (§42), **share settings export/import** (§62), and a **redesigned Progress screen** with session-mode filter, expandable session rows, timed-run detail lines, and topic accuracy (§36). The application currently targets **Expo SDK 57**.
 
 **Planned next:** dedicated decimal/percent practice beyond rounding and comparison (see §24.3 and §51).
+
+**New implementation plan:** private multiplayer rooms with a separate ASP.NET Core / SignalR backend, delivered incrementally (§64). The first milestone is one complete “Climb to 10” match between two phones. This is planned scope, not shipped functionality.
 
 **Potential curriculum expansion:** ratios and proportions (§45), Least Common Multiple and Greatest Common Divisor (§46), decade-based number reasoning (§47), matrices (§48), place value / number decomposition (§49), and the implementation-conscious curriculum candidates in §§50–60.
 
@@ -1590,7 +1592,7 @@ Avoid unnecessary complexity in early releases:
 - Too many subcategories on one screen
 - Unrestricted range controls where shipped discrete presets are sufficient
 - User accounts and cloud sync (until explicitly scoped)
-- Leaderboards and social features
+- Public leaderboards and broader social features; private multiplayer rooms and match standings are explicitly scoped in §64
 - Parent dashboard (until explicitly scoped)
 - Interactive “shade the fraction” questions in v1 of fraction visuals (identification first — see §28)
 
@@ -1662,6 +1664,10 @@ For potential curriculum topics, the first implementation should prefer text, ex
 - Probability split into focused subcategories (§58)
 - Sequences and functions beyond the shipped pattern generators (§59)
 - Roman numerals (§60)
+
+### 24.4 Planned: Private Multiplayer Rooms
+
+Implement the small first version in §64 in three steps: room/lobby, gameplay, and match completion. Reuse the mobile question generator; start with one in-memory ASP.NET Core backend using SignalR. Accounts, database persistence, reconnect recovery, and additional game modes are later upgrades, not prerequisites for the first playable match.
 
 ---
 
@@ -1916,6 +1922,7 @@ Follow the global answer-entry preference:
 | Probability | **Potential** | §58 — text/symbol-based events first; no custom spinner/card artwork required |
 | Sequences and functions | **Potential (partial foundation shipped)** | §59 — arithmetic/geometric/number patterns exist; add nth term, tables, linear functions |
 | Roman numerals | **Potential** | §60 — text-only conversion, comparison, and clock-related questions |
+| Private multiplayer rooms: Climb to 10 | **Planned (not implemented)** | §64 — 2–4 players, host-generated questions, SignalR, in-memory backend |
 | Badges, parent dashboard, cloud sync | **Later** | §24.3 |
 
 ---
@@ -3013,9 +3020,103 @@ Validation remains scoped: relevant profile and answer-input tests passed during
 
 ---
 
+## 64. Private Multiplayer Rooms (planned — incremental implementation)
+
+### 64.1 Purpose and first milestone
+
+Let a learner create a private room from their mobile device so a few learners can join and compete. Build this as a small extension of the existing app and a separate .NET backend project for practicing C#, APIs, real-time communication, business rules, and testing. Deliver one playable mode before expanding backend infrastructure or game options.
+
+**First milestone:** two phones can create/join a room, complete a match, see live scores, and receive the same final result. Nothing in this section is implemented or advertised as shipped yet.
+
+### 64.2 Hosting and architecture
+
+- The host creates and controls the room through the mobile app. The phone does not run a server; all players connect to a separately running ASP.NET Core backend over the network.
+- Use one backend application/instance, with rooms, question batches, player progress, and match results held in memory. No database or user accounts in the first version.
+- Use HTTP endpoints for room creation/joining and question-batch upload; use a SignalR hub for live lobby updates, starting the match, answer submissions, score updates, and match completion. Exact routes and event names will be defined during implementation.
+- SignalR provides the real-time connection layer, normally using WebSockets. Game state and rules remain application responsibilities.
+- Existing local Practice, Quiz, Timed, Learn, and progress features remain available independently. Multiplayer requires connectivity and has separate match scoring.
+
+### 64.3 First-version room and mobile flow
+
+1. Host opens multiplayer, enters a nickname, creates a room, and receives a join code.
+2. Other learners enter the code and a nickname. The lobby displays connected players.
+3. Support **2–4 players**, including the host. Join is allowed only while the room is in the lobby state.
+4. The host chooses supported arithmetic settings using the existing learning-plan model. Their app generates and uploads a complete question batch before starting.
+5. The host can start only after a valid batch is stored and at least two players are connected. No separate ready toggle is required initially.
+6. Players enter the multiplayer question screen and see live standings.
+7. The server ends the match and sends the final standings to a result screen.
+
+Use the existing English/Macedonian UI conventions for the new screens. For this version, all players receive the host-generated question text in the host's chosen language; per-player question translation is deferred.
+
+### 64.4 First mode: Climb to 10
+
+These are starting rules, open to later adjustment after the first playable version:
+
+- All players receive the same ordered question batch and advance at their own pace.
+- Correct answer: **+1**. Wrong answer: **−1**, with a minimum score of **0**.
+- Each accepted answer advances that player to the next question, regardless of correctness.
+- The first player whose accepted answer brings their score to **10** wins immediately. The server processes answers consistently within each room; server acceptance order determines the winner when submissions arrive close together.
+- A player who exhausts the batch waits for the remaining players. If every remaining player exhausts the batch without reaching 10, the highest score wins; equal highest scores produce a tie.
+- Freeze scores when the match ends; later submissions cannot change the result.
+- No match timer, streak requirement, or configurable scoring rules in this first mode.
+
+### 64.5 Reuse the mobile question generator
+
+- Generate questions on the host's device using the existing mobile generator. Do not implement question generation in C# for the first version.
+- Initially support multiple-choice, text-based arithmetic with integer answers. Visual diagrams, fractions, decimals, advanced topics, and keyboard answers are outside this first multiplayer scope.
+- Upload a complete batch with unique question IDs, prompts, answer-choice IDs/text, and a correct-choice ID for each question. Exact batch size and supported settings will be settled during implementation.
+- Validate the batch on the server: supported format/version, unique IDs, valid choices and answer references, and bounded question count/payload size. Reject an invalid batch before starting.
+- Keep the uploaded answer key on the server. Send players the current question and choices without correct-answer fields; reveal correctness only after an accepted submission.
+- The server trusts the host's question content and answer key. This is a private casual game, not a verified public ranking system. Independent validation or backend generation can be considered later.
+- The stored batch allows an active match to continue without further question generation by the host. Do not add batch replenishment initially.
+
+### 64.6 Backend responsibilities and basic safeguards
+
+- Model the room lifecycle as lobby → active → finished, with closed/expired rooms cleaned up.
+- Identify participants with a server-issued temporary player credential; a nickname or room code alone does not authorize submitting another player's answers or starting a match.
+- Only the host can upload the batch and start the match. Validate membership and room state for every action.
+- The client sends a question ID and selected choice ID. The server checks the answer and owns score updates, question progression, and winner selection.
+- Accept at most one answer per player/question. Repeated submissions must not award or deduct points again; reject answers for questions other than the player's current question.
+- Broadcast lobby membership, updated standings, and final results to the appropriate room only.
+- Keep this logic small and testable; do not introduce microservices, distributed room storage, or a generic rules framework for the first milestone.
+
+### 64.7 Initial limitations and disconnect behavior
+
+- Leaving or losing the connection removes the player from the match. Automatic reconnect recovery is deferred; the app explains this limitation.
+- If the host leaves the lobby, close the room. If the host disconnects during a match, remaining players continue using the uploaded batch; no host transfer is required for active gameplay.
+- If only one player remains during a match, end it with that player as the winner by default; if nobody remains, close it without a winner. These are provisional disconnect rules to confirm during implementation.
+- Server restarts clear rooms and matches. There is no restoration or persistent multiplayer history, and results do not feed into local profile session history initially.
+- Expire inactive lobbies and clean up abandoned/finished rooms so memory use remains bounded. Exact expiry values are implementation details.
+- This feature sends nicknames, question content, and answers to the backend. Update the app's privacy wording before release to describe this networked behavior; current local-only descriptions must not be used to describe multiplayer.
+
+### 64.8 Incremental delivery and verification
+
+| Step | Deliverable | Acceptance check |
+|---|---|---|
+| 1. Room and lobby | Create/join by code; list players; enforce room capacity and host control | Two phones join the same room and see membership changes; invalid/full-room joins fail clearly |
+| 2. Gameplay | Upload/validate host questions; start match; submit answers; broadcast scores | Players see the same question order; correct/wrong scoring works; duplicate submissions do not count twice |
+| 3. Match completion | Target-score victory, batch-exhaustion standings/ties, disconnect outcomes, result screen | Both phones receive the same final result; scores stay frozen after completion |
+
+Use focused unit tests for scoring and match transitions, integration checks for membership/host permissions and duplicate submissions, and an end-to-end two-device check. Include simultaneous submissions and isolation between two rooms in verification. No performance-testing infrastructure is required for the first milestone.
+
+### 64.9 Later upgrades (not first-version requirements)
+
+- Reconnect support with restored player identity, current question, and score.
+- PostgreSQL match history, followed by accounts and persistent statistics if useful.
+- Additional modes: timed competition, consecutive-correct streak, and cooperative shared target.
+- Configurable target/penalties, wider question support, and improved fairness rules.
+- Backend question generation or independent validation if public/ranked competition is introduced.
+- Cloud deployment and performance testing as usage grows; multi-instance scaling only when needed.
+
+Choose the next upgrade after the first complete match works. Do not implement these upgrades together with the initial room feature.
+
+---
+
 ## 61. Summary
 
 The app provides a simple, friendly math learning experience for **learners of all ages**, with optional age-based recommended plans and flexible profiles for multiple learners on one device.
+
+**Planned multiplayer milestone (§64):** private 2–4-player rooms and Climb to 10, using host-generated mobile questions and a separate in-memory ASP.NET Core / SignalR backend. Deliver lobby, gameplay, and results incrementally; database persistence, reconnect recovery, and other modes follow later.
 
 First-time flow:
 

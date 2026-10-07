@@ -100,25 +100,16 @@ export function applyLearnPracticeFocus(
       }
       break;
     case 'equation_two_unknowns':
+      // Learn systems use all four operators independently of arithmetic topics.
       focused = {
         ...disableAllQuestionSources(base),
-        addition: {
-          ...defaults.addition,
-          enabled: true,
-          standardCalculation: true,
-        },
-        subtraction: {
-          ...defaults.subtraction,
-          enabled: true,
-          standardCalculation: true,
-        },
         equationTwoUnknowns: {
           enabled: true,
           operators: {
             addition: true,
             subtraction: true,
-            multiplication: false,
-            division: false,
+            multiplication: true,
+            division: true,
           },
         },
       };

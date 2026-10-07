@@ -1,4 +1,5 @@
 {
+  "findVariable": "Најди го {{variable}}.",
   "whatTimeIsIt": "Колку е часот?",
   "elapsedTime": "Колку време поминало од {{start}} до {{end}}?",
   "durationUnits": { "hour": "час", "hours": "часови", "minute": "минута", "minutes": "минути" },

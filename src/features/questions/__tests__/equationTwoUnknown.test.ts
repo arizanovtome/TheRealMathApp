@@ -1,4 +1,5 @@
 import { getRecommendedLearningPlan } from '@/features/learning-plan/recommendedLearningPlan';
+import { initI18n } from '@/i18n';
 import {
   finalizeEquationTwoUnknownQuestion,
   generateEquationTwoUnknownQuestion,
@@ -6,6 +7,23 @@ import {
 } from '@/features/questions/equationTwoUnknown';
 
 describe('equationTwoUnknown', () => {
+  afterEach(async () => {
+    await initI18n('en');
+  });
+
+  it.each(['addition', 'subtraction', 'multiplication', 'division'] as const)(
+    'translates the %s system instruction into Macedonian',
+    async (operation) => {
+      await initI18n('mk');
+      const draft = generateEquationTwoUnknownQuestion(config, operation)!;
+      expect(draft.questionText).toMatch(/\nНајди го [xy]\.$/);
+      expect(parseSolveForFromQuestionText(draft.questionText)).toMatch(/^[xy]$/);
+      await initI18n('en');
+      expect(generateEquationTwoUnknownQuestion(config, operation)!.questionText)
+        .toMatch(/\nFind [xy]\.$/);
+    },
+  );
+
   const base = getRecommendedLearningPlan(10);
   const config = {
     ...base,
