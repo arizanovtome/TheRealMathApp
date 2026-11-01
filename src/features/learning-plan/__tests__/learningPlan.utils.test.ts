@@ -156,7 +156,7 @@ describe("special arithmetic question modes", () => {
     ]);
   });
 
-  it("excludes equations with x when the parent operation main switch is off", () => {
+  it("keeps systems independent while x-equations follow the parent operation switch", () => {
     const cfg: MathLearningConfig = {
       ...basePlan,
       addition: { ...basePlan.addition, enabled: false },
@@ -182,7 +182,7 @@ describe("special arithmetic question modes", () => {
       },
     };
     expect(getEquationUnknownOperatorPool(cfg)).toEqual([]);
-    expect(getEquationTwoUnknownOperatorPool(cfg)).toEqual([]);
+    expect(getEquationTwoUnknownOperatorPool(cfg)).toEqual(['addition']);
   });
 
   it("keeps missing-number and x-equation sources without regular arithmetic when regular is off", () => {
@@ -440,6 +440,7 @@ describe("validateLearningConfig", () => {
     const invalid: MathLearningConfig = {
       ...basePlan,
       multiplication: {
+        ...basePlan.multiplication,
         enabled: true,
         factors: [],
         secondFactorSource: "selection_only",
@@ -458,6 +459,7 @@ describe("validateLearningConfig", () => {
     const valid: MathLearningConfig = {
       ...basePlan,
       addition: {
+        ...basePlan.addition,
         enabled: true,
         leftMin: 1,
         leftMax: 100,
@@ -481,6 +483,7 @@ describe("validateLearningConfig", () => {
     const invalid: MathLearningConfig = {
       ...basePlan,
       addition: {
+        ...basePlan.addition,
         enabled: true,
         leftMin: 50,
         leftMax: 60,

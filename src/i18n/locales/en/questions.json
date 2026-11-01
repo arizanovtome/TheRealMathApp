@@ -1,4 +1,5 @@
 {
+  "findVariable": "Find {{variable}}.",
   "whatTimeIsIt": "What time is it?",
   "elapsedTime": "How much time from {{start}} to {{end}}?",
   "durationUnits": { "hour": "hour", "hours": "hours", "minute": "minute", "minutes": "minutes" },

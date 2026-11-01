@@ -1,8 +1,10 @@
 # Business Requirements Document: The Real Math
 
-**Last updated:** 3 September 2026
+**Last updated:** 7 October 2026
 
 **Current implementation baseline:** Expo SDK 57
+
+**Review basis:** Mobile source code checked on 9 September 2026, with pending button, onboarding, answer-entry and sharing changes incorporated on 10 September 2026. “Shipped” below means implemented in this repository, not independently verified in an installed store build. Existing future curriculum proposals remain proposals; this review does not promote them to committed scope. See §63 for review findings and source references.
 
 ## 1. Document Purpose
 
@@ -11,6 +13,21 @@ This document defines the business and functional requirements for a React Nativ
 The app is designed for **learners of all ages** — from early number sense through upper elementary and beyond — while still offering optional age-based recommended plans for quick setup.
 
 This document does not cover monetization, store release requirements, or legal requirements. An **in-app privacy policy** screen is shipped (see Home → Privacy policy); store listing URLs and compliance questionnaires remain the publisher’s responsibility.
+
+### 1.1 Website content alignment
+
+The companion website should describe the shipped app, using these content requirements:
+
+- Use **23 topics** consistently in page copy and search/social metadata. Describe a practice and reference library, not a complete course covering every advanced subject.
+- Describe timed starts of **15 seconds to 10 minutes**, adjustable wrong-answer penalties **0–15 seconds**, and correct-answer bonuses **0–5 seconds**.
+- Describe practice feedback as correctness feedback plus the correct answer after a miss; do not imply worked remediation or instructional hints in the session feedback.
+- Answer-option presets are **2, 3, 4 or 6**, with fixed natural sets for certain questions. Keyboard entry is supported only for appropriate question types (§15).
+- Visual questions still use written instructions. Do not imply guaranteed independent use by children who cannot read or built-in question narration.
+- Word-problem examples and illustrations should use actual template scenarios (§7.5). Website illustrations do not imply that the app's text-based word problems themselves contain those illustrations.
+- Describe plan sharing accurately, including the exported profile label (§62). Factual descriptions of stored data should include optional age/confidence, language preference, local progress and user-initiated settings sharing; keep corresponding app and website descriptions synchronized.
+- Keep platform availability copy and store badges consistent with publisher-confirmed release status. A supported platform must not be presented as publicly downloadable before it is available.
+
+These are content requirements, not a claim that the deployed website has been verified or updated.
 
 ---
 
@@ -52,6 +69,8 @@ The main learning operations are:
 
 **Planned next:** dedicated decimal/percent practice beyond rounding and comparison (see §24.3 and §51).
 
+**New implementation plan:** private multiplayer rooms with a separate ASP.NET Core / SignalR backend, delivered incrementally (§64). The first milestone is one complete “Climb to 10” match between two phones. This is planned scope, not shipped functionality.
+
 **Potential curriculum expansion:** ratios and proportions (§45), Least Common Multiple and Greatest Common Divisor (§46), decade-based number reasoning (§47), matrices (§48), place value / number decomposition (§49), and the implementation-conscious curriculum candidates in §§50–60.
 
 **Later:** Learn quality pass (§35), session history question review (§37).
@@ -72,7 +91,7 @@ The main goals of the app are:
 - Support practice, quiz, and timed session modes.
 - Provide multiple-choice or keyboard answer entry where appropriate.
 - Track session results, recent performance, and gentle adaptation hints.
-- **Export and import** session/topic settings between profiles or devices (without sharing learner identity or progress).
+- **Export and import** session/topic settings between profiles or devices (includes the profile label; excludes the learner-name field and progress — §62).
 - Offer a **Learn** section with explanations and visuals for all 23 curriculum topics.
 - Support **English and Macedonian** UI with first-run language selection.
 
@@ -97,7 +116,7 @@ Suggested learning focus by age (defaults only — all topics remain available i
 | 6–7 | Addition and subtraction up to 20 |
 | 8–9 | Addition and subtraction up to 100, basic multiplication |
 | 10–12 | Multiplication, division, mixed arithmetic, fractions, larger ranges |
-| 13+ / unspecified | User chooses operations manually; no assumption of “kids only” content |
+| 13+ / unspecified | Editable bracket/default plan selected using optional age and confidence (§6.2); all topics remain available |
 
 ---
 
@@ -107,9 +126,9 @@ The recommended first-time user flow is:
 
 1. User opens the app.
 2. App prompts **language selection** on first launch (English or Macedonian).
-3. App prompts **profile setup**: profile label (e.g. “Subtraction”, “Advanced”), learner name or nickname, and age.
-4. App creates a recommended learning plan based on age (using 4–12 brackets when age falls in that range).
-5. User can either start learning immediately or customize the plan.
+3. App collects profile label and learner name, then optional age and math confidence on a separate screen.
+4. App creates and saves the recommended plan from age/confidence (§6.2), completes first-time onboarding, and shows the profile-ready message (§6.5).
+5. User chooses Continue to Home or Review settings to customize the plan.
 6. User starts practice, quiz, or a timed run from the home screen (or **Try in practice** from Learn).
 7. App presents math questions from the active profile’s enabled sources.
 8. User answers via multiple choice or keyboard (depending on settings and question type); optional **Confirm** step for multiple choice.
@@ -124,36 +143,22 @@ The recommended first-time user flow is:
 
 ### 6.1 Profile setup (first launch and add profile)
 
-On first launch, the app creates **Profile 1** by default for the profile label; the user may change it.
+After language selection, collect **profile label** and **learner name/nickname** together. Both fields must be nonempty. The label defaults to the next available “Profile N”.
 
-The profile setup screen should collect:
+Continue opens a separate screen for **optional age** and **optional math knowledge/confidence**. Age is initially blank. Confidence offers levels **1–5**; the visible initial selection is 3, but it is stored as unset unless changed.
 
-1. **Profile name** — a short label for switching profiles (e.g. “Subtraction”, “Advanced”, “Profile 2”). Placeholder example: `Subtraction, Advanced, …`
-2. **Name or nickname** — used in greetings and feedback (e.g. “Hi Alex!”). Placeholder example: `John Smith`
-3. **Age (years)** — numeric entry; no default pre-filled value; placeholder “Your age”
+Saving the first profile stores its recommended plan, completes onboarding and shows the profile-ready message (§6.5). The onboarding add-profile route uses the same name/age steps and message. Settings also provides a combined add/edit profile form; newly created profiles receive the same message, while edits do not.
 
-There is no separate “what should we call you?” step without profile name; both are on one screen.
+### 6.2 Age and math confidence
 
-When adding another profile from Settings, the same flow applies (`mode=add`).
+Age accepts **1–150**, or may remain blank. Confidence is nullable, with values **1–5**. Neither limits available topics.
 
-### 6.2 Age selection
+Recommendation selection:
+- Both unset: use the neutral default, currently the **8–9** plan.
+- Age only: ages up to 5 use **4–5**, 6–7 use **6–7**, 8–9 use **8–9**, and 10+ use **10–12**.
+- Confidence provided: shift effective age by **2 × (level − 3)** years before selecting the bracket. Use age 8 as the base if age is absent; clamp effective age to 1–150.
 
-Supported age entry:
-
-- Minimum: **1**
-- Maximum: **150**
-
-The selected age is used to pick a **recommended learning plan** using these brackets when age falls in range:
-
-| Age entered | Recommended bracket |
-|---|---|
-| 4–5 | 4–5 plan |
-| 6–7 | 6–7 plan |
-| 8–9 | 8–9 plan |
-| 10–12 | 10–12 plan |
-| Outside 4–12 | Closest bracket or default plan (implementation uses `getAgeBracket`) |
-
-Ages below 4 or above 12 still save correctly; recommended defaults are tuned for school-age brackets when age falls in **4–12**. Ages **13+** or outside brackets receive a neutral default plan — users customize operations manually; the app does not assume “kids only” content.
+An adult with age only currently receives the 10–12 starting plan, not a dedicated adult plan. Users can customize every topic.
 
 ### 6.3 Name / nickname (within profile setup)
 
@@ -168,21 +173,17 @@ A nickname is accepted; a legal name is not required.
 
 ### 6.4 Recommended plan as default
 
-After name and age are selected, the app should default to the recommended learning plan.
+Save the recommended plan with the profile so practice can begin without manual configuration. Profile creation now leads to the profile-ready message rather than the separate recommended-plan screen. Later settings edits must not be overwritten by a stale onboarding recommendation.
 
-The app should not force the user to configure all learning settings before starting.
+### 6.5 Profile-ready message and settings review
 
-Recommended primary action:
+After creating a profile through onboarding or the Settings add-profile form, show a native modal titled **Your profile is ready!** explaining that starting **session settings and topics** have been selected and can be reviewed or changed in Settings. Mention **Session settings** before **Topics**, matching the hub order. Localize the message and actions in English and Macedonian.
 
-> Start learning
-
-Secondary action:
-
-> Customize
-
-Example screen message:
-
-> Based on your age, we prepared a learning plan for you. You can change it anytime.
+- **Continue:** onboarding returns to Home; the Settings form completes its pending return/navigation action.
+- **Review settings:** open the Settings hub for the new active profile, with Home as the previous screen. Back must return Home, not reopen completed profile setup.
+- Highlight Session settings and Topics together with three brief gold pulses on this review entry. Ordinary Settings visits and returning from a sub-screen must not replay the highlight. With reduced motion enabled, use a steady four-second highlight instead. Highlights must not intercept button taps.
+- Show the message on creation, not profile edits, profile switches or ordinary app launches. Settings-file imports retain their separate import flow (§62).
+- Repeated save/continue taps must not create duplicate profiles while this message is open.
 
 ---
 
@@ -254,7 +255,7 @@ Each profile stores:
 
 - Profile name (switch label)
 - Learner name or nickname
-- Age
+- Optional age and math confidence (nullable)
 - Full learning plan (`MathLearningConfig`)
 - Session history for that profile
 
@@ -278,6 +279,19 @@ For addition, subtraction, multiplication, and division, each operation card inc
 ### 7.4 Geometry
 
 When geometry is enabled, questions are drawn from a separate geometry source (not mapped onto addition/multiplication). See §8.7.
+
+### 7.5 Word-problem scenarios (shipped)
+
+The source of truth is `src/features/questions/wordProblemTemplates.ts` and its Macedonian counterpart. Current scenarios are:
+
+| Operation | Ordinary scenarios | Signed-number scenarios |
+|---|---|---|
+| Addition | Stickers gained, birds landing in a tree, shells collected | Temperature rising or falling |
+| Subtraction | Cookies eaten, marbles given away, passengers leaving a bus | Elevator moving between floors |
+| Multiplication | Apples in bags, rows of stars, packs of pencils | Points lost per round, removal of point penalties |
+| Division | Treats shared among friends, stickers in equal groups, pencils in equal piles | Average points gained or lost per round |
+
+Signed templates are selected when an operand or result is negative. Example stories include three birds joined by two more (5), temperature rising from −3°C by 5 degrees (2°C), and an elevator descending five floors from floor 2 (floor −3). Word problems are text-based questions; visual word-problem rendering remains future work.
 
 ---
 
@@ -544,7 +558,7 @@ type AdditionConfig = {
   rightMin: number;
   rightMax: number;
   /** Addition-specific result cap. */
-  answerMax: 10 | 20 | 100 | 1000 | 'unlimited';
+  answerMax: 10 | 20 | 50 | 100 | 1000 | 1000000 | 'unlimited';
   missingNumber: boolean;
   fractions: boolean;
   fractionDenominatorMode: 'same_only' | 'different_only' | 'mixed';
@@ -656,6 +670,7 @@ type MathLearningConfig = {
   answerOptionsCount: 2 | 3 | 4 | 6;
   /** Shipped — MC only; requires Confirm tap before answer is counted */
   confirmAnswerBeforeSubmit: boolean;
+  /** Legacy migration field; current answer limit is addition.answerMax. */
   maxFinalResult: 10 | 20 | 100 | 1000 | 'unlimited';
   timerEnabled: boolean;
   timerSecondsPerQuestion: number;
@@ -808,7 +823,8 @@ type LearnerProfile = {
   id: string;
   profileName: string;
   name: string;
-  age: number;
+  age: number | null;
+  mathKnowledgeLevel: 1 | 2 | 3 | 4 | 5 | null;
   learningConfig: MathLearningConfig | null;
   sessionHistory: SessionHistoryEntry[];
 };
@@ -818,353 +834,75 @@ type LearnerProfile = {
 
 ---
 
-## 10. Recommended Learning Plan by Age
+## 10. Recommended Learning Plan by Age and Confidence
 
-The app should generate a recommended learning plan based on the selected age when provided. These defaults are **starting suggestions only** — all operations and topics remain available for manual configuration regardless of age.
+Bracket plans are starting suggestions selected using §6.2. Current defaults are defined in `src/features/learning-plan/recommendedLearningPlan.ts`; this table summarizes selected fields instead of duplicating full configuration objects.
 
-### Age 4–5
+| Bracket | Addition operand ranges | Addition answer cap | Questions | Answer choices |
+|---|---|---:|---:|---:|
+| 4–5 | 1–5 and 1–5 | 10 | 5 | 2 |
+| 6–7 | 1–20 and 1–20 | 100 | 10 | 3 |
+| 8–9 | 1–100 and 1–100 | 1000 | 10 | 4 |
+| 10–12 | 1–100 and 1–100 | 1000 | 10 | 4 |
 
-Recommended focus:
+The youngest plan includes Shapes and Numbers alongside addition. The 6–7 plan enables subtraction and Numbers; 8–9 enables multiplication; 10–12 enables division and basic geometry. Neutral defaults currently reuse the 8–9 plan. Confidence can shift the bracket (§6.2).
 
-- Simple addition
-- Very small numbers
-- Optional simple subtraction later
-
-Suggested config:
-
-```ts
-{
-  addition: {
-    enabled: true,
-    leftMin: 1,
-    leftMax: 5,
-    rightMin: 1,
-    rightMax: 5
-  },
-  subtraction: {
-    enabled: false,
-    firstMin: 1,
-    firstMax: 5,
-    secondMin: 1,
-    secondMax: 5,
-    allowNegativeAnswers: false
-  },
-  multiplication: {
-    enabled: false,
-    leftMin: 1,
-    leftMax: 5,
-    rightMin: 1,
-    rightMax: 5
-  },
-  division: {
-    enabled: false,
-    answerMin: 1,
-    answerMax: 5,
-    divisorMin: 1,
-    divisorMax: 5
-  },
-  mode: 'practice',
-  questionsCount: 5,
-  answerOptionsCount: 2,
-  maxFinalResult: 10
-}
-```
-
-### Age 6–7
-
-Recommended focus:
-
-- Addition up to 20
-- Subtraction up to 20
-
-Suggested config:
-
-```ts
-{
-  addition: {
-    enabled: true,
-    leftMin: 1,
-    leftMax: 20,
-    rightMin: 1,
-    rightMax: 20
-  },
-  subtraction: {
-    enabled: true,
-    firstMin: 1,
-    firstMax: 20,
-    secondMin: 1,
-    secondMax: 20,
-    allowNegativeAnswers: false
-  },
-  multiplication: {
-    enabled: false,
-    leftMin: 1,
-    leftMax: 10,
-    rightMin: 1,
-    rightMax: 10
-  },
-  division: {
-    enabled: false,
-    answerMin: 1,
-    answerMax: 10,
-    divisorMin: 1,
-    divisorMax: 10
-  },
-  mode: 'practice',
-  questionsCount: 10,
-  answerOptionsCount: 3,
-  maxFinalResult: 20
-}
-```
-
-### Age 8–9
-
-Recommended focus:
-
-- Addition up to 100
-- Subtraction up to 100
-- Basic multiplication up to 10
-
-Suggested config:
-
-```ts
-{
-  addition: {
-    enabled: true,
-    leftMin: 1,
-    leftMax: 100,
-    rightMin: 1,
-    rightMax: 100
-  },
-  subtraction: {
-    enabled: true,
-    firstMin: 1,
-    firstMax: 100,
-    secondMin: 1,
-    secondMax: 100,
-    allowNegativeAnswers: false
-  },
-  multiplication: {
-    enabled: true,
-    leftMin: 1,
-    leftMax: 10,
-    rightMin: 1,
-    rightMax: 10
-  },
-  division: {
-    enabled: false,
-    answerMin: 1,
-    answerMax: 10,
-    divisorMin: 1,
-    divisorMax: 10
-  },
-  mode: 'practice',
-  questionsCount: 10,
-  answerOptionsCount: 4,
-  maxFinalResult: 100
-}
-```
-
-### Age 10–12
-
-Recommended focus:
-
-- Addition up to 100
-- Subtraction up to 100
-- Multiplication up to 12
-- Division with whole-number answers
-
-Suggested config:
-
-```ts
-{
-  addition: {
-    enabled: true,
-    leftMin: 1,
-    leftMax: 100,
-    rightMin: 1,
-    rightMax: 100
-  },
-  subtraction: {
-    enabled: true,
-    firstMin: 1,
-    firstMax: 100,
-    secondMin: 1,
-    secondMax: 100,
-    allowNegativeAnswers: false
-  },
-  multiplication: {
-    enabled: true,
-    leftMin: 1,
-    leftMax: 12,
-    rightMin: 1,
-    rightMax: 12
-  },
-  division: {
-    enabled: true,
-    answerMin: 1,
-    answerMax: 12,
-    divisorMin: 1,
-    divisorMax: 12
-  },
-  mode: 'practice',
-  questionsCount: 10,
-  answerOptionsCount: 4,
-  maxFinalResult: 1000
-}
-```
+Default mode is Practice, per-question timer is off, and confirm-before-submit is off. Timed configuration starts at 1 minute with a 5-second wrong-answer penalty and 2-second correct-answer bonus.
 
 ---
 
 ## 11. Learning Plan UI Requirements
 
-The learning plan screen (also labeled **Settings** in navigation) allows the user to configure each operation independently and manage profiles.
+Settings is a hub for the active profile:
 
-Suggested screen title:
+- **Profile details:** switch, add, edit or remove profiles; edit label, learner name, optional age and confidence.
+- **Session settings:** mode, question count, answer entry, answer choices, confirmation and timers.
+- **Topics:** topic-specific enable switches, ranges, question styles and examples.
+- **Share settings:** export/import a settings file (§62).
+- **About:** build/update information.
 
-> Settings
+Topic cards own their controls; there is no global question-style card. Geometry owns measures, shapes and question types. Editable sub-screens provide Save and protect unsaved changes (§40). Focused Learn → Try shows only the selected topic and offers start-only or save-and-start.
 
-Suggested layout (abbreviated):
+The Topics hub groups settings into **Foundations**, **Operations**, **Advanced topics**, and **Calculus**. These are navigation groups for the existing 23 curriculum topics, not additional topics. Learn retains its full ordered topic list rather than this grouped settings navigation.
 
-```text
-Settings
+### 11.1 Button icons and alignment
 
-Profiles
-  [Profile 1 ▼]  Switch | Edit | Add | Remove
+- Shared action buttons (`AppButton`) require a named Ionicons icon and retain a visible text label. Decorative icons must not duplicate the button label for screen readers.
+- `textPosition` supports **left**, **center**, and **right**, defaulting to left. Align the icon and label together; `iconPosition` independently places the icon immediately to the **left** or **right** of the text, defaulting to left. Long labels may wrap without displacing the icon outside the button.
+- Menu and Results actions use icons before left-aligned labels. Session actions and onboarding navigation use centered content with the icon after the label. Profile-form Add/Save and Cancel center their icon and label together with the icon first.
+- Keep button colors, disabled/loading behavior and the full-width touch target consistent across alignments. Icons do not replace choice labels in topic or confidence selectors.
 
-Personal info
-  Profile name, name/nickname, age
+Distinct icons identify navigation destinations:
 
-[✓] Addition
-    Ranges … | Standard | Regrouping | Missing | Word | Fractions …
+| Area | Icon choices |
+|---|---|
+| Home | Practice: barbell; Quiz: calculator; Timed run: timer; Learn: book; Recent performance: chart; Settings: gear |
+| Topic groups | Foundations: layers; Operations: calculator; Advanced topics: puzzle piece; Calculus: graph |
+| Results | Retry: replay; Settings: gear; Go home: home |
+| Profile actions | Add profile: person-plus; Save: disk; Cancel: circled X |
 
-[✓] Geometry
-    Perimeter / Area / Volume | Shapes | Formula + Calculate
-
-Practice mode: Practice | Quiz | Timed
-Questions: 10
-Answer entry: Multiple choice | Keyboard
-Confirm answer (MC): On | Off
-Answer choices: 4
-Maximum answer (final result): Up to 100
-Timer … / Timed duration …
-
-[Start practice]
-```
-
-Each operation card should have:
-
-- Enable/disable toggle
-- Range configuration (where applicable)
-- Per-operation toggles (standard, regrouping, missing number, word problems, fractions, etc.) — not a separate global “question styles” card
-- Example question preview when possible
-
-The **Geometry** card uses a master toggle plus measure/shape/question-type controls (see §8.7).
-
-**Profiles** block: switch active profile, edit (load profile into editor), add profile, remove profile (when more than one exists).
-
-Main action:
-
-- Save / Start practice (or Start quiz / Start timed run depending on selected mode)
+Practice-tip and Try in practice buttons reuse the barbell icon. Other shared actions, including file selection, import/export and saving settings, also supply an appropriate icon.
 
 ---
 
 ## 12. Range Selection Requirements
 
-The app should support predefined range options at first.
+Current preset controls:
 
-A custom slider can be added later, but buttons are simpler and easier to understand.
+- **Addition/subtraction:** independent operand upper-limit sliders, lower bound 1, with stops at **5, 10, 20, 50, 100, 1000, 1,000,000**.
+- **Multiplication:** selected tables **1–10**, second-factor source **selected only / 1–10 / 1–20**, and optional factor-order randomization.
+- **Division:** quotient presets **1–5 / 1–10 / 1–12** and individually selected divisors **1–10**.
+- Other topics retain dedicated controls; geometry dimensions are generated rather than configured with sliders.
 
-Suggested range buttons:
+### Addition maximum answer
 
-### Addition
+The addition card has a separate answer-limit slider: **10, 20, 50, 100, 1000, 1,000,000, Unlimited**. It limits addition results independently of operand ranges.
 
-- 1–5
-- 1–10
-- 1–20
-- 1–50
-- 1–100
+For a finite limit, ordinary numeric addition answers must lie between 0 and the limit, or between the negative and positive limit when negative addition numbers are enabled. Addition distractors use the corresponding band. Addition validation reports incompatible operand ranges and answer limits. Arithmetic fraction questions take a separate generator path that bypasses this shared cap check; the cap is not a universal promise for every addition question style.
 
-### Subtraction
+The shared answer-cap check applies **only to addition**. Subtraction, multiplication, division, squares, roots and other operations follow their own settings. Questions routed through addition, including its unknown-equation forms, use addition's answer band where that check is applied.
 
-For first number:
-
-- 1–10
-- 1–20
-- 1–50
-- 1–100
-
-For second number:
-
-- 1–5
-- 1–10
-- 1–20
-- 1–50
-- 1–100
-
-### Multiplication
-
-- 1–5
-- 1–10
-- 1–12
-
-### Division
-
-For answer range:
-
-- 1–5
-- 1–10
-- 1–12
-
-For divisor range:
-
-- 1–5
-- 1–10
-- 1–12
-
-### Maximum final result (correct answer limit)
-
-In addition to per-operation number ranges, the app should let the learner or parent cap how large the **correct answer** may be for most arithmetic. This is a separate control from operand ranges: it limits the **outcome** of each question, not the operands themselves.
-
-The learning plan screen should offer **five preset choices**, implemented as simple buttons (same interaction style as other preset range controls):
-
-- **Up to 10** — for capped operations, correct answers must be between 0 and 10 (or between −10 and 10 when “answers below zero” is allowed for subtraction).
-- **Up to 20** — same idea with a limit of 20.
-- **Up to 100** — limit of 100.
-- **Up to 1000** — limit of 1000.
-- **Unlimited** — no numeric ceiling; generation and validation do not reject answers for being too large.
-
-Recommended defaults by age (aligned with §10):
-
-| Age group | Suggested `maxFinalResult` |
-| --- | ---: |
-| 4–5 | 10 |
-| 6–7 | 20 |
-| 8–9 | 100 |
-| 10–12 | 1000 |
-
-#### Which operations use the cap
-
-The maximum final result applies when generating and validating these enabled operations:
-
-- Addition
-- Subtraction
-- Multiplication
-- Division
-- Squaring
-- Square roots
-- Equations with an unknown (`x`)
-
-It does **not** apply to:
-
-- **Rounding** — the correct answer is the rounded value (e.g. 50 for “Round 47 to the nearest 10”), which is determined by the rounding range and unit, not by the cap.
-- **Order of operations** — the correct answer is `a + b × c` (multiply before add); operand limits are configured separately and are not checked against the cap.
-
-For capped operations, question generation must only produce questions whose `correctAnswer` fits the cap (and existing operation rules). Multiple-choice distractors for capped operations should stay within the same band when possible so wrong answers remain plausible.
-
-For rounding and order of operations, generation does not filter by the cap, settings validation does not show cap-related warnings for those operations, and distractors are not clipped to the cap band.
-
-If the user picks a finite cap that cannot be satisfied together with other **capped** enabled operations and ranges, the app should show a clear validation message per operation (e.g. addition, multiplication) rather than failing silently. Rounding and order of operations never trigger those cap warnings.
+`maxFinalResult` is a **legacy persisted field** retained for normalization/migration, not a current global user-facing limit. Current addition configuration uses `addition.answerMax`.
 
 ---
 
@@ -1212,7 +950,7 @@ Great job!
 
 In timed mode:
 
-1. User has a **total session clock** with presets from **15 seconds to 10 minutes**.
+1. User has a **total session clock** with presets of **15 seconds, 30 seconds, 1, 2, 3, 5, or 10 minutes**.
 2. Questions are generated one after another until time runs out.
 3. A configurable wrong-answer penalty subtracts **0–15 seconds**; `0` disables it.
 4. A configurable correct-answer bonus adds **0–5 seconds**; `0` disables it.
@@ -1221,13 +959,22 @@ In timed mode:
 
 Timed mode does not use a fixed question count setting.
 
+After a submitted answer, show correctness feedback and any time adjustment, then automatically advance after approximately **600 ms**. The session clock continues during feedback. Remaining time cannot go below zero; correct-answer bonuses can extend it beyond the original duration, with no runtime upper cap. Only submitted answers enter the result; the unanswered question visible when time expires is excluded.
+
+### 13.4 Per-question timer (Practice and Quiz)
+
+- Optional and off by default; configurable from **10 to 120 seconds** in **5-second steps**, with a stored default of **45 seconds**.
+- Expiry locks the question and records no answer when the learner continues; it counts as wrong in scoring. Practice reveals feedback, while Quiz withholds correctness until the result screen.
+- A selected multiple-choice answer awaiting confirmation is not protected from expiry. The timer stops when the answer is accepted; without confirmation enabled, selecting a Quiz option stops the timer, while Next/Finish advances the session.
+- Learn → Try uses an open-ended, untimed practice loop and does not apply this timer.
+
 ---
 
 ## 14. Question Count Requirements
 
 The app should allow the number of questions in a session to be configured.
 
-Suggested options:
+Shipped options for Practice and Quiz (not Timed or Learn → Try):
 
 - 5 questions
 - 10 questions
@@ -1287,9 +1034,11 @@ When keyboard mode is selected:
 - Geometry **integer** calculate questions accept numeric input.
 - Number-sense questions with numeric answers (count objects, before/after, and missing number) accept numeric input.
 
+**Check answer availability:** a complete valid typed value must enable the on-screen action immediately, including in Learn → Try. Tapping it while the keyboard is open must submit without requiring the keyboard's Done/checkmark first. Empty or incomplete values remain disabled; a valid but incorrect answer must still be submittable for feedback. Practice/Quiz and Learn → Try use the shared question-aware readiness rules. Regression example: entering `39` for `37, 38, ?, 40` enables Check answer.
+
 **Keyboard is not offered when:**
 
-- Division remainders are enabled (quotient R remainder format is awkward on keyboard).
+- The generated question asks for a division quotient and remainder. This is a per-question override, not a blanket keyboard restriction whenever division remainders are enabled.
 - Geometry **formula** questions (always multiple choice).
 - Geometry **π-form** calculate questions (circle, cone, cylinder — always multiple choice, e.g. `10π`).
 - Comparison, equivalent expressions, shapes, clock, patterns, trigonometry, **logarithms**, **linear and quadratic equations**, **limits**, and **calculus** questions (always multiple choice in v1).
@@ -1362,18 +1111,11 @@ The order of answers should be randomized.
 
 ## 17. Question Generation Requirements
 
-### 17.0 Maximum final result
+### 17.0 Addition answer limit
 
-When `maxFinalResult` is a finite number (10, 20, 100, or 1000), generated questions for **capped** operations must have a `correctAnswer` within the allowed band:
+Use `addition.answerMax` as described in §12. For numeric addition questions passing through the cap check, a finite limit requires `0 ≤ correctAnswer ≤ cap`, or `−cap ≤ correctAnswer ≤ cap` when negative addition numbers are enabled. Unlimited disables this ceiling. Arithmetic fraction questions bypass this shared check (§12).
 
-- If subtraction **negative answers are disabled**, require `0 ≤ correctAnswer ≤ maxFinalResult`.
-- If subtraction **negative answers are enabled**, require `-maxFinalResult ≤ correctAnswer ≤ maxFinalResult`.
-
-When `maxFinalResult` is **unlimited**, no numeric ceiling is applied in generation or validation for capped operations.
-
-**Exempt operations** — rounding and order of operations never use this cap. Their correct answers follow only their own configuration (value range and nearest unit for rounding; operand max for order of operations). The generator does not reject or resample those questions because an answer exceeds the cap.
-
-For capped operations, operand ranges may still be wide; the generator should **sample** operands until the resulting answer fits the cap, or the learning plan screen should warn that the ranges and cap cannot be satisfied together.
+The shared cap helper bypasses every operation other than addition. Do not apply legacy `maxFinalResult` as a global arithmetic cap. Addition sampling and validation respect operand ranges and the addition answer limit together.
 
 ### 17.6 Rounding generation
 
@@ -1420,6 +1162,8 @@ When a session starts, the app should identify all enabled operations.
 If only one operation is enabled, all questions should use that operation.
 
 If multiple operations are enabled, the app should randomly select from the enabled operations.
+
+Generation attempts to avoid repeated **question text** within a Practice/Quiz batch and across a Timed run. It falls back to valid repeats after bounded attempts, so uniqueness is not guaranteed for small pools. Learn → Try generates one question at a time without retaining a cross-question uniqueness set. If no valid question can be generated, the session presents a settings/generation error rather than starting with invalid content.
 
 Example:
 
@@ -1521,7 +1265,7 @@ When geometry is enabled, questions are picked from a separate geometry source (
 - **Formula:** Random enabled shape + measure; correct formula vs distractors from other formulas for the same measure.
 - **Calculate:** Integer dimensions **1–10**; evaluate perimeter, area, or volume per shape rules.
 - **π-form answers:** Circle perimeter/area and cone/cylinder volume use multiple-choice answers like `10π`, not decimal approximations.
-- Geometry is **exempt** from `maxFinalResult` cap (like rounding and order of operations).
+- Geometry uses its own settings and is not subject to the addition answer limit (§12).
 
 See §8.7 for shape lists and answer-entry overrides.
 
@@ -1575,20 +1319,7 @@ The tone should be encouraging, not negative.
 
 ### 18.3 Moving to Next Question
 
-After feedback is shown, the user should be able to continue to the next question.
-
-Possible behavior:
-
-- Show a “Next” button.
-- Or automatically continue after a short delay.
-
-Recommended first version:
-
-```text
-Use a Next button.
-```
-
-A Next button gives the learner time to understand the feedback.
+Practice and Learn → Try use a **Next** button after feedback, giving the learner time to read it. Quiz advances with Next/Finish without revealing correctness. Timed automatically advances after its brief feedback interval (§13.3).
 
 The full visible area of the primary session button—including its left and right sides, not only the centered label—must be tappable. The touch target should remain forgiving inside scrollable practice and quiz layouts.
 
@@ -1608,7 +1339,7 @@ For each session, the app should track:
 Score formula:
 
 ```text
-scorePercentage = correctAnswers / totalQuestions × 100
+scorePercentage = round(correctAnswers / totalQuestions × 100)
 ```
 
 Example:
@@ -1618,6 +1349,8 @@ Correct answers: 8
 Total questions: 10
 Score: 80%
 ```
+
+A session with zero submitted questions has a score of **0%**. Practice/Quiz timeouts count as wrong; an unanswered question at timed-run expiry is not an attempt (§13).
 
 At the end of a session, the app should show a result summary.
 
@@ -1640,11 +1373,13 @@ Each profile stores:
 
 - Profile name (switch label)
 - Learner name or nickname
-- Age
+- Optional age and math confidence (nullable)
 - Full learning plan (`MathLearningConfig`)
 - Session history for that profile
 
 The app remembers the **active profile id** and migrates legacy single-user data into **Profile 1** when needed.
+
+Language selection is device-wide and persisted separately from profiles. Active questions, partial answers, timers, and the immediate result detail are not persisted for session resumption. Leaving an unfinished session does not create a completed-history entry. Removing a profile also removes its local settings and history; the final remaining profile cannot be removed through profile management.
 
 On app start:
 
@@ -1669,43 +1404,17 @@ Main action:
 
 - Continue → profile setup
 
-### 21.2 Profile setup (onboarding and add profile)
+### 21.2 Profile setup (onboarding)
 
-Purpose:
+Collect profile label and learner name/nickname together. Continue opens the separate age/confidence screen. Both names are required; the profile label has a generated default.
 
-- Capture profile label, learner name or nickname, and age on one screen.
+### 21.3 Onboarding: Age and confidence screen
 
-Fields:
-
-- Profile name (default `Profile 1` on first launch)
-- Name or nickname (placeholder `John Smith`)
-- Age (placeholder `Your age`; no pre-filled default)
-
-Main action:
-
-- Continue → age screen or recommended plan (depending on flow)
-
-### 21.3 Onboarding: Age screen
-
-Purpose:
-
-- Confirm or enter age when not collected on prior step (legacy flow may use separate age step).
-
-Main action:
-
-- Continue → recommended plan
+Collect optional age (1–150) and optional math confidence (1–5). Save the profile and recommended plan using §6.2, then show the profile-ready message (§6.5). First launch also completes onboarding. Continue opens Home; Review settings opens Settings with Home behind it.
 
 ### 21.4 Recommended plan screen
 
-Purpose:
-
-- Show that the app prepared a learning plan for this profile.
-- Allow start immediately or customize.
-
-Main actions:
-
-- Start learning
-- Customize
+The separate recommended-plan screen remains in the repository but is no longer the destination of the current profile-creation flow. The profile-ready message (§6.5) provides the normal Continue and Review settings choices.
 
 ### 21.5 Settings / learning plan screen
 
@@ -1713,9 +1422,9 @@ Purpose:
 
 - Hub for profile, session, topic, share, and about actions for the active profile.
 - Switch, edit, add, or remove profiles (Profile details).
-- Edit personal info (profile name, learner name, age).
+- Edit personal info (profile name, learner name, optional age and confidence).
 - Configure operations, ranges, geometry, mode, question count, answer entry, timers, and caps (Session settings and Topics sub-screens).
-- Export or import session and topic settings as a JSON file (Share settings — §62).
+- Export session and topic settings as a settings archive; import current settings archives (Share settings — §62).
 
 Suggested hub actions:
 
@@ -1758,8 +1467,8 @@ Purpose:
 
 Purpose:
 
-- Session clock (1–10 minutes); questions until time expires.
-- Optional 15-second penalty on wrong answers.
+- Session clock (15 seconds–10 minutes); questions until time expires, with bonuses able to extend the run (§13.3).
+- Configurable wrong-answer penalty (0–15 seconds, default 5) and correct-answer bonus (0–5 seconds, default 2).
 - Result screen with score and per-question breakdown.
 
 ### 21.10 Progress screen (shipped)
@@ -1830,9 +1539,9 @@ Home → Learn → Topic list → Tutorial for selected topic
 
 The current shipped product includes:
 
-- **Multi-profile** support: profile name, learner name, age; switch / edit / add / remove in Settings
+- **Multi-profile** support: profile name, learner name, optional age and confidence; switch / edit / add / remove in Settings
 - **Internationalization:** English and Macedonian UI; first-run language picker; localized Learn tutorials (mk overrides), word problems, privacy policy, and operation labels (§42)
-- Profile setup onboarding (profile name + name + age); age **1–150**; optional recommended plans use **4–12** brackets
+- Profile setup onboarding (label/name, then optional age and confidence); age **1–150**; recommendations follow §6.2
 - Recommended learning plan by age; full learning plan customization per profile
 - Operations: addition, subtraction, multiplication, division, squaring, square roots, rounding, order of operations, equations with one unknown (`x`) and two unknowns (`x`, `y`), **linear and quadratic equations**, **limits**, and **equivalent expressions**
 - Per-operation toggles: standard calculation, missing number, word problems, fractions (with denominator mode), regrouping (add/sub), division remainders, **decimals (1 decimal place)**
@@ -1858,7 +1567,7 @@ The current shipped product includes:
 - Answer entry: multiple choice (**2, 3, 4, 6** choices) or **keyboard** (with overrides for geometry formula/π, division remainders, and MC-only topics)
 - **Confirm before submit** for multiple choice (optional toggle)
 - Configurable question count, per-question timer, timed session duration, timed wrong-answer penalty, and timed correct-answer bonus
-- Maximum final result cap (excluding rounding and order of operations)
+- Addition answer limit; legacy global-cap field retained for migration (§12)
 - **Gentle adaptation** hints on home (focused practice suggestion from recent misses)
 - Progress: streak card; session history with mode filter and expandable rows; topic accuracy by operation (§36); up to **50** stored sessions per profile; gentle adaptation card on home
 - **Share settings:** export/import session and topic settings as JSON; no learner name, age, or progress in the file (§62)
@@ -1881,9 +1590,9 @@ Avoid unnecessary complexity in early releases:
 
 - Complex grading systems and heavy gamification
 - Too many subcategories on one screen
-- Advanced sliders for every range (predefined buttons first)
+- Unrestricted range controls where shipped discrete presets are sufficient
 - User accounts and cloud sync (until explicitly scoped)
-- Leaderboards and social features
+- Public leaderboards and broader social features; private multiplayer rooms and match standings are explicitly scoped in §64
 - Parent dashboard (until explicitly scoped)
 - Interactive “shade the fraction” questions in v1 of fraction visuals (identification first — see §28)
 
@@ -1955,6 +1664,10 @@ For potential curriculum topics, the first implementation should prefer text, ex
 - Probability split into focused subcategories (§58)
 - Sequences and functions beyond the shipped pattern generators (§59)
 - Roman numerals (§60)
+
+### 24.4 Planned: Private Multiplayer Rooms
+
+Implement the small first version in §64 in three steps: room/lobby, gameplay, and match completion. Reuse the mobile question generator; start with one in-memory ASP.NET Core backend using SignalR. Accounts, database persistence, reconnect recovery, and additional game modes are later upgrades, not prerequisites for the first playable match.
 
 ---
 
@@ -2097,7 +1810,7 @@ Mirrors the top-level configurable curriculum sections (23 topics, easiest → h
 
 Equations with one `x` are not a separate top-level curriculum section: they remain per-operation question toggles under Addition, Subtraction, Multiplication, and Division. Therefore, there is no standalone **Equations with x** Learn card.
 
-**Product decision (recommended):** Show **all topics** in Learn regardless of practice settings — Learn is a reference library, not gated by the active learning plan.
+**Shipped behavior:** Show **all topics** in Learn regardless of practice settings — Learn is a reference library, not gated by the active learning plan.
 
 ### 27.3 Tutorial content structure (per topic)
 
@@ -2116,7 +1829,7 @@ Each tutorial page should include:
 
 ### 27.5 No quiz mixing in v1
 
-Learn content is **browse-only**; not injected into practice/quiz/timed sessions unless the user taps “Try in practice.”
+Learn explanations are reference content and are not injected into recorded practice/quiz/timed sessions. “Try in practice” opens focused settings, then a separate **open-ended, untimed** question loop. It shows running question/correct counts and answer feedback, but has no result screen and writes no session history, streak, or topic-accuracy data. Saving the focused settings is a separate explicit action (§40.3).
 
 ---
 
@@ -2157,9 +1870,9 @@ Follow the global answer-entry preference:
 
 | Area | Status | Notes |
 |---|---|---|
-| Multi-profile | **Shipped** | Profile name + learner name + age; switch / edit / add / remove in Settings |
+| Multi-profile | **Shipped** | Profile name + learner name + optional age/confidence; switch / edit / add / remove in Settings |
 | Internationalization | **Shipped** | English + Macedonian; first-run language gate; mk Learn overrides (§42) |
-| Onboarding | **Shipped** | Profile setup screen; age 1–150; optional recommended plans use 4–12 brackets |
+| Onboarding | **Shipped** | Label/name then optional age 1–150 and confidence 1–5; profile-ready message offers Continue or Review settings, with highlighted setup controls (§6) |
 | Session modes | **Shipped** | Practice, quiz, timed run |
 | Answer entry | **Shipped** | MC 2/3/4/6 or keyboard; visual fractions support typed equivalent fractions/decimals; geometry formula / π forced MC; calculus/logs/trig/advanced-equations/limits MC only |
 | Confirm before submit | **Shipped** | Optional MC toggle; Confirm then feedback/submit |
@@ -2170,7 +1883,7 @@ Follow the global answer-entry preference:
 | Comparison (relational, ordering, expression) | **Shipped** | §25.2–§25.4; expression auto from enabled ops |
 | Comparison (fraction/percent/measurement) | **Shipped** | §25.5–§25.8 |
 | Learn / tutorials | **Shipped** | §27 — 23 topics matching top-level Settings sections; Try in practice on all |
-| Learn Try in practice | **Shipped (partial)** | Open-ended loop; no session history / result screen |
+| Learn Try in practice | **Shipped** | Focused configuration and open-ended untimed loop; no session history / result screen by current design |
 | Visual fraction recognition | **Shipped** | §28 — bar/circle models; MC or fraction keyboard entry |
 | Geometry Phase 1 | **Shipped** | Expanded planar/solid shape set; formula + calculate; dims 1–10; π-form MC |
 | Shapes | **Shipped** | §28.6 — shape/color recognition and visual patterns |
@@ -2183,7 +1896,7 @@ Follow the global answer-entry preference:
 | Linear & Quadratic Equations | **Shipped** | §43 — multi-step linear, variables on both sides, parentheses, factorable quadratics |
 | Limits | **Shipped** | §44 — direct substitution, factor-and-cancel, infinity, and rationalization limits |
 | Differentiation & Integration | **Shipped** | §34 — power/constant/sum, ln, sin/cos, quotient/simplify-fraction |
-| Trigonometry v1 | **Shipped (partial)** | §38 — pick formula, name sides, find angle; MC only |
+| Trigonometry v1 | **Shipped (partial)** | §38 — pick formula (including unknown-angle scenarios) and name sides; no numeric angle solving |
 | Privacy policy (in-app) | **Shipped** | Home → Privacy policy |
 | Compact question card | **Shipped** | Short prompts + visual below |
 | Gentle adaptation | **Shipped** | Home card → focused practice when recent misses cluster |
@@ -2209,6 +1922,7 @@ Follow the global answer-entry preference:
 | Probability | **Potential** | §58 — text/symbol-based events first; no custom spinner/card artwork required |
 | Sequences and functions | **Potential (partial foundation shipped)** | §59 — arithmetic/geometric/number patterns exist; add nth term, tables, linear functions |
 | Roman numerals | **Potential** | §60 — text-only conversion, comparison, and clock-related questions |
+| Private multiplayer rooms: Climb to 10 | **Planned (not implemented)** | §64 — 2–4 players, host-generated questions, SignalR, in-memory backend |
 | Badges, parent dashboard, cloud sync | **Later** | §24.3 |
 
 ---
@@ -2244,30 +1958,27 @@ Follow the global answer-entry preference:
 25. **Expo SDK 57 and build/update information — shipped.**
 26. **Progress screen redesign — shipped (§36):** streak on top; session mode filter; expandable session rows; timed-run detail lines; topic accuracy section.
 27. **Share settings export/import — shipped (§62).**
+28. **Discrete preset sliders and topic-specific pickers — shipped (§12).**
+29. **Addition-only answer limit — shipped (§12); other operations use their own settings.**
+30. **Expression comparison uses `<`, `>`, `=` answer symbols (§25), not Left/Right labels.**
+31. **Two-variable equations have their own settings card (§26).**
+32. **Calculus uses exponents 2–5, includes `+ C` where applicable, and has separate Differentiation and Integration cards (§34).**
 
 **Still open:**
 
 1. Should subtraction support negative answers by default for younger ages, or remain opt-in per profile?
-2. Should the app use predefined range buttons only, or include custom range sliders later?
-3. ~~Should the result screen show only score or also list incorrect questions?~~ **Resolved:** quiz and timed show full question review on the result screen; practice does not.
-4. Should the maximum final result cap apply only to addition, or to all capped operations as implemented today (excluding rounding and order of operations)?
-5. Comparison: confirm “Left / Right / Equal” vs symbol labels for expression compare.
-6. Two-variable equations: separate card vs mode on existing Equations card.
-7. Decimal places: add **2 decimal places** option or keep 1 only?
-8. Division with decimals: decimal divisor in a future release or quotients only?
-9. Measurement: metric-only first vs imperial?
-10. Clock: 12h default for all ages or follow locale?
-11. Expression compare: keep auto-only or add override toggle?
-12. ~~Calculus: max power **n** in generators?~~ **Resolved:** exponents 2–5 in v1.
-13. ~~Integration MC: is `+ C` always required?~~ **Resolved:** yes, where applicable.
-14. ~~Calculus settings: separate cards vs combined?~~ **Resolved:** separate Differentiation and Integration cards.
-15. Logarithm: add separate base toggles (2/3/5/10) vs single “Find log value” toggle?
-16. Ratios: should direct and inverse proportion be separate settings toggles, or introduced together after standard ratios?
-17. LCM/GCD: one combined Number Theory card or two independent top-level topics?
-18. Decade terminology: use “first ten / second ten” in English or the less ambiguous range labels (`1–10`, `11–20`, etc.) while retaining the school terminology in Macedonian?
-19. Matrices: should v1 remain 2×2 only, or include compatible rectangular products such as 2×3 multiplied by 3×2?
-20. Number decomposition: should v1 cover only tens and ones, or include hundreds from the first release?
-21. Potential-topic rendering: keep first releases text/table/symbol based as specified in §§50–60, and defer custom graph plotting and angle-diagram generation?
+2. Decimal places: add **2 decimal places** option or keep 1 only?
+3. Division with decimals: decimal divisor in a future release or quotients only?
+4. Measurement: metric-only first vs imperial?
+5. Clock: 12h default for all ages or follow locale?
+6. Expression compare: keep auto-only or add override toggle?
+7. Logarithm: add separate base toggles (2/3/5/10) vs single “Find log value” toggle?
+8. Ratios: should direct and inverse proportion be separate settings toggles, or introduced together after standard ratios?
+9. LCM/GCD: one combined Number Theory card or two independent top-level topics?
+10. Decade terminology: use “first ten / second ten” in English or the less ambiguous range labels (`1–10`, `11–20`, etc.) while retaining the school terminology in Macedonian?
+11. Matrices: should v1 remain 2×2 only, or include compatible rectangular products such as 2×3 multiplied by 3×2?
+12. Number decomposition: should v1 cover only tens and ones, or include hundreds from the first release?
+13. Potential-topic rendering: keep first releases text/table/symbol based as specified in §§50–60, and defer custom graph plotting and angle-diagram generation?
 
 ---
 
@@ -2517,7 +2228,7 @@ Suggested per-topic checklist:
 - “Try in practice” link where applicable
 - Diagrams or visuals where they aid understanding
 
-**Not implemented in current release** — track as content/UX improvement work.
+**Partly implemented:** Learn topics now include contextual introductions, mathematical and real-life uses, and worked examples beside related concepts in English and Macedonian. Further editorial/visual review remains planned; these structures do not establish that every topic meets the entire quality checklist.
 
 ---
 
@@ -2532,6 +2243,10 @@ The Progress screen uses a vertical layout:
 3. **By topic** — per-operation accuracy for sessions matching the active filter; hidden when there is no data for that filter
 
 Up to **50** sessions are persisted per profile and eligible for display.
+
+Streaks use local calendar days and completed sessions across all modes, independently of the mode filter. A streak remains active if the latest completed day is yesterday. Because streaks are derived from retained history, this is not a permanent lifetime streak record.
+
+The displayed average is the rounded mean of session percentages in the filtered history; sessions carry equal weight regardless of question count. Topic accuracy instead aggregates correct/attempted questions for each operation in that filtered history.
 
 ### 36.2 Session list rows
 
@@ -2551,6 +2266,10 @@ Up to **50** sessions are persisted per profile and eligible for display.
 - Questions-per-minute or other derived timed metrics
 - Separate visual row styling for timed vs quiz (beyond expanded detail lines)
 - Persisted question-level review from history rows (see §37)
+
+### 36.5 Gentle adaptation on Home
+
+Review the most recent **5 completed sessions**. An enabled operation becomes eligible for a suggestion after at least **3 attempts**, **2 wrong answers**, and a wrong-answer rate of at least **34%**. Prefer the eligible operation with the most misses, then the higher miss rate. The learner chooses whether to start focused practice; the app does not automatically increase difficulty or rewrite the saved learning plan. Learn → Try contributes no history to this calculation.
 
 ---
 
@@ -2696,7 +2415,7 @@ Roll up under operation label **Logarithms**.
 ### 42.2 Language selection
 
 - **First launch:** language picker before main navigation (required for Android stability).
-- **Settings:** language can be changed at any time; persisted in app store.
+- **Language switch:** available on Home and non-session headers, including Settings; persisted device-wide. The header switch is hidden during active sessions to avoid changing question language mid-session.
 
 ### 42.3 Localized content
 
@@ -3199,7 +2918,7 @@ Start with `I`, `V`, and `X` (`1–20`), then add `L`, `C`, `D`, and `M` up to `
 
 ### 62.1 Purpose
 
-Allow users to **back up, copy, or move** session and topic settings between devices or profiles without exporting learner identity or progress.
+Allow users to **back up, copy, or move** session and topic settings between devices or profiles without exporting the learner-name field, age, math confidence or progress. The profile label is included as metadata and may itself contain identifying text.
 
 Typical uses:
 
@@ -3218,8 +2937,9 @@ The hub shows a single **Share settings** entry; export and import actions live 
 ### 62.3 Export
 
 - Exports the active profile’s `learningConfig` (`MathLearningConfig`) plus metadata.
-- Opens the system share sheet with a JSON file (e.g. `therealmath-grade-4-plan.json`).
-- **Does not include:** profile name, learner name, age, session history, streak, or adaptation state.
+- Opens the system share sheet with a UTF-8 `.json` attachment (e.g. `therealmath-grade-4-plan.json`), using `application/json` and the iOS `public.json` type. The payload format remains version 1.
+- **Includes:** the profile label in the payload and generated filename. This user-entered label may contain identifying text.
+- **Does not include:** the separate learner-name field, age, math confidence, session history, streak, or adaptation state.
 
 Export payload (version **1**):
 
@@ -3230,23 +2950,25 @@ Export payload (version **1**):
 | `exportedAt` | ISO timestamp |
 | `appVersion` | App version at export time (optional) |
 | `label` | Optional human label (usually the profile name used at export) |
-| `learningConfig` | Full validated learning plan object |
+| `learningConfig` | Full normalized learning plan object; validated during import and before starting a session |
 
 ### 62.4 Import
 
-1. User picks a `.json` file (document picker).
+1. User picks a current settings archive. Older plain-text and JSON exports are not supported.
 2. App validates file size (max **256 KB**), JSON shape, `kind`, `version`, and `learningConfig` using the same validators as in-app saves.
 3. User enters a **profile name** for this device (prefilled from export `label` when present).
 4. User chooses destination:
    - **Create new profile** (default) — learner name defaults to localized **“friend”**; age left blank; new profile becomes active.
    - **Replace settings in current profile** — overwrites only `learningConfig` on the active profile after confirmation; profile name, learner name, age, and progress are unchanged.
 
-Import errors show a localized message (invalid JSON, wrong file type, unsupported version, invalid settings, file too large, read failure).
+Import errors show a localized message (invalid settings data, wrong file type, unsupported version, invalid settings, file too large, read failure). Invalid JSON is presented as “The file does not contain valid settings data.” rather than exposing the serialization format in the user-facing error.
+
+Import normalizes older settings and permits a configuration with all question sources disabled. Starting a session still requires at least one valid enabled source. Import is a settings transfer, not a full profile/progress backup, and does not transfer the device-wide language preference.
 
 ### 62.5 Security and privacy
 
 - Treat imports as untrusted input: parse JSON only; reject oversize files; require known `kind` and `version`; run existing `validateLearningConfig`.
-- No executable content, URLs, or profile PII in the export format.
+- Import parses settings data, never executable content. Exports include the profile label and must not be described as guaranteed free of identifying text.
 - Export is user-initiated; import never runs automatically.
 
 ### 62.6 Localization
@@ -3255,17 +2977,154 @@ English and Macedonian strings for hub entry, share screen, import flow, error m
 
 ---
 
+## 63. Implementation Review — 9 September 2026
+
+### 63.1 Changes from this review
+
+| Area | BRD correction or addition | Implementation evidence |
+|---|---|---|
+| Session settings | Exact start-duration presets, per-question timer range/default, timeout scoring, timed feedback/advance behavior, and uncapped bonus extension (§13) | [Session constants](../src/features/learning-plan/learningPlan.types.ts), [Practice/Quiz view](../src/components/practice/MathSessionView.tsx), [Timed view](../src/components/practice/TimedMathSessionView.tsx), [time adjustment](../src/features/learning-plan/timedRun.utils.ts) |
+| Learning versus recorded progress | Learn → Try is untimed and open-ended, with no result/history; all Learn topics are already visible (§27) | [Learn list](../src/app/learn/index.tsx), [Learn practice](../src/components/practice/LearnPracticeSessionView.tsx) |
+| Settings navigation and answer entry | Four topic groups; quotient/remainder keyboard fallback is per question (§11, §15) | [Topic groups](../src/components/settings/settingsTopicCategories.ts), [answer-input rules](../src/features/questions/questionAnswerInput.ts) |
+| Progress and persistence | Local-day streak semantics, session-average versus topic accuracy, adaptation thresholds, and no in-progress session persistence (§20, §36) | [History](../src/features/progress/sessionHistory.ts), [adaptation](../src/features/progress/adaptation.ts), [store](../src/store/useAppStore.ts) |
+| Question generation | Best-effort prompt uniqueness with valid-repeat fallback; no cross-question uniqueness in Learn → Try; arithmetic fractions bypass the shared addition cap check (§12, §17) | [Question generator](../src/features/questions/questionGenerator.ts), [Learn practice](../src/components/practice/LearnPracticeSessionView.tsx) |
+| Resolved decisions | Remove already-implemented controls, answer caps, comparison labels, equations-card placement, and calculus choices from the open list (§30) | [Comparison generator](../src/features/comparison/comparisonGenerator.ts), [settings editor](../src/components/learning-plan/LearningPlanEditor.tsx), topic generators |
+| Sharing and language | Normalize imported settings; disabled plans may import but cannot start; language is device-wide and its switch is hidden in sessions (§42, §62) | [Import parser](../src/features/learning-plan/learningPlanExport.utils.ts), [root navigation](../src/app/_layout.tsx) |
+
+### 63.2 Device behavior and current limits
+
+- The app requests portrait orientation on phones. On screens with a shortest dimension of at least 600 layout units, it unlocks orientation. See [orientation hook](../src/hooks/usePhonePortraitOrientation.ts); platform behavior still requires device verification.
+- Written question prompts remain necessary. There is no implemented question read-aloud control; an installed speech dependency is not evidence of narration. Timed feedback has a screen-reader announcement for time adjustments, which is distinct from question narration.
+- Session history stores aggregates, not a recoverable copy of each question. The immediate Quiz/Timed review stores text and answer labels, not full visual diagram data. Full visual replay and persisted history review must not be advertised as shipped.
+- Offline question generation, Learn content, and local progress do not require an account or remote question service. Downloading the app or updates and sharing through an external destination can still require connectivity.
+
+### 63.3 Scope retained for future decisions
+
+No implemented top-level topic needs to be removed from the current feature inventory. Dedicated percentages, ratios, number theory, matrices, statistics, probability, and the other §§45–60 proposals remain potential extensions. Learn editorial/visual review and persisted question-history review remain future work. Their priority has not been changed by this source review.
+
+This was a documentation/source comparison, not an emulator, accessibility certification, or store-release verification. No mobile behavior was changed.
+
+### 63.4 Pending-change alignment — 10 September 2026
+
+This follow-up incorporates the current working-tree behavior without implying a published release:
+
+| Area | Updated requirements | Implementation evidence |
+|---|---|---|
+| Shared buttons | Required Ionicons, independent text/icon positioning, centered profile actions and distinct topic-group icons (§11.1) | [AppButton](../src/components/common/AppButton.tsx), [profile form](../src/components/profiles/ProfileForm.tsx), [Topics hub](../src/app/learning-plan/topics/index.tsx) |
+| Profile completion | Localized message for newly created profiles, Continue/Review settings actions and Home-backed review navigation (§6.5) | [Profile-ready message](../src/features/onboarding/showProfileReady.ts), [onboarding completion](../src/app/onboarding/age.tsx), [Settings profile form](../src/app/learning-plan/profile-form.tsx) |
+| Settings guidance | One-time gold pulses for Session settings and Topics, with reduced-motion fallback (§6.5) | [Settings hub](../src/app/learning-plan/index.tsx) |
+| Answer entry | Enable Check answer for complete numeric number-sense input in Learn → Try (§15.2); remove unreachable duplicate answer-option branches | [Learn practice](../src/components/practice/LearnPracticeSessionView.tsx), [Timed practice](../src/components/practice/TimedMathSessionView.tsx), [answer-input regression tests](../src/features/questions/__tests__/questionAnswerInput.test.ts) |
+| Settings sharing | Settings archives and plain-language invalid-data message (§62) | [Sharing service](../src/features/learning-plan/learningPlanShare.service.ts), [English strings](../src/i18n/locales/en/settings.json), [Macedonian strings](../src/i18n/locales/mk/settings.json) |
+
+Validation remains scoped: relevant profile and answer-input tests passed during implementation, while full-project TypeScript checks still report unrelated errors. This documentation update does not assert an error-free project build or fresh device verification.
+
+---
+
+## 64. Private Multiplayer Rooms (planned — incremental implementation)
+
+### 64.1 Purpose and first milestone
+
+Let a learner create a private room from their mobile device so a few learners can join and compete. Build this as a small extension of the existing app and a separate .NET backend project for practicing C#, APIs, real-time communication, business rules, and testing. Deliver one playable mode before expanding backend infrastructure or game options.
+
+**First milestone:** two phones can create/join a room, complete a match, see live scores, and receive the same final result. Nothing in this section is implemented or advertised as shipped yet.
+
+### 64.2 Hosting and architecture
+
+- The host creates and controls the room through the mobile app. The phone does not run a server; all players connect to a separately running ASP.NET Core backend over the network.
+- Use one backend application/instance, with rooms, question batches, player progress, and match results held in memory. No database or user accounts in the first version.
+- Use HTTP endpoints for room creation/joining and question-batch upload; use a SignalR hub for live lobby updates, starting the match, answer submissions, score updates, and match completion. Exact routes and event names will be defined during implementation.
+- SignalR provides the real-time connection layer, normally using WebSockets. Game state and rules remain application responsibilities.
+- Existing local Practice, Quiz, Timed, Learn, and progress features remain available independently. Multiplayer requires connectivity and has separate match scoring.
+
+### 64.3 First-version room and mobile flow
+
+1. Host opens multiplayer, enters a nickname, creates a room, and receives a join code.
+2. Other learners enter the code and a nickname. The lobby displays connected players.
+3. Support **2–4 players**, including the host. Join is allowed only while the room is in the lobby state.
+4. The host chooses supported arithmetic settings using the existing learning-plan model. Their app generates and uploads a complete question batch before starting.
+5. The host can start only after a valid batch is stored and at least two players are connected. No separate ready toggle is required initially.
+6. Players enter the multiplayer question screen and see live standings.
+7. The server ends the match and sends the final standings to a result screen.
+
+Use the existing English/Macedonian UI conventions for the new screens. For this version, all players receive the host-generated question text in the host's chosen language; per-player question translation is deferred.
+
+### 64.4 First mode: Climb to 10
+
+These are starting rules, open to later adjustment after the first playable version:
+
+- All players receive the same ordered question batch and advance at their own pace.
+- Correct answer: **+1**. Wrong answer: **−1**, with a minimum score of **0**.
+- Each accepted answer advances that player to the next question, regardless of correctness.
+- The first player whose accepted answer brings their score to **10** wins immediately. The server processes answers consistently within each room; server acceptance order determines the winner when submissions arrive close together.
+- A player who exhausts the batch waits for the remaining players. If every remaining player exhausts the batch without reaching 10, the highest score wins; equal highest scores produce a tie.
+- Freeze scores when the match ends; later submissions cannot change the result.
+- No match timer, streak requirement, or configurable scoring rules in this first mode.
+
+### 64.5 Reuse the mobile question generator
+
+- Generate questions on the host's device using the existing mobile generator. Do not implement question generation in C# for the first version.
+- Initially support multiple-choice, text-based arithmetic with integer answers. Visual diagrams, fractions, decimals, advanced topics, and keyboard answers are outside this first multiplayer scope.
+- Upload a complete batch with unique question IDs, prompts, answer-choice IDs/text, and a correct-choice ID for each question. Exact batch size and supported settings will be settled during implementation.
+- Validate the batch on the server: supported format/version, unique IDs, valid choices and answer references, and bounded question count/payload size. Reject an invalid batch before starting.
+- Keep the uploaded answer key on the server. Send players the current question and choices without correct-answer fields; reveal correctness only after an accepted submission.
+- The server trusts the host's question content and answer key. This is a private casual game, not a verified public ranking system. Independent validation or backend generation can be considered later.
+- The stored batch allows an active match to continue without further question generation by the host. Do not add batch replenishment initially.
+
+### 64.6 Backend responsibilities and basic safeguards
+
+- Model the room lifecycle as lobby → active → finished, with closed/expired rooms cleaned up.
+- Identify participants with a server-issued temporary player credential; a nickname or room code alone does not authorize submitting another player's answers or starting a match.
+- Only the host can upload the batch and start the match. Validate membership and room state for every action.
+- The client sends a question ID and selected choice ID. The server checks the answer and owns score updates, question progression, and winner selection.
+- Accept at most one answer per player/question. Repeated submissions must not award or deduct points again; reject answers for questions other than the player's current question.
+- Broadcast lobby membership, updated standings, and final results to the appropriate room only.
+- Keep this logic small and testable; do not introduce microservices, distributed room storage, or a generic rules framework for the first milestone.
+
+### 64.7 Initial limitations and disconnect behavior
+
+- Leaving or losing the connection removes the player from the match. Automatic reconnect recovery is deferred; the app explains this limitation.
+- If the host leaves the lobby, close the room. If the host disconnects during a match, remaining players continue using the uploaded batch; no host transfer is required for active gameplay.
+- If only one player remains during a match, end it with that player as the winner by default; if nobody remains, close it without a winner. These are provisional disconnect rules to confirm during implementation.
+- Server restarts clear rooms and matches. There is no restoration or persistent multiplayer history, and results do not feed into local profile session history initially.
+- Expire inactive lobbies and clean up abandoned/finished rooms so memory use remains bounded. Exact expiry values are implementation details.
+- This feature sends nicknames, question content, and answers to the backend. Update the app's privacy wording before release to describe this networked behavior; current local-only descriptions must not be used to describe multiplayer.
+
+### 64.8 Incremental delivery and verification
+
+| Step | Deliverable | Acceptance check |
+|---|---|---|
+| 1. Room and lobby | Create/join by code; list players; enforce room capacity and host control | Two phones join the same room and see membership changes; invalid/full-room joins fail clearly |
+| 2. Gameplay | Upload/validate host questions; start match; submit answers; broadcast scores | Players see the same question order; correct/wrong scoring works; duplicate submissions do not count twice |
+| 3. Match completion | Target-score victory, batch-exhaustion standings/ties, disconnect outcomes, result screen | Both phones receive the same final result; scores stay frozen after completion |
+
+Use focused unit tests for scoring and match transitions, integration checks for membership/host permissions and duplicate submissions, and an end-to-end two-device check. Include simultaneous submissions and isolation between two rooms in verification. No performance-testing infrastructure is required for the first milestone.
+
+### 64.9 Later upgrades (not first-version requirements)
+
+- Reconnect support with restored player identity, current question, and score.
+- PostgreSQL match history, followed by accounts and persistent statistics if useful.
+- Additional modes: timed competition, consecutive-correct streak, and cooperative shared target.
+- Configurable target/penalties, wider question support, and improved fairness rules.
+- Backend question generation or independent validation if public/ranked competition is introduced.
+- Cloud deployment and performance testing as usage grows; multi-instance scaling only when needed.
+
+Choose the next upgrade after the first complete match works. Do not implement these upgrades together with the initial room feature.
+
+---
+
 ## 61. Summary
 
 The app provides a simple, friendly math learning experience for **learners of all ages**, with optional age-based recommended plans and flexible profiles for multiple learners on one device.
 
+**Planned multiplayer milestone (§64):** private 2–4-player rooms and Climb to 10, using host-generated mobile questions and a separate in-memory ASP.NET Core / SignalR backend. Deliver lobby, gameplay, and results incrementally; database persistence, reconnect recovery, and other modes follow later.
+
 First-time flow:
 
 ```text
-Language → Profile setup (name + age) → Recommended learning plan → Home → Practice / Quiz / Timed / Learn / Settings / Progress
+Language → Profile label + learner name → Optional age + confidence → Save recommended plan → Profile-ready message → Continue to Home / Review settings
 ```
 
-The learning plan is flexible but not overwhelming: each operation (plus geometry, comparison, logarithms, linear/quadratic equations, limits, calculus, and other topic cards) is configurable separately, with per-operation toggles for question styles. Multiple-choice answers are the default; keyboard mode is available where appropriate. Optional **Confirm answer** for multiple choice. Practice gives immediate feedback; quiz and timed modes summarize at the end.
+The learning plan is flexible but not overwhelming: each operation (plus geometry, comparison, logarithms, linear/quadratic equations, limits, calculus, and other topic cards) is configurable separately, with per-operation toggles for question styles. Multiple-choice answers are the default; keyboard mode is available where appropriate. Optional **Confirm answer** for multiple choice. Practice gives immediate feedback; Quiz withholds correctness until the end; Timed gives brief feedback with time adjustments and a final summary. Learn → Try is separate open-ended practice without recorded progress.
 
 **Shipped today:** arithmetic, decimals toggle (1 place), fractions on operation cards, regrouping, word problems, equations with `x` and `xy`, **linear and quadratic equations**, **limits**, equivalent expressions, expanded geometry, comparison, Shapes with color and pattern questions, Numbers / early number sense, clock/time, numeric patterns, visual fractions with multiple-choice or keyboard entry, trigonometry v1, **logarithms**, calculus (power/constant/sum/ln/trig/quotient), focused Learn/Try configuration (23 topics), configurable timed penalties and bonuses, multi-profile, progress screen with streak, session filter, expandable rows, and topic accuracy (§36), **share settings export/import** (§62), gentle adaptation, build/update information (About screen), privacy policy, unsaved-settings protection, compact visual layouts, **English + Macedonian** UI, and an Expo SDK 57 runtime baseline.
 

@@ -26,7 +26,7 @@
     "storage": {
       "title": "How data is stored and shared",
       "p1": "All profile and progress data is stored in local device storage (AsyncStorage) under the key \"therealmathapp\". It is not uploaded to our servers and is not shared with third parties for marketing.",
-      "p2": "If you use multiple devices, data does not sync between them unless you back up the device through your operating system.",
+      "p2": "Data does not sync automatically between devices. You can share topic and session settings as a file using an app you choose. Exports also include the profile label, but not learner names, age, or progress. Settings files are created and imported on your device without uploading them to our servers.",
       "p3": "The app may check for software updates through Expo Updates. That process uses standard app version information to deliver updates and does not include learner names or practice history."
     },
     "children": {

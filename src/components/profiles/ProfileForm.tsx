@@ -131,10 +131,12 @@ export function ProfileForm({
       <View style={styles.actions}>
         <AppButton
           label={mode === 'add' ? t('common:addProfile') : t('common:save')}
+          icon={mode === 'add' ? 'person-add-outline' : 'save-outline'}
+          textPosition="center"
           onPress={onSave}
           disabled={!canSave}
         />
-        <AppButton label={t('common:cancel')} variant="secondary" onPress={onCancel} />
+        <AppButton label={t('common:cancel')} icon="close-circle-outline" textPosition="center" variant="secondary" onPress={onCancel} />
       </View>
     </Card>
   );

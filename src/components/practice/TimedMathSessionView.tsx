@@ -1,9 +1,9 @@
-import { useHeaderHeight } from "expo-router/react-navigation";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useHeaderHeight } from "expo-router/react-navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-    Keyboard,
     AccessibilityInfo,
+    Keyboard,
     ScrollView,
     StyleSheet,
     View,
@@ -12,74 +12,82 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { KeyboardScreenShell } from "@/components/common/KeyboardScreenShell";
 
-import { BasicShapeDiagram } from "@/components/shapes/BasicShapeDiagram";
-import { ColoredShapeSequence } from "@/components/patterns/ColoredShapeSequence";
-import { ShapeCountingVisual, ShapeQuantityComparisonVisual } from "@/components/number-sense/ShapeQuantityVisual";
-import { ShapePatternFigure, ShapePatternSequence } from "@/components/patterns/ShapePatternFigure";
-import { SHAPE_COLOR_HEX } from "@/features/shapes/shapeColors";
-import { TrigonometryShapeDiagram } from "@/components/learn/TrigonometryShapeDiagram";
 import { AnalogClockFace } from "@/components/clock/AnalogClockFace";
 import { AppButton } from "@/components/common/AppButton";
 import { AppText } from "@/components/common/AppText";
+import { FractionVisualModel } from "@/components/fractions/FractionModels";
+import { TrigonometryShapeDiagram } from "@/components/learn/TrigonometryShapeDiagram";
+import { LimitQuestionDisplay } from "@/components/limits/LimitQuestionDisplay";
+import {
+    ShapeCountingVisual,
+    ShapeQuantityComparisonVisual,
+} from "@/components/number-sense/ShapeQuantityVisual";
+import { ColoredShapeSequence } from "@/components/patterns/ColoredShapeSequence";
+import {
+    ShapePatternFigure,
+    ShapePatternSequence,
+} from "@/components/patterns/ShapePatternFigure";
 import { AnswerOptionButton } from "@/components/practice/AnswerOptionButton";
 import { FeedbackMessage } from "@/components/practice/FeedbackMessage";
 import { QuestionCard } from "@/components/practice/QuestionCard";
-import { LimitQuestionDisplay } from "@/components/limits/LimitQuestionDisplay";
 import {
-  SessionAnswerTextInput,
-  SessionEquationAnswerInput,
+    SessionAnswerTextInput,
+    SessionEquationAnswerInput,
 } from "@/components/practice/SessionAnswerTextInput";
+import { BasicShapeDiagram } from "@/components/shapes/BasicShapeDiagram";
 import { ROUTES } from "@/constants/routes";
 import {
-  ALL_MATH_OPERATIONS,
-  type MathOperation,
+    ALL_MATH_OPERATIONS,
+    type MathOperation,
 } from "@/features/learning-plan/learningPlan.types";
-import { adjustedTimedRemainingSeconds } from "@/features/learning-plan/timedRun.utils";
 import {
     applyPracticeFocusOverride,
-    validateLearningConfig,
     hasAnyQuestionSource,
+    validateLearningConfig,
 } from "@/features/learning-plan/learningPlan.utils";
+import { adjustedTimedRemainingSeconds } from "@/features/learning-plan/timedRun.utils";
 import { positiveFeedbackForCorrectCount } from "@/features/questions/answerOptionsGenerator";
 import { normalizeEquationAnswerInput } from "@/features/questions/equationUnknown";
 import { formatFraction } from "@/features/questions/fractions";
 import type { MathQuestion } from "@/features/questions/question.types";
-import { requiresMultipleChoiceQuestion } from "@/features/questions/questionAnswerInput";
 import {
-  isArithmeticQuestion,
-  isEquationUnknownQuestion,
-  isEquationTwoUnknownQuestion,
-  isFractionQuestion,
-  isFractionVisualQuestion,
-  isShapeRecognitionQuestion,
-  isComparisonQuestion,
-  isEquivalentExpressionQuestion,
-  isClockQuestion,
-  isPatternQuestion,
-  isCalculusQuestion,
-  isTrigonometryQuestion,
-  isLogarithmQuestion,
-  isGeometryQuestion,
-  usesCompactQuestionCard,
+    isArithmeticQuestion,
+    isClockQuestion,
+    isEquationTwoUnknownQuestion,
+    isEquationUnknownQuestion,
+    isFractionQuestion,
+    isFractionVisualQuestion,
+    isGeometryQuestion,
+    isPatternQuestion,
+    isShapeRecognitionQuestion,
+    isTrigonometryQuestion,
+    usesCompactQuestionCard,
 } from "@/features/questions/question.types";
-import { FractionVisualModel } from "@/components/fractions/FractionModels";
+import { requiresMultipleChoiceQuestion } from "@/features/questions/questionAnswerInput";
 import { createSessionQuestions } from "@/features/questions/questionGenerator";
 import {
     answerOptionDisplayLabel,
     answerOptionsArePlainNumbers,
-    shouldStackAnswerOptions,
     buildTimedSessionResult,
+    shouldStackAnswerOptions,
     submittedAnswerIsCorrect,
 } from "@/features/questions/questionScoring";
-import { useAppStore } from "@/store/useAppStore";
+import { SHAPE_COLOR_HEX } from "@/features/shapes/shapeColors";
+import { useAppTranslation } from "@/i18n/useAppTranslation";
 import { selectActiveLearningConfig } from "@/store/profileSelectors";
+import { useAppStore } from "@/store/useAppStore";
 import { colors } from "@/theme/colors";
 import { fonts } from "@/theme/fonts";
 import { radii, spacing } from "@/theme/spacing";
-import { useAppTranslation } from "@/i18n/useAppTranslation";
+import {
+    useKeyboardInset,
+    useScrollToFocusedInput,
+} from "@/utils/keyboardScroll";
+import {
+    isCompleteFractionAnswer,
+    parseFractionAnswer,
+} from "@/utils/parseFractionAnswer";
 import { parseNumberAnswer } from "@/utils/parseIntegerAnswer";
-import { isCompleteFractionAnswer, parseFractionAnswer } from "@/utils/parseFractionAnswer";
-import { useKeyboardInset, useScrollToFocusedInput } from "@/utils/keyboardScroll";
 
 const FEEDBACK_MS = 600;
 
@@ -88,7 +96,9 @@ function parseFocusOperationParam(
 ): MathOperation | null {
   const s = Array.isArray(raw) ? raw[0] : raw;
   if (!s || typeof s !== "string") return null;
-  return ALL_MATH_OPERATIONS.includes(s as MathOperation) ? (s as MathOperation) : null;
+  return ALL_MATH_OPERATIONS.includes(s as MathOperation)
+    ? (s as MathOperation)
+    : null;
 }
 
 function formatSessionClock(totalSeconds: number): string {
@@ -142,7 +152,9 @@ export function TimedMathSessionView() {
   const [positiveLine, setPositiveLine] = useState(() => t("correct"));
   const [answerInputText, setAnswerInputText] = useState("");
   const [inputError, setInputError] = useState("");
-  const [feedbackTimeDelta, setFeedbackTimeDelta] = useState<number | null>(null);
+  const [feedbackTimeDelta, setFeedbackTimeDelta] = useState<number | null>(
+    null,
+  );
 
   const finishingRef = useRef(false);
   const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -183,11 +195,7 @@ export function TimedMathSessionView() {
   }, [effectiveConfig, validation?.valid]);
 
   useEffect(() => {
-    if (
-      finishingRef.current ||
-      !effectiveConfig ||
-      !validation?.valid
-    ) {
+    if (finishingRef.current || !effectiveConfig || !validation?.valid) {
       return;
     }
     const t = setInterval(() => {
@@ -278,16 +286,18 @@ export function TimedMathSessionView() {
       setFeedbackTimeDelta(configuredDelta !== 0 ? configuredDelta : null);
       if (configuredDelta !== 0) {
         setRemaining((currentRemaining) =>
-          adjustedTimedRemainingSeconds(
-            currentRemaining,
-            configuredDelta,
-          ),
+          adjustedTimedRemainingSeconds(currentRemaining, configuredDelta),
         );
         const seconds = Math.abs(configuredDelta);
         void AccessibilityInfo.announceForAccessibility(
-          t(configuredDelta > 0 ? "common:timeAddedA11y" : "common:timeRemovedA11y", {
-            n: seconds,
-          }),
+          t(
+            configuredDelta > 0
+              ? "common:timeAddedA11y"
+              : "common:timeRemovedA11y",
+            {
+              n: seconds,
+            },
+          ),
         );
       }
       setRecords((prev) => [...prev, { q: qSnapshot, a: answer }]);
@@ -323,7 +333,8 @@ export function TimedMathSessionView() {
   };
 
   const handleConfirmMc = () => {
-    if (!current || showFeedback || finishingRef.current || selected === null) return;
+    if (!current || showFeedback || finishingRef.current || selected === null)
+      return;
     finalizeAnswer(selected);
   };
 
@@ -367,8 +378,7 @@ export function TimedMathSessionView() {
     finalizeAnswer(n);
   };
 
-  const forcedMc =
-    current !== null && requiresMultipleChoiceQuestion(current);
+  const forcedMc = current !== null && requiresMultipleChoiceQuestion(current);
   const showKeyboardInput = useKeyboard && !forcedMc;
   const requireConfirmMc =
     Boolean(effectiveConfig?.confirmAnswerBeforeSubmit) && !showKeyboardInput;
@@ -390,6 +400,7 @@ export function TimedMathSessionView() {
         </AppText>
         <AppButton
           label={t("common:openSettings")}
+          icon="settings-outline"
           onPress={() => router.replace(ROUTES.learningPlan)}
         />
       </View>
@@ -472,7 +483,8 @@ export function TimedMathSessionView() {
         : parsedKeyboard !== null;
   const inputLocked = showFeedback && showKeyboardInput;
 
-  const showSubmitAction = !showFeedback && (showKeyboardInput || requireConfirmMc);
+  const showSubmitAction =
+    !showFeedback && (showKeyboardInput || requireConfirmMc);
   const submitActionLabel = showKeyboardInput
     ? t("common:checkAnswer")
     : t("common:confirm");
@@ -516,15 +528,33 @@ export function TimedMathSessionView() {
           questionText={current.questionText}
           compact={usesCompactQuestionCard(current)}
           timerProgress={sessionTimerProgress}
-          timerAccessibilityLabel={t("common:secondsLeft", { seconds: sessionSeconds })}
-          questionContent={current.kind === "limit" ? (
-            <LimitQuestionDisplay approach={current.approach} expression={current.expression} fraction={current.expressionFraction} />
-          ) : undefined}
+          timerAccessibilityLabel={t("common:secondsLeft", {
+            seconds: sessionSeconds,
+          })}
+          questionContent={
+            current.kind === "limit" ? (
+              <LimitQuestionDisplay
+                approach={current.approach}
+                expression={current.expression}
+                fraction={current.expressionFraction}
+              />
+            ) : undefined
+          }
         >
-          {current.kind === "number_sense" && current.countTarget ? <BasicShapeDiagram shape={current.countTarget.shape} fill={SHAPE_COLOR_HEX[current.countTarget.color]} size={58} /> : null}
+          {current.kind === "number_sense" && current.countTarget ? (
+            <BasicShapeDiagram
+              shape={current.countTarget.shape}
+              fill={SHAPE_COLOR_HEX[current.countTarget.color]}
+              size={58}
+            />
+          ) : null}
         </QuestionCard>
-        {current.kind === "number_sense" && current.countingShapes ? <ShapeCountingVisual items={current.countingShapes} /> : null}
-        {current.kind === "number_sense" && current.quantityShapeGroups ? <ShapeQuantityComparisonVisual {...current.quantityShapeGroups} /> : null}
+        {current.kind === "number_sense" && current.countingShapes ? (
+          <ShapeCountingVisual items={current.countingShapes} />
+        ) : null}
+        {current.kind === "number_sense" && current.quantityShapeGroups ? (
+          <ShapeQuantityComparisonVisual {...current.quantityShapeGroups} />
+        ) : null}
 
         {isFractionVisualQuestion(current) ? (
           <View style={styles.fractionVisual}>
@@ -538,7 +568,10 @@ export function TimedMathSessionView() {
 
         {isShapeRecognitionQuestion(current) ? (
           <View style={styles.shapeVisual}>
-            <BasicShapeDiagram shape={current.shape} fill={SHAPE_COLOR_HEX[current.color]} />
+            <BasicShapeDiagram
+              shape={current.shape}
+              fill={SHAPE_COLOR_HEX[current.color]}
+            />
           </View>
         ) : null}
 
@@ -548,7 +581,9 @@ export function TimedMathSessionView() {
           </View>
         ) : null}
 
-        {isClockQuestion(current) && current.subtype === "read_analog" && current.displayTime ? (
+        {isClockQuestion(current) &&
+        current.subtype === "read_analog" &&
+        current.displayTime ? (
           <View style={styles.clockVisual}>
             <AnalogClockFace time={current.displayTime} />
           </View>
@@ -558,7 +593,9 @@ export function TimedMathSessionView() {
           <View style={styles.patternVisual}>
             <ColoredShapeSequence items={current.sequenceColoredShapes} />
           </View>
-        ) : isPatternQuestion(current) && current.subtype === "shape_pattern" && current.sequenceShapes ? (
+        ) : isPatternQuestion(current) &&
+          current.subtype === "shape_pattern" &&
+          current.sequenceShapes ? (
           <View style={styles.patternVisual}>
             <ShapePatternSequence icons={current.sequenceShapes} />
           </View>
@@ -590,7 +627,8 @@ export function TimedMathSessionView() {
                   editable={!inputLocked}
                   onFocus={scrollToInput}
                   onSubmitEditing={() => {
-                    if (!showFeedback && showKeyboardInput) handleSubmitAction();
+                    if (!showFeedback && showKeyboardInput)
+                      handleSubmitAction();
                   }}
                   placeholder={answerPlaceholder}
                   placeholderTextColor={colors.textMuted}
@@ -649,34 +687,24 @@ export function TimedMathSessionView() {
               />
             ))}
           </View>
-        ) : isArithmeticQuestion(current) ||
-          isEquationUnknownQuestion(current) ||
-          isGeometryQuestion(current) ||
-          isFractionVisualQuestion(current) ||
-          isShapeRecognitionQuestion(current) ||
-          isComparisonQuestion(current) ||
-          isEquivalentExpressionQuestion(current) ||
-          isClockQuestion(current) ||
-          isPatternQuestion(current) ||
-          isCalculusQuestion(current) ||
-          isTrigonometryQuestion(current) ||
-          isLogarithmQuestion(current) ||
-          current.kind === "advanced_equation" ||
-          current.kind === "limit" ||
-          current.kind === "number_sense" ||
-          isEquationTwoUnknownQuestion(current) ? (
+        ) : (
           <View style={styles.optionsStacked}>
             {current.answerOptions.map((opt, index) => (
               <AnswerOptionButton
                 key={`${String(opt)}-${index}`}
-                label={isEquationUnknownQuestion(current) ? `x=${opt}` : answerOptionDisplayLabel(current, opt)}
+                label={
+                  isEquationUnknownQuestion(current)
+                    ? `x=${opt}`
+                    : answerOptionDisplayLabel(current, opt)
+                }
                 value={opt}
                 disabled={showFeedback}
                 selected={selected === opt}
                 onPress={handleSelect}
                 stacked
               >
-                {isPatternQuestion(current) && current.subtype === "colored_shape_pattern"
+                {isPatternQuestion(current) &&
+                current.subtype === "colored_shape_pattern"
                   ? (() => {
                       const visual = current.coloredShapeAnswerOptions?.find(
                         (item) => item.label === String(opt),
@@ -689,7 +717,8 @@ export function TimedMathSessionView() {
                         />
                       ) : null;
                     })()
-                  : isPatternQuestion(current) && current.subtype === "shape_pattern"
+                  : isPatternQuestion(current) &&
+                      current.subtype === "shape_pattern"
                     ? (() => {
                         const visual = current.shapePatternAnswerOptions?.find(
                           (item) => item.label === String(opt),
@@ -709,31 +738,14 @@ export function TimedMathSessionView() {
               </AnswerOptionButton>
             ))}
           </View>
-        ) : (
-          <View
-            style={
-              shouldStackAnswerOptions(current)
-                ? styles.optionsStacked
-                : styles.options
-            }
-          >
-            {current.answerOptions.map((opt) => (
-              <AnswerOptionButton
-                key={String(opt)}
-                label={`x=${opt}`}
-                value={opt}
-                disabled={showFeedback}
-                selected={selected === opt}
-                onPress={handleSelect}
-                stacked={shouldStackAnswerOptions(current)}
-              />
-            ))}
-          </View>
         )}
 
         {showSubmitAction ? (
           <AppButton
             label={submitActionLabel}
+            icon="checkmark"
+            textPosition="center"
+            iconPosition="right"
             onPress={handleSubmitAction}
             disabled={submitActionDisabled}
             accessibilityHint={
@@ -769,19 +781,19 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
   },
   fractionVisual: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: spacing.sm,
   },
   shapeVisual: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: spacing.sm,
   },
   clockVisual: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: spacing.sm,
   },
   patternVisual: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: spacing.sm,
   },
   patternSequence: {

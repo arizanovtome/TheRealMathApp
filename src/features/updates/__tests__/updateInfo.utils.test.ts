@@ -14,6 +14,8 @@ describe('getUpdateMessageFromManifest', () => {
       getUpdateMessageFromManifest({
         extra: {
           expoClient: {
+            name: 'The Real Math',
+            slug: 'the-real-math',
             extra: { message: 'QA build for testers' },
           },
         },

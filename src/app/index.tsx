@@ -1,31 +1,31 @@
-import { useMemo } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Redirect, useRouter } from 'expo-router';
+import { useMemo } from "react";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Redirect, useRouter } from "expo-router";
 
-import { AppButton } from '@/components/common/AppButton';
-import { AppScreen } from '@/components/common/AppScreen';
-import { AppText } from '@/components/common/AppText';
-import { HomeAboutLinks } from '@/components/home/HomeAboutLinks';
-import { LanguageQuickSwitch } from '@/components/settings/LanguageQuickSwitch';
-import { GentleAdaptationCard } from '@/components/progress/GentleAdaptationCard';
-import { ROUTES } from '@/constants/routes';
-import { getEnabledOperations } from '@/features/learning-plan/learningPlan.utils';
-import { computeAdaptationSuggestion } from '@/features/progress/adaptation';
-import { useStoreHydration } from '@/hooks/useStoreHydration';
-import { useAppStore } from '@/store/useAppStore';
+import { AppButton } from "@/components/common/AppButton";
+import { AppScreen } from "@/components/common/AppScreen";
+import { AppText } from "@/components/common/AppText";
+import { HomeAboutLinks } from "@/components/home/HomeAboutLinks";
+import { LanguageQuickSwitch } from "@/components/settings/LanguageQuickSwitch";
+import { GentleAdaptationCard } from "@/components/progress/GentleAdaptationCard";
+import { ROUTES } from "@/constants/routes";
+import { getEnabledOperations } from "@/features/learning-plan/learningPlan.utils";
+import { computeAdaptationSuggestion } from "@/features/progress/adaptation";
+import { useStoreHydration } from "@/hooks/useStoreHydration";
+import { useAppStore } from "@/store/useAppStore";
 import {
   selectActiveLearningConfig,
   selectActiveProfile,
   selectActiveSessionHistory,
-} from '@/store/profileSelectors';
-import { useAppTranslation } from '@/i18n/useAppTranslation';
-import { colors } from '@/theme/colors';
+} from "@/store/profileSelectors";
+import { useAppTranslation } from "@/i18n/useAppTranslation";
+import { colors } from "@/theme/colors";
 
 export const options = { headerShown: false as const };
 
 export default function HomeScreen() {
-  const { t } = useAppTranslation(['home', 'common']);
+  const { t } = useAppTranslation(["home", "common"]);
   const hydrated = useStoreHydration();
   const router = useRouter();
   const activeProfile = useAppStore(selectActiveProfile);
@@ -36,13 +36,23 @@ export default function HomeScreen() {
 
   const adaptationSuggestion = useMemo(() => {
     if (!learningConfig) return null;
-    return computeAdaptationSuggestion(sessionHistory, getEnabledOperations(learningConfig));
+    return computeAdaptationSuggestion(
+      sessionHistory,
+      getEnabledOperations(learningConfig),
+    );
   }, [sessionHistory, learningConfig]);
 
   if (!hydrated) {
     return (
-      <SafeAreaView style={styles.loading} edges={['top', 'bottom', 'left', 'right']}>
-        <ActivityIndicator size="large" color={colors.primary} accessibilityLabel={t('common:loadingSettings')} />
+      <SafeAreaView
+        style={styles.loading}
+        edges={["top", "bottom", "left", "right"]}
+      >
+        <ActivityIndicator
+          size="large"
+          color={colors.primary}
+          accessibilityLabel={t("common:loadingSettings")}
+        />
       </SafeAreaView>
     );
   }
@@ -51,7 +61,7 @@ export default function HomeScreen() {
     return <Redirect href={ROUTES.onboardingName} />;
   }
 
-  const greetingName = activeProfile?.name?.trim() || t('common:friend');
+  const greetingName = activeProfile?.name?.trim() || t("common:friend");
   const profileLabel =
     profiles.length > 1 && activeProfile?.profileName
       ? activeProfile.profileName
@@ -61,62 +71,70 @@ export default function HomeScreen() {
     <AppScreen scroll includeTopSafeArea>
       <View style={styles.titleRow}>
         <AppText variant="title" style={styles.title}>
-          {t('home:greeting', { name: greetingName })}
+          {t("home:greeting", { name: greetingName })}
         </AppText>
         <LanguageQuickSwitch />
       </View>
       {profileLabel ? (
         <AppText variant="body" muted>
-          {t('home:activeProfile', { profileLabel })}
+          {t("home:activeProfile", { profileLabel })}
         </AppText>
       ) : null}
       <AppText variant="body" muted>
-        {t('home:intro')}
+        {t("home:intro")}
       </AppText>
 
       <AppButton
-        label={t('common:practice')}
+        label={t("common:practice")}
+        icon="barbell-outline"
         onPress={() => router.push(ROUTES.practice)}
-        accessibilityHint={t('home:hintPractice')}
+        accessibilityHint={t("home:hintPractice")}
       />
       <AppButton
-        label={t('common:quiz')}
+        label={t("common:quiz")}
+        icon="calculator-outline"
         variant="secondary"
         onPress={() => router.push(ROUTES.quiz)}
-        accessibilityHint={t('home:hintQuiz')}
+        accessibilityHint={t("home:hintQuiz")}
       />
       <AppButton
-        label={t('common:timed')}
+        label={t("common:timed")}
+        icon="timer-outline"
         variant="secondary"
         onPress={() => router.push(ROUTES.timed)}
-        accessibilityHint={t('home:hintTimed')}
+        accessibilityHint={t("home:hintTimed")}
       />
       <AppButton
-        label={t('home:learnTitle')}
+        label={t("home:learnTitle")}
+        icon="book-outline"
         variant="secondary"
         onPress={() => router.push(ROUTES.learn)}
-        accessibilityHint={t('home:hintLearn')}
+        accessibilityHint={t("home:hintLearn")}
       />
       <AppButton
-        label={t('progress:title')}
+        label={t("progress:title")}
+        icon="stats-chart-outline"
         variant="secondary"
         onPress={() => router.push(ROUTES.progress)}
-        accessibilityHint={t('home:hintProgress')}
+        accessibilityHint={t("home:hintProgress")}
       />
       <AppButton
-        label={t('settings:title')}
+        label={t("settings:title")}
+        icon="settings-outline"
         variant="secondary"
         onPress={() => router.push(ROUTES.learningPlan)}
-        accessibilityHint={t('home:hintSettings')}
+        accessibilityHint={t("home:hintSettings")}
       />
 
       <HomeAboutLinks />
 
-      {adaptationSuggestion ? <GentleAdaptationCard suggestion={adaptationSuggestion} /> : null}
+      {adaptationSuggestion ? (
+        <GentleAdaptationCard suggestion={adaptationSuggestion} />
+      ) : null}
 
       {!learningConfig ? (
         <AppText variant="body" muted>
-          {t('home:noSetup')}
+          {t("home:noSetup")}
         </AppText>
       ) : null}
     </AppScreen>
@@ -125,9 +143,9 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     gap: 12,
   },
   title: {
@@ -136,8 +154,8 @@ const styles = StyleSheet.create({
   },
   loading: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: colors.background,
   },
 });

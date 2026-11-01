@@ -93,7 +93,7 @@ describe('comparisonGenerator', () => {
     expect(q!.subtype).toBe('fraction_vs_decimal');
     expect(q!.questionText).toMatch(/ __ /);
     expect(q!.answerOptions).toContain(q!.correctAnswer);
-    expect(submittedAnswerIsCorrect(q!, q!.correctAnswer)).toBe(true);
+    expect(submittedAnswerIsCorrect({ ...q!, id: 'test-question' }, q!.correctAnswer)).toBe(true);
   });
 
   it('generates percent vs fraction questions when enabled', () => {
@@ -104,7 +104,7 @@ describe('comparisonGenerator', () => {
     const q = tryGenerateComparisonQuestion(config, 'percent_vs_fraction');
     expect(q).not.toBeNull();
     expect(q!.questionText).toMatch(/% __ /);
-    expect(submittedAnswerIsCorrect(q!, q!.correctAnswer)).toBe(true);
+    expect(submittedAnswerIsCorrect({ ...q!, id: 'test-question' }, q!.correctAnswer)).toBe(true);
   });
 
   it('generates fraction vs fraction questions when enabled', () => {
@@ -115,7 +115,7 @@ describe('comparisonGenerator', () => {
     const q = tryGenerateComparisonQuestion(config, 'fraction_vs_fraction');
     expect(q).not.toBeNull();
     expect(q!.questionText).toMatch(/\d+\/\d+ __ \d+\/\d+/);
-    expect(submittedAnswerIsCorrect(q!, q!.correctAnswer)).toBe(true);
+    expect(submittedAnswerIsCorrect({ ...q!, id: 'test-question' }, q!.correctAnswer)).toBe(true);
   });
 
   it('generates measurement comparison questions when enabled', () => {
@@ -127,7 +127,7 @@ describe('comparisonGenerator', () => {
     expect(q).not.toBeNull();
     expect(q!.questionText).toMatch(/ __ /);
     expect(q!.answerOptions).toEqual(expect.arrayContaining(['<', '>', '=']));
-    expect(submittedAnswerIsCorrect(q!, q!.correctAnswer)).toBe(true);
+    expect(submittedAnswerIsCorrect({ ...q!, id: 'test-question' }, q!.correctAnswer)).toBe(true);
   });
 
   it('respects relational toggle off', () => {

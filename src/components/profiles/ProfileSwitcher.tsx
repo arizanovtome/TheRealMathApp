@@ -122,6 +122,7 @@ export function ProfileSwitcher({
       {!hideAddButton ? (
         <AppButton
           label={t('common:addProfile')}
+          icon="person-add-outline"
           variant="secondary"
           onPress={onAddProfile}
           accessibilityHint={t('common:addProfileHint')}

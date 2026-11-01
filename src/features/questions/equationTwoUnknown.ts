@@ -6,6 +6,7 @@ import { buildAnswerOptions } from '@/features/questions/answerOptionsGenerator'
 import { isAnswerWithinFinalResultCap } from '@/features/questions/answerCap.utils';
 import type { EquationTwoUnknownMathQuestion } from '@/features/questions/question.types';
 import { pickRandom, randomIntInclusive } from '@/utils/random';
+import { i18n } from '@/i18n';
 
 type SolveFor = 'x' | 'y';
 
@@ -45,7 +46,7 @@ function boundsForOperation(
 }
 
 function formatQuestionText(eq1: string, eq2: string, solveFor: SolveFor): string {
-  return `${eq1}\n${eq2}\nFind ${solveFor}.`;
+  return `${eq1}\n${eq2}\n${i18n.t('questions:findVariable', { variable: solveFor })}`;
 }
 
 function pickSolveFor(): SolveFor {
@@ -198,9 +199,9 @@ export function finalizeEquationTwoUnknownQuestion(
   return { ...draft, answerOptions };
 }
 
-/** Parses "Find x." / "Find y." from generated question text. */
+/** Parses the variable from English or Macedonian system instructions. */
 export function parseSolveForFromQuestionText(questionText: string): SolveFor | null {
-  const match = /Find ([xy])\./.exec(questionText);
+  const match = /(?:Find|Најди(?: го)?) ([xy])\./.exec(questionText);
   if (!match) return null;
   return match[1] === 'y' ? 'y' : 'x';
 }

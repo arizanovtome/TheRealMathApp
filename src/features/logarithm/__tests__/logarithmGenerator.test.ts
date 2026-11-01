@@ -69,7 +69,7 @@ describe('logarithmGenerator', () => {
       /log (\d+) \+ log (\d+)/,
       'log $2 + log $1',
     );
-    expect(submittedAnswerIsCorrect(q!, swapped)).toBe(true);
+    expect(submittedAnswerIsCorrect({ ...q!, id: 'test-question' }, swapped)).toBe(true);
   });
 
   it('scores numeric ln answers', () => {
@@ -85,7 +85,7 @@ describe('logarithmGenerator', () => {
       q = tryGenerateLogarithmQuestion(config);
     }
     expect(q?.subtype).toBe('numeric_ln');
-    expect(submittedAnswerIsCorrect(q!, q!.correctAnswer)).toBe(true);
+    expect(submittedAnswerIsCorrect({ ...q!, id: 'test-question' }, q!.correctAnswer)).toBe(true);
   });
 
   it('generates numeric log value questions with simple bases', () => {
@@ -101,7 +101,7 @@ describe('logarithmGenerator', () => {
       const q = tryGenerateLogarithmQuestion(config);
       expect(q?.subtype).toBe('numeric_log');
       expect(q!.questionText).toMatch(/log.+\= \?/);
-      expect(submittedAnswerIsCorrect(q!, q!.correctAnswer)).toBe(true);
+      expect(submittedAnswerIsCorrect({ ...q!, id: 'test-question' }, q!.correctAnswer)).toBe(true);
       expect(q!.answerOptions.every((opt) => /^-?\d+$/.test(opt))).toBe(true);
       if (q!.questionText.includes('log₂')) bases.add('2');
       if (q!.questionText.includes('log₃')) bases.add('3');

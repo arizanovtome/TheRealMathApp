@@ -255,10 +255,10 @@ export function getEquationTwoUnknownOperatorPool(
   if (!config.equationTwoUnknowns.enabled) return [];
   const o = config.equationTwoUnknowns.operators;
   const out: MathOperation[] = [];
-  if (o.addition && config.addition.enabled) out.push("addition");
-  if (o.subtraction && config.subtraction.enabled) out.push("subtraction");
-  if (o.multiplication && config.multiplication.enabled) out.push("multiplication");
-  if (o.division && config.division.enabled) out.push("division");
+  if (o.addition) out.push("addition");
+  if (o.subtraction) out.push("subtraction");
+  if (o.multiplication) out.push("multiplication");
+  if (o.division) out.push("division");
   return out;
 }
 

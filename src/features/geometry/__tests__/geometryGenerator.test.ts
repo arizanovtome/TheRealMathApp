@@ -234,7 +234,6 @@ describe('geometryGenerator', () => {
     try {
       await i18n.changeLanguage('en');
       const config = geometryConfig({
-        answerOptionsCount: 6,
         questionKinds: { formula: true, calculate: false },
         perimeter: {
           enabled: true,
@@ -253,6 +252,7 @@ describe('geometryGenerator', () => {
         area: { enabled: false, shapes: DEFAULT_GEOMETRY_CONFIG.area.shapes },
         volume: { enabled: false, shapes: DEFAULT_GEOMETRY_CONFIG.volume.shapes },
       });
+      config.answerOptionsCount = 6;
 
       for (let i = 0; i < 30; i++) {
         const q = tryGenerateGeometryQuestion(config);

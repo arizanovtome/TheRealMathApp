@@ -1,94 +1,99 @@
-import { useHeaderHeight } from "expo-router/react-navigation";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useHeaderHeight } from "expo-router/react-navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  Keyboard,
-  ScrollView,
-  StyleSheet,
-  View,
-} from "react-native";
+import { Keyboard, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { KeyboardScreenShell } from "@/components/common/KeyboardScreenShell";
 
 import { AnalogClockFace } from "@/components/clock/AnalogClockFace";
-import { BasicShapeDiagram } from "@/components/shapes/BasicShapeDiagram";
-import { ColoredShapeSequence } from "@/components/patterns/ColoredShapeSequence";
-import { ShapeCountingVisual, ShapeQuantityComparisonVisual } from "@/components/number-sense/ShapeQuantityVisual";
-import { ShapePatternFigure, ShapePatternSequence } from "@/components/patterns/ShapePatternFigure";
-import { SHAPE_COLOR_HEX } from "@/features/shapes/shapeColors";
-import { TrigonometryShapeDiagram } from "@/components/learn/TrigonometryShapeDiagram";
 import { AppButton } from "@/components/common/AppButton";
 import { AppText } from "@/components/common/AppText";
+import { FractionVisualModel } from "@/components/fractions/FractionModels";
+import { TrigonometryShapeDiagram } from "@/components/learn/TrigonometryShapeDiagram";
+import { LimitQuestionDisplay } from "@/components/limits/LimitQuestionDisplay";
+import {
+    ShapeCountingVisual,
+    ShapeQuantityComparisonVisual,
+} from "@/components/number-sense/ShapeQuantityVisual";
+import { ColoredShapeSequence } from "@/components/patterns/ColoredShapeSequence";
+import {
+    ShapePatternFigure,
+    ShapePatternSequence,
+} from "@/components/patterns/ShapePatternFigure";
 import { AnswerOptionButton } from "@/components/practice/AnswerOptionButton";
 import { FeedbackMessage } from "@/components/practice/FeedbackMessage";
 import { QuestionCard } from "@/components/practice/QuestionCard";
-import { LimitQuestionDisplay } from "@/components/limits/LimitQuestionDisplay";
 import {
-  SessionAnswerTextInput,
-  SessionEquationAnswerInput,
+    SessionAnswerTextInput,
+    SessionEquationAnswerInput,
 } from "@/components/practice/SessionAnswerTextInput";
+import { BasicShapeDiagram } from "@/components/shapes/BasicShapeDiagram";
 import { ROUTES } from "@/constants/routes";
 import type { MathOperation } from "@/features/learning-plan/learningPlan.types";
 import { ALL_MATH_OPERATIONS } from "@/features/learning-plan/learningPlan.types";
 import {
-  applyPracticeFocusOverride,
-  validateLearningConfig,
-  hasAnyQuestionSource,
+    applyPracticeFocusOverride,
+    hasAnyQuestionSource,
+    validateLearningConfig,
 } from "@/features/learning-plan/learningPlan.utils";
-import {
-  positiveFeedbackForCorrectCount,
-} from "@/features/questions/answerOptionsGenerator";
+import { positiveFeedbackForCorrectCount } from "@/features/questions/answerOptionsGenerator";
 import { normalizeEquationAnswerInput } from "@/features/questions/equationUnknown";
 import { formatFraction } from "@/features/questions/fractions";
 import type { MathQuestion } from "@/features/questions/question.types";
-import { keyboardAnswerIsReady, requiresMultipleChoiceQuestion } from "@/features/questions/questionAnswerInput";
 import {
-  isArithmeticQuestion,
-  isEquationUnknownQuestion,
-  isFractionQuestion,
-  isGeometryQuestion,
-  isFractionVisualQuestion,
-  isShapeRecognitionQuestion,
-  isComparisonQuestion,
-  isEquivalentExpressionQuestion,
-  isClockQuestion,
-  isPatternQuestion,
-  isCalculusQuestion,
-  isTrigonometryQuestion,
-  isLogarithmQuestion,
-  isEquationTwoUnknownQuestion,
-  usesCompactQuestionCard,
+    isArithmeticQuestion,
+    isCalculusQuestion,
+    isClockQuestion,
+    isComparisonQuestion,
+    isEquationTwoUnknownQuestion,
+    isEquationUnknownQuestion,
+    isEquivalentExpressionQuestion,
+    isFractionQuestion,
+    isFractionVisualQuestion,
+    isGeometryQuestion,
+    isLogarithmQuestion,
+    isPatternQuestion,
+    isShapeRecognitionQuestion,
+    isTrigonometryQuestion,
+    usesCompactQuestionCard,
 } from "@/features/questions/question.types";
-import { FractionVisualModel } from "@/components/fractions/FractionModels";
 import {
-  createSessionQuestions,
-} from "@/features/questions/questionGenerator";
+    keyboardAnswerIsReady,
+    requiresMultipleChoiceQuestion,
+} from "@/features/questions/questionAnswerInput";
+import { createSessionQuestions } from "@/features/questions/questionGenerator";
 import {
-  answerOptionDisplayLabel,
-  answerOptionsArePlainNumbers,
-  shouldStackAnswerOptions,
-  buildPracticeSessionResult,
-  buildQuizSessionResult,
-  correctAnswerFeedbackLabel,
-  submittedAnswerIsCorrect,
+    answerOptionDisplayLabel,
+    answerOptionsArePlainNumbers,
+    buildPracticeSessionResult,
+    buildQuizSessionResult,
+    correctAnswerFeedbackLabel,
+    shouldStackAnswerOptions,
+    submittedAnswerIsCorrect,
 } from "@/features/questions/questionScoring";
-import { useAppStore } from "@/store/useAppStore";
+import { SHAPE_COLOR_HEX } from "@/features/shapes/shapeColors";
+import { useAppTranslation } from "@/i18n/useAppTranslation";
 import { selectActiveLearningConfig } from "@/store/profileSelectors";
+import { useAppStore } from "@/store/useAppStore";
 import { colors } from "@/theme/colors";
 import { fonts } from "@/theme/fonts";
 import { radii, spacing } from "@/theme/spacing";
-import { useAppTranslation } from "@/i18n/useAppTranslation";
-import { parseNumberAnswer } from "@/utils/parseIntegerAnswer";
+import {
+    useKeyboardInset,
+    useScrollToFocusedInput,
+} from "@/utils/keyboardScroll";
 import { parseFractionAnswer } from "@/utils/parseFractionAnswer";
-import { useKeyboardInset, useScrollToFocusedInput } from "@/utils/keyboardScroll";
+import { parseNumberAnswer } from "@/utils/parseIntegerAnswer";
 
 function parseFocusOperationParam(
   raw: string | string[] | undefined,
 ): MathOperation | null {
   const s = Array.isArray(raw) ? raw[0] : raw;
   if (!s || typeof s !== "string") return null;
-  return ALL_MATH_OPERATIONS.includes(s as MathOperation) ? (s as MathOperation) : null;
+  return ALL_MATH_OPERATIONS.includes(s as MathOperation)
+    ? (s as MathOperation)
+    : null;
 }
 
 function countPriorCorrectAnswers(
@@ -100,7 +105,11 @@ function countPriorCorrectAnswers(
   for (let i = 0; i < beforeIndex; i++) {
     const answer = answers[i];
     const question = questions[i];
-    if (answer !== null && question && submittedAnswerIsCorrect(question, answer)) {
+    if (
+      answer !== null &&
+      question &&
+      submittedAnswerIsCorrect(question, answer)
+    ) {
       count++;
     }
   }
@@ -318,7 +327,7 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
     if (parsed === null) {
       setInputError(
         (isArithmeticQuestion(current) && isFractionQuestion(current)) ||
-        isFractionVisualQuestion(current)
+          isFractionVisualQuestion(current)
           ? t("common:fractionHint")
           : t("common:numberHint"),
       );
@@ -393,7 +402,7 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
           if (parsed === null) {
             setInputError(
               (isArithmeticQuestion(current) && isFractionQuestion(current)) ||
-              isFractionVisualQuestion(current)
+                isFractionVisualQuestion(current)
                 ? t("common:fractionHint")
                 : t("common:numberHint"),
             );
@@ -460,6 +469,7 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
         </AppText>
         <AppButton
           label={t("common:openSettings")}
+          icon="settings-outline"
           onPress={() => router.replace(ROUTES.learningPlan)}
         />
       </View>
@@ -502,7 +512,9 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
         : selected === null || (mode === "practice" && !showFeedback);
 
   const awaitingCheck =
-    mode === "practice" && !showFeedback && (showKeyboardInput || requireConfirmMc);
+    mode === "practice" &&
+    !showFeedback &&
+    (showKeyboardInput || requireConfirmMc);
 
   const primaryActionLabel = awaitingCheck
     ? showKeyboardInput
@@ -546,18 +558,34 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
               ? t("common:secondsLeft", {
                   seconds: timedOut
                     ? 0
-                    : secondsLeft ?? effectiveConfig.timerSecondsPerQuestion,
+                    : (secondsLeft ?? effectiveConfig.timerSecondsPerQuestion),
                 })
               : undefined
           }
-          questionContent={current.kind === "limit" ? (
-            <LimitQuestionDisplay approach={current.approach} expression={current.expression} fraction={current.expressionFraction} />
-          ) : undefined}
+          questionContent={
+            current.kind === "limit" ? (
+              <LimitQuestionDisplay
+                approach={current.approach}
+                expression={current.expression}
+                fraction={current.expressionFraction}
+              />
+            ) : undefined
+          }
         >
-          {current.kind === "number_sense" && current.countTarget ? <BasicShapeDiagram shape={current.countTarget.shape} fill={SHAPE_COLOR_HEX[current.countTarget.color]} size={58} /> : null}
+          {current.kind === "number_sense" && current.countTarget ? (
+            <BasicShapeDiagram
+              shape={current.countTarget.shape}
+              fill={SHAPE_COLOR_HEX[current.countTarget.color]}
+              size={58}
+            />
+          ) : null}
         </QuestionCard>
-        {current.kind === "number_sense" && current.countingShapes ? <ShapeCountingVisual items={current.countingShapes} /> : null}
-        {current.kind === "number_sense" && current.quantityShapeGroups ? <ShapeQuantityComparisonVisual {...current.quantityShapeGroups} /> : null}
+        {current.kind === "number_sense" && current.countingShapes ? (
+          <ShapeCountingVisual items={current.countingShapes} />
+        ) : null}
+        {current.kind === "number_sense" && current.quantityShapeGroups ? (
+          <ShapeQuantityComparisonVisual {...current.quantityShapeGroups} />
+        ) : null}
 
         {isFractionVisualQuestion(current) ? (
           <View style={styles.fractionVisual}>
@@ -571,7 +599,10 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
 
         {isShapeRecognitionQuestion(current) ? (
           <View style={styles.shapeVisual}>
-            <BasicShapeDiagram shape={current.shape} fill={SHAPE_COLOR_HEX[current.color]} />
+            <BasicShapeDiagram
+              shape={current.shape}
+              fill={SHAPE_COLOR_HEX[current.color]}
+            />
           </View>
         ) : null}
 
@@ -581,7 +612,9 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
           </View>
         ) : null}
 
-        {isClockQuestion(current) && current.subtype === "read_analog" && current.displayTime ? (
+        {isClockQuestion(current) &&
+        current.subtype === "read_analog" &&
+        current.displayTime ? (
           <View style={styles.clockVisual}>
             <AnalogClockFace time={current.displayTime} />
           </View>
@@ -591,7 +624,9 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
           <View style={styles.patternVisual}>
             <ColoredShapeSequence items={current.sequenceColoredShapes} />
           </View>
-        ) : isPatternQuestion(current) && current.subtype === "shape_pattern" && current.sequenceShapes ? (
+        ) : isPatternQuestion(current) &&
+          current.subtype === "shape_pattern" &&
+          current.sequenceShapes ? (
           <View style={styles.patternVisual}>
             <ShapePatternSequence icons={current.sequenceShapes} />
           </View>
@@ -704,14 +739,19 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
             {current.answerOptions.map((opt, index) => (
               <AnswerOptionButton
                 key={`${String(opt)}-${index}`}
-                label={isEquationUnknownQuestion(current) ? `x=${opt}` : answerOptionDisplayLabel(current, opt)}
+                label={
+                  isEquationUnknownQuestion(current)
+                    ? `x=${opt}`
+                    : answerOptionDisplayLabel(current, opt)
+                }
                 value={opt}
                 disabled={optionDisabled}
                 selected={selected === opt}
                 onPress={handleSelect}
                 stacked
               >
-                {isPatternQuestion(current) && current.subtype === "colored_shape_pattern"
+                {isPatternQuestion(current) &&
+                current.subtype === "colored_shape_pattern"
                   ? (() => {
                       const visual = current.coloredShapeAnswerOptions?.find(
                         (item) => item.label === String(opt),
@@ -724,7 +764,8 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
                         />
                       ) : null;
                     })()
-                  : isPatternQuestion(current) && current.subtype === "shape_pattern"
+                  : isPatternQuestion(current) &&
+                      current.subtype === "shape_pattern"
                     ? (() => {
                         const visual = current.shapePatternAnswerOptions?.find(
                           (item) => item.label === String(opt),
@@ -748,6 +789,9 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
 
         <AppButton
           label={primaryActionLabel}
+          icon={awaitingCheck ? "checkmark" : "arrow-forward"}
+          textPosition="center"
+          iconPosition="right"
           onPress={handlePrimaryAction}
           disabled={nextDisabled}
           accessibilityHint={
@@ -761,7 +805,9 @@ export function MathSessionView({ mode }: MathSessionViewProps) {
           }
         />
 
-        {mode === "practice" && showFeedback && (selected !== null || timedOut) ? (
+        {mode === "practice" &&
+        showFeedback &&
+        (selected !== null || timedOut) ? (
           <FeedbackMessage
             variant={isCorrectSelection ? "correct" : "incorrect"}
             message={feedbackMessage}
@@ -785,19 +831,19 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
   },
   fractionVisual: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: spacing.sm,
   },
   shapeVisual: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: spacing.sm,
   },
   clockVisual: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: spacing.sm,
   },
   patternVisual: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: spacing.sm,
   },
   patternSequence: {

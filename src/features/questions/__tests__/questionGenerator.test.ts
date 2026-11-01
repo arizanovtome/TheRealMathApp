@@ -815,14 +815,15 @@ describe("createSessionQuestions", () => {
       expect(remainder).toBeGreaterThan(0);
       expect(submittedAnswerIsCorrect(q, `${quotient} R ${remainder}`)).toBe(true);
 
-      const divMatch = /^(-?\d+|\u2212\d+) ÷ (-?\d+|\u2212\d+) = \?$/.exec(
+      const divMatch = /^([-\u2212]?\d+) ÷ (\d+|\([-\u2212]\d+\)) = \?$/.exec(
         q.questionText,
       );
       expect(divMatch).not.toBeNull();
       const parseNum = (s: string) =>
-        Number(s.replace(/\u2212/g, '-'));
+        Number(s.replace(/[()]/g, '').replace(/\u2212/g, '-'));
       const dividend = parseNum(divMatch![1]!);
       const divisor = parseNum(divMatch![2]!);
+      expect(remainder).toBeLessThan(Math.abs(divisor));
       expect(dividend).toBe(quotient * divisor + remainder);
       expect(q.answerOptions).toContain(`${quotient} R ${remainder}`);
     }
